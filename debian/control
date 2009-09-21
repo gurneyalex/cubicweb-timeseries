@@ -1,0 +1,18 @@
+Source: cubicweb-timeseries
+Section: web
+Priority: optional
+Maintainer: LOGILAB S.A. (Paris, FRANCE) <contact@logilab.fr>
+Build-Depends: debhelper (>= 5.0.37.1), python (>=2.4), python-dev (>=2.4)
+Standards-Version: 3.8.0
+
+
+Package: cubicweb-timeseries
+Architecture: all
+Depends: cubicweb-common (>= 3.5.1)
+Description: Timeseries component for the CubicWeb framework
+ CubicWeb is a semantic web application framework.
+ .
+ Timeseries component for the CubicWeb framework
+ .
+ This package will install all the components you need to run the
+ cubicweb-timeseries application (cube :)..
