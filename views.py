@@ -16,26 +16,34 @@ class TimeSeriesPrimaryView(primary.PrimaryView):
     __select__ = implements('TimeSeries')
 
     def summary(self, entity):
-        self.wview('ts_plot', self.rset, width=640, height=480)
-        self.wview('ts_summary', self.rset)
+        entity.view('ts_plot', w = self.w, width=640, height=480)
+        entity.view('ts_summary', w=self.w)
 
 class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'
     __select__ = implements('TimeSeries')
-    title = _(u'Time Series plot')
-
-    def build_plot_data(self):
+    def build_plot_data(self, entity):
         plots = []
         for ts in self.rset.entities():
-
             plots.append(ts.timestamped_array())
         return plots
-
-    def call(self, start=None, end=None, width=None, height=None):
+    
+    def call(self, width=None, height=None):
         form = self.req.form
         width = width or form.get('width', 500)
         height = height or form.get('height', 400)
-        plotwidget = FlotPlotWidget(['data'], self.build_plot_data(),
+        names = []
+        plots = []
+        for ts in self.rset.entities():
+            names.append(ts.dc_title())
+            plots.append(ts.timestamped_array())
+        plotwidget = FlotPlotWidget(names, plots, timemode=True)
+        plotwidget.render(self.req, width, height, w=self.w)
+
+    def cell_call(self, row, col, width=None, height=None):
+        ts = self.rset.get_entity(row, col)
+        plotwidget = FlotPlotWidget([ts.dc_title()],
+                                    [ts.timestamped_array()],
                                     timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
@@ -43,10 +51,9 @@ class TimeSeriesPlotView(baseviews.EntityView):
 class TimeSeriesSummaryView(baseviews.EntityView):
     id = 'ts_summary'
     __select__ = implements('TimeSeries')
-    title = _(u'Time Series summary')
-    def call(self):
-        for ts in self.rset.entities():
-            self.w(u'<p>Summary:\n<ul>')
-            for attr in ('first', 'last', 'min', 'max', 'average', 'sum'):
-                self.w(u'<li>%s: %.2f</li>' % (attr, getattr(ts, attr)))
-            self.w(u'</ul></p>')
+    def cell_call(self, row, col):
+        entity = self.rset.get_entity(row, col)
+        self.w(u'<p>Summary:\n<ul>')
+        for attr in ('first', 'last', 'min', 'max', 'average', 'sum'):
+            self.w(u'<li>%s: %.2f</li>' % (attr, getattr(entity, attr)))
+        self.w(u'</ul></p>')
