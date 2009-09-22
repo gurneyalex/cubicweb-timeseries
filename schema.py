@@ -6,3 +6,25 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
+
+from yams.buildobjs import EntityType, String, Bytes, Datetime
+from yams.constraints import StaticVocabularyConstraint
+
+class TimeSeries(EntityType):
+    granularity = String(description = _('Granularity'),
+                         required=True,
+                         internationalizable=True,
+                         vocabulary = [_('15 min'), _('hourly'), _('daily'),
+                                       _('weekly'), _('monthly'), _('yearly')],
+                         default='1d')
+
+    calendar = String(description = _('Calendrier'),
+                      required=True,
+                      internationalizable=True,
+                      vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
+                      default='gregorian')
+
+    start_date = Datetime(description = _('Start date'),
+                        required=True, default='TODAY')
+    data = Bytes(required=True,
+                 description = _('Timeseries data'))
