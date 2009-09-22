@@ -27,10 +27,10 @@ class TimeSeriesPlotView(baseviews.EntityView):
     def build_plot_data(self):
         plots = []
         for ts in self.rset.entities():
-            
+
             plots.append(ts.timestamped_array())
         return plots
-    
+
     def call(self, start=None, end=None, width=None, height=None):
         form = self.req.form
         width = width or form.get('width', 500)

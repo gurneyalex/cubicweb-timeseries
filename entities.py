@@ -34,12 +34,13 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return _(u'Time series starting on %s with %d values' % (self.start_date, self.length))
+        return self.req._(u'Time series starting on %s with %d values' %
+                          (self.start_date, self.length))
 
     def grok_data(self):
         """
-        called in a before_update_entity_hook
-        
+        called in a before_{update|add}_entity_hook
+
         self.data is something such as an excel file or CSV data or a
         pickled numpy array. Ensure it a pickle numpy array before
         storing object in db.
@@ -69,15 +70,15 @@ class TimeSeries(AnyEntity):
     @property
     def first(self):
         return self.array[0]
-    
+
     @property
     def last(self):
         return self.array[-1]
-    
+
     @property
     def length(self):
         return self.array.size
-    
+
     @property
     def min(self):
         return self.array.min()
@@ -93,7 +94,7 @@ class TimeSeries(AnyEntity):
     @property
     def average(self):
         return self.array.mean()
-    
+
 
 
     def _numpy_from_csv(self, file):
