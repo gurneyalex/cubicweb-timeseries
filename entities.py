@@ -15,6 +15,7 @@ import csv
 import datetime
 
 import numpy
+import xlrd
 
 TIME_DELTAS = {'15 min': datetime.timedelta(minutes=15),
                'hourly': datetime.timedelta(hours=1),
@@ -130,4 +131,21 @@ class TimeSeries(AnyEntity):
 
 
     def _numpy_from_excel(self, file):
-        raise ValueError('Cannot process excel files yet')
+        xl_data = file.read()
+        wb = xlrd.open_workbook(filename=file.filename,
+                                file_contents=xl_data
+                                )
+        sheet = wb.sheet_by_index(0)
+        dates = []
+        values = []
+        for row in xrange(sheet.nrows):
+            if sheet.cell_type(row, 0) != xlrd.XL_CELL_DATE:
+                continue
+            dates.append(sheet.cell_value(row, 0))
+            values.append(sheet.cell_value(row, 1))
+        if not dates or not values:
+            raise ValueError('Unable to read a Timeseries in %s' % file.filename)
+        return numpy.array(values)
+                         
+            
+
