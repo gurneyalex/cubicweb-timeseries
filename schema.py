@@ -7,24 +7,28 @@
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
 
+_ = unicode
+
 from yams.buildobjs import EntityType, String, Bytes, Datetime
 from yams.constraints import StaticVocabularyConstraint
 
 class TimeSeries(EntityType):
-    granularity = String(description = _('Granularity'),
+    granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
                          vocabulary = [_('15 min'), _('hourly'), _('daily'),
                                        _('weekly'), _('monthly'), _('yearly')],
-                         default='1d')
+                         default='daily')
 
-    calendar = String(description = _('Calendrier'),
+    use_calendar = String(description=_('Calendar used'),
                       required=True,
                       internationalizable=True,
                       vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
                       default='gregorian')
 
-    start_date = Datetime(description = _('Start date'),
-                        required=True, default='TODAY')
+    start_date = Datetime(description=_('Start date'),
+                          required=True,
+                          default='TODAY')
+    
     data = Bytes(required=True,
                  description = _('Timeseries data'))
