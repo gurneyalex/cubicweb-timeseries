@@ -8,6 +8,7 @@
 from cubicweb.web.views import primary
 from cubicweb.web.views import baseviews
 from logilab.mtconverter import xml_escape
+from cubicweb.schema import display_name
 from cubicweb.common.uilib import cut, printable_value
 from cubicweb.web.views.plots import FlotPlotWidget, datetime2ticks
 from cubicweb.selectors import implements
@@ -16,8 +17,11 @@ class TimeSeriesPrimaryView(primary.PrimaryView):
     __select__ = implements('TimeSeries')
 
     def summary(self, entity):
-        entity.view('ts_plot', w = self.w, width=640, height=480)
+        entity.view('ts_plot', w=self.w, width=640, height=480)
         entity.view('ts_summary', w=self.w)
+
+    def render_entity_attributes(self, entity):
+        pass
 
 class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'
@@ -51,9 +55,23 @@ class TimeSeriesPlotView(baseviews.EntityView):
 class TimeSeriesSummaryView(baseviews.EntityView):
     id = 'ts_summary'
     __select__ = implements('TimeSeries')
+    summary_attrs = (_('first'), _('last'),
+                     _('min'), _('max'),
+                     _('average'), _('sum'))
     def cell_call(self, row, col):
         entity = self.rset.get_entity(row, col)
-        self.w(u'<p>Summary:\n<ul>')
-        for attr in ('first', 'last', 'min', 'max', 'average', 'sum'):
-            self.w(u'<li>%s: %.2f</li>' % (attr, getattr(entity, attr)))
-        self.w(u'</ul></p>')
+        self.w(u'<h2>Summary</h2>')
+        self.w(u'<table>')
+        for attr in self.summary_attrs:
+            self.w(u'<tr>')
+            self.w(u'<td>%s: </td><td> %.2f </td>' % (self.req._(attr), getattr(entity, attr)))
+            self.w(u'</tr>')
+        self.w(u'</table>')
+
+        self.w(u'<h2>Characteristics</h2>')
+        self.w(u'<table>')
+        for attr in ('start_date', 'granularity', 'use_calendar'):
+            self.w(u'<tr>')
+            self.w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr), getattr(entity, attr)))
+            self.w(u'</tr>')
+        self.w(u'</table>')
