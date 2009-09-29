@@ -13,6 +13,12 @@ from yams.buildobjs import EntityType, String, Bytes, Datetime
 from yams.constraints import StaticVocabularyConstraint
 
 class TimeSeries(EntityType):
+    name = String(required=True,
+                  fulltextindexed=True,
+                  maxsize=255,
+                  unique=True)
+    
+                  
     granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
