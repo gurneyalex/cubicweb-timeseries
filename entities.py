@@ -35,8 +35,11 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return self.req._(u'Time series starting on %s with %d values' %
-                          (self.start_date, self.length))
+        return self.name 
+    
+    def dc_long_title(self):
+        return self.req._(u'Time series %s starting on %s with %d values' %
+                          (self.name, self.start_date, self.length))
 
     def grok_data(self):
         """
