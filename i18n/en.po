@@ -1,8 +1,120 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
 msgid ""
 msgstr ""
+"Project-Id-Version: cubicweb-timeseries 0.1.0\n"
+"PO-Revision-Date: 2009-10-01 18:10+0200\n"
+"Last-Translator: Alexandre Fayolle <alexandre.fayolle@logilab.fr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+msgid "15 min"
+msgstr "15 min"
+
+msgid "Calendar used"
+msgstr "Calendar used"
+
+msgid "Granularity"
+msgstr "Granularity"
+
+msgid "New TimeSeries"
+msgstr "New TimeSeries"
+
+msgid "Start date"
+msgstr "Start date"
+
+msgid "This TimeSeries"
+msgstr "This TimeSeries"
+
+#, python-format
+msgid "Time series starting on %s with %d values"
+msgstr "Time series starting on %s with %d values"
+
+# schema pot file, generated on 2009-10-01 17:32:57
+#
+# singular and plural forms for each entity type
+msgid "TimeSeries"
+msgstr "TimeSeries"
+
+msgid "TimeSeries_plural"
+msgstr "TimeSeries"
+
+msgid "Timeseries data"
+msgstr "Timeseries data"
+
+msgid "average"
+msgstr "average"
+
+msgid "daily"
+msgstr "daily"
+
+# subject and object forms for each relation type
+# (no object form for final or symetric relation types)
+msgid "data"
+msgstr "data"
+
+msgctxt "TimeSeries"
+msgid "data"
+msgstr "data"
+
+msgid "first"
+msgstr "first"
+
+msgid "gas"
+msgstr "gas"
+
+msgid "granularity"
+msgstr "granularity"
+
+msgctxt "TimeSeries"
+msgid "granularity"
+msgstr "granularity"
+
+msgid "gregorian"
+msgstr "gregorian"
+
+msgid "hourly"
+msgstr "hourly"
+
+msgid "last"
+msgstr "last"
+
+msgid "max"
+msgstr "max"
+
+msgid "min"
+msgstr "min"
+
+msgid "monthly"
+msgstr "monthly"
+
+msgid "normalized"
+msgstr "normalized"
+
+msgid "start_date"
+msgstr "start date"
+
+msgctxt "TimeSeries"
+msgid "start_date"
+msgstr "start date"
+
+msgid "sum"
+msgstr "sum"
+
+msgid "use_calendar"
+msgstr "uses calendar"
+
+msgctxt "TimeSeries"
+msgid "use_calendar"
+msgstr "uses calendar"
+
+msgid "weekly"
+msgstr "weekly"
+
+msgid "yearly"
+msgstr "yearly"

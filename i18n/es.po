@@ -1,0 +1,117 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cubicweb 3.5.2\n"
+"PO-Revision-Date: 2008-03-28 18:14+0100\n"
+"Last-Translator: Logilab Team <contact@logilab.fr>\n"
+"Language-Team: fr <contact@logilab.fr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: cubicweb-devtools\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+# schema pot file, generated on 2009-10-01 17:32:57
+#
+# singular and plural forms for each entity type
+msgid "TimeSeries"
+msgstr ""
+
+msgid "TimeSeries_plural"
+msgstr ""
+
+msgid "This TimeSeries"
+msgstr ""
+
+msgid "New TimeSeries"
+msgstr ""
+
+# subject and object forms for each relation type
+# (no object form for final or symetric relation types)
+msgid "data"
+msgstr ""
+
+msgctxt "TimeSeries"
+msgid "data"
+msgstr ""
+
+msgid "granularity"
+msgstr ""
+
+msgctxt "TimeSeries"
+msgid "granularity"
+msgstr ""
+
+msgid "start_date"
+msgstr ""
+
+msgctxt "TimeSeries"
+msgid "start_date"
+msgstr ""
+
+msgid "use_calendar"
+msgstr ""
+
+msgctxt "TimeSeries"
+msgid "use_calendar"
+msgstr ""
+
+#, python-format
+msgid "Time series starting on %s with %d values"
+msgstr ""
+
+msgid "first"
+msgstr ""
+
+msgid "last"
+msgstr ""
+
+msgid "min"
+msgstr ""
+
+msgid "max"
+msgstr ""
+
+msgid "average"
+msgstr ""
+
+msgid "sum"
+msgstr ""
+
+msgid "Granularity"
+msgstr ""
+
+msgid "15 min"
+msgstr ""
+
+msgid "hourly"
+msgstr ""
+
+msgid "daily"
+msgstr ""
+
+msgid "weekly"
+msgstr ""
+
+msgid "monthly"
+msgstr ""
+
+msgid "yearly"
+msgstr ""
+
+msgid "Calendar used"
+msgstr ""
+
+msgid "gregorian"
+msgstr ""
+
+msgid "normalized"
+msgstr ""
+
+msgid "gas"
+msgstr ""
+
+msgid "Start date"
+msgstr ""
+
+msgid "Timeseries data"
+msgstr ""
