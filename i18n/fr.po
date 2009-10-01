@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cubicweb-timeseries 0.1.0\n"
-"PO-Revision-Date: 2009-10-01 18:16+0200\n"
+"PO-Revision-Date: 2009-10-01 18:30+0200\n"
 "Last-Translator: Alexandre Fayolle <alexandre.fayolle@logilab.fr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -30,10 +30,6 @@ msgstr "Date de début"
 
 msgid "This TimeSeries"
 msgstr "Cette série temporelle"
-
-#, python-format
-msgid "Time series starting on %s with %d values"
-msgstr "Série temporelle débutant le %s avec %d valeurs"
 
 # schema pot file, generated on 2009-10-01 17:32:57
 #
@@ -93,6 +89,10 @@ msgstr "minimum"
 msgid "monthly"
 msgstr "mensuelle"
 
+msgctxt "TimeSeries"
+msgid "name"
+msgstr "nom"
+
 msgid "normalized"
 msgstr "normalisé"
 
@@ -118,3 +118,6 @@ msgstr "hebdomadaire"
 
 msgid "yearly"
 msgstr "annuelle"
+
+#~ msgid "Time series starting on %s with %d values"
+#~ msgstr "Série temporelle débutant le %s avec %d valeurs"
