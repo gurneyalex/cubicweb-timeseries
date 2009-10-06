@@ -13,10 +13,19 @@ msgstr ""
 msgid "15 min"
 msgstr ""
 
+msgid "Boolean"
+msgstr ""
+
 msgid "Calendar used"
 msgstr ""
 
+msgid "Float"
+msgstr ""
+
 msgid "Granularity"
+msgstr ""
+
+msgid "Integer"
 msgstr ""
 
 msgid "New TimeSeries"
@@ -57,6 +66,13 @@ msgstr ""
 
 msgctxt "TimeSeries"
 msgid "data"
+msgstr ""
+
+msgid "data_type"
+msgstr ""
+
+msgctxt "TimeSeries"
+msgid "data_type"
 msgstr ""
 
 msgid "first"
