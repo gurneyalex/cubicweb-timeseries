@@ -27,7 +27,11 @@ TIME_DELTAS = {'15 min': datetime.timedelta(minutes=15),
 
 class TimeSeries(AnyEntity):
     id = 'TimeSeries'
-
+    
+    _dtypes = {'Float': numpy.float64,
+               'Integer': numpy.int32,
+               'Boolean': numpy.bool,
+               }
     @property
     def array(self):
         if not hasattr(self, '_array'):
@@ -70,6 +74,10 @@ class TimeSeries(AnyEntity):
             data.append((date, v))
             date += step
         return data
+
+    @property
+    def dtype(self):
+        return self._dtypes[self.data_type]
 
     @property
     def first(self):
@@ -134,7 +142,7 @@ class TimeSeries(AnyEntity):
                     raise ValueError('unable to read value on line %d of %s' % (reader.line_num, file.filename))
             series.append(val)
 
-        return numpy.array(series)
+        return numpy.array(series, dtype = self.dtype)
 
 
     def _numpy_from_excel(self, file):
@@ -152,9 +160,7 @@ class TimeSeries(AnyEntity):
             values.append(sheet.cell_value(row, 1))
         if not dates or not values:
             raise ValueError('Unable to read a Timeseries in %s' % file.filename)
-        return numpy.array(values)
-                         
-            
+        return numpy.array(values, dtype=self.dtype)
 
 class AbstractCalendar:
     
