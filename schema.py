@@ -18,7 +18,10 @@ class TimeSeries(EntityType):
                   maxsize=255,
                   unique=True)
     
-                  
+    data_type = String(required=True,
+                       vocabulary = [_('Float'), _('Integer'), _('Boolean')],
+                       default = _('Float'))
+    
     granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
@@ -38,3 +41,4 @@ class TimeSeries(EntityType):
     
     data = Bytes(required=True,
                  description = _('Timeseries data'))
+
