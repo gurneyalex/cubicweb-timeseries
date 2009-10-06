@@ -59,19 +59,20 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                      _('min'), _('max'),
                      _('average'), _('sum'))
     def cell_call(self, row, col):
+        w = self.w
         entity = self.rset.get_entity(row, col)
-        self.w(u'<h2>Summary</h2>')
-        self.w(u'<table>')
+        w(u'<h2>Summary</h2>')
+        w(u'<table>')
         for attr in self.summary_attrs:
-            self.w(u'<tr>')
-            self.w(u'<td>%s: </td><td> %.2f </td>' % (self.req._(attr), getattr(entity, attr)))
-            self.w(u'</tr>')
-        self.w(u'</table>')
+            w(u'<tr>')
+            w(u'<td>%s: </td><td> %.2f </td>' % (self.req._(attr), getattr(entity, attr)))
+            w(u'</tr>')
+        w(u'</table>')
 
-        self.w(u'<h2>Characteristics</h2>')
-        self.w(u'<table>')
+        w(u'<h2>Characteristics</h2>')
+        w(u'<table>')
         for attr in ('start_date', 'granularity', 'use_calendar'):
-            self.w(u'<tr>')
-            self.w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr), getattr(entity, attr)))
-            self.w(u'</tr>')
-        self.w(u'</table>')
+            w(u'<tr>')
+            w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr), getattr(entity, attr)))
+            w(u'</tr>')
+        w(u'</table>')
