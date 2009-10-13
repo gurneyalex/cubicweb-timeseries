@@ -53,15 +53,19 @@ class TimeSeries(AnyEntity):
         pickled numpy array. Ensure it a pickle numpy array before
         storing object in db.
         """
-        filename = self.data.filename.lower()
-        if filename.endswith('.csv'):
-            numpy_array = self._numpy_from_csv(self.data)
-        elif filename.endswith('.xls'):
-            numpy_array = self._numpy_from_excel(self.data)
-        elif filename.endswith('.txt'):
-            pass
+        try:
+            filename = self.data.filename.lower()
+        except AttributeError:
+            numpy_array = self.data
         else:
-            raise ValueError('Unsupported file type %s' % self.data.filename)
+            if filename.endswith('.csv'):
+                numpy_array = self._numpy_from_csv(self.data)
+            elif filename.endswith('.xls'):
+                numpy_array = self._numpy_from_excel(self.data)
+            elif filename.endswith('.txt'):
+                pass
+            else:
+                raise ValueError('Unsupported file type %s' % self.data.filename)
 
         self.data = Binary()
         pickle.dump(numpy_array, self.data)
