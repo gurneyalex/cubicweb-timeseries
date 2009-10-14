@@ -75,9 +75,16 @@ class TimeSeries(AnyEntity):
         date = self.start_date
         data = []
         for v in self.array:
-            data.append((date, v))
+            data.append((date, self.python_value(v)))
             date += step
         return data
+
+    def python_value(self, v):
+        _dtypes = {'Float': float,
+                   'Integer': int,
+                   'Boolean': bool,
+                   }
+        return _dtypes[self.data_type]()
 
     @property
     def dtype(self):
