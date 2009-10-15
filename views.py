@@ -12,6 +12,9 @@ from cubicweb.schema import display_name
 from cubicweb.common.uilib import cut, printable_value
 from cubicweb.web.views.plots import FlotPlotWidget, datetime2ticks
 from cubicweb.selectors import implements
+from cubicweb.web import uicfg
+
+#uicfg.autoform_is_inlined.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'), True)
 
 class TimeSeriesPrimaryView(primary.PrimaryView):
     __select__ = implements('TimeSeries')
