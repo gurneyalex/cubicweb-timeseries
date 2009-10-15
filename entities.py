@@ -84,7 +84,7 @@ class TimeSeries(AnyEntity):
                    'Integer': int,
                    'Boolean': bool,
                    }
-        return _dtypes[self.data_type]()
+        return _dtypes[self.data_type](v)
 
     @property
     def dtype(self):
