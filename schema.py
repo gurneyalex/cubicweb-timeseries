@@ -9,7 +9,7 @@
 
 _ = unicode
 
-from yams.buildobjs import EntityType, String, Bytes, Datetime
+from yams.buildobjs import EntityType, String, Bytes, Date
 from yams.constraints import StaticVocabularyConstraint
 
 class TimeSeries(EntityType):
@@ -35,7 +35,7 @@ class TimeSeries(EntityType):
                       vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
                       default='gregorian')
 
-    start_date = Datetime(description=_('Start date'),
+    start_date = Date(description=_('Start date'),
                           required=True,
                           default='TODAY')
     

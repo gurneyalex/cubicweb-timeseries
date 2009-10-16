@@ -66,7 +66,7 @@ class TimeSeries(AnyEntity):
                 pass
             else:
                 raise ValueError('Unsupported file type %s' % self.data.filename)
-
+        
         self.data = Binary()
         pickle.dump(numpy_array, self.data)
 
