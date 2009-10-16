@@ -27,7 +27,7 @@ TIME_DELTAS = {'15 min': datetime.timedelta(minutes=15),
 
 class TimeSeries(AnyEntity):
     id = 'TimeSeries'
-    
+
     _dtypes = {'Float': numpy.float64,
                'Integer': numpy.int32,
                'Boolean': numpy.bool,
@@ -39,8 +39,8 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return self.name 
-    
+        return self.name
+
     def dc_long_title(self):
         return self.req._(u'Time series %s starting on %s with %d values' %
                           (self.name, self.start_date, self.length))
@@ -66,7 +66,7 @@ class TimeSeries(AnyEntity):
                 pass
             else:
                 raise ValueError('Unsupported file type %s' % self.data.filename)
-        
+
         self.data = Binary()
         pickle.dump(numpy_array, self.data)
 
@@ -174,7 +174,7 @@ class TimeSeries(AnyEntity):
         return numpy.array(values, dtype=self.dtype)
 
 class AbstractCalendar:
-    
+
     def get_offset(self, date, granularity):
         if isinstance(date, str):
             date = self._parse_iso(date)
@@ -228,7 +228,7 @@ class AbstractCalendar:
 
     def _ymd_from_ordinal(self, ordinal):
         raise NotImplementedError
-    
+
     def _hms_from_seconds(self, seconds):
         hour, rem_secs = divmod(seconds, 3600)
         minute, second = divmod(rem_secs, 60)
@@ -258,7 +258,7 @@ class DateTime:
     Meant to be immutable. Please consider the attributes read-only.
 
     XXX timezone management (core work required in calendar)
-    
+
     """
     def __init__(self, year, month, day, hour, minute, second, calendar, iso_str=None):
         # boundary checks
@@ -268,7 +268,7 @@ class DateTime:
         assert 0 <= hour < 24
         assert 0 <= minute < 60
         assert 0 <= second < 60
-        
+
         self._calendar = calendar
         if iso_str is None:
             iso_str = '%d%d%dT%d:%d:%d' % (year, month, day, hour, minute, second)
@@ -306,10 +306,10 @@ class DateTime:
 
 
 
-    
+
 
 class GregorianCalendar(AbstractCalendar):
-    def ordinal(self, date):        
+    def ordinal(self, date):
         return self.__as_datetime(date).toordinal()
 
     @staticmethod
@@ -323,21 +323,21 @@ class GregorianCalendar(AbstractCalendar):
     def _ymd_from_ordinal(self, ordinal):
         date = datetime.fromordinal(ordinal)
         return date.year, date.month, date.day
-        
+
 class GasCalendar(AbstractCalendar):
     pass
 
 class NormalizedCalendar(AbstractCalendar):
     """
     Normalized calendar has 365 days, and starts on monday
-    XXX: DST ? 
+    XXX: DST ?
     """
     def __init__(self):
         self.month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.cum_month_length =  [0] + numpy.cumsum(self.month_length[:-1]).tolist()
-        
+
     def ordinal(self, date):
-        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1 
+        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1
 
     def day_of_week(self, date):
         return (self.cum_month_length[date.month-1] + date.day-1) % 7
