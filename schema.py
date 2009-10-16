@@ -9,7 +9,7 @@
 
 _ = unicode
 
-from yams.buildobjs import EntityType, String, Bytes, Date
+from yams.buildobjs import EntityType, String, Bytes, Date, Datetime, SubjectRelation
 from yams.constraints import StaticVocabularyConstraint
 
 class TimeSeries(EntityType):
@@ -17,11 +17,11 @@ class TimeSeries(EntityType):
                   fulltextindexed=True,
                   maxsize=255,
                   unique=True)
-    
+
     data_type = String(required=True,
                        vocabulary = [_('Float'), _('Integer'), _('Boolean')],
                        default = _('Float'))
-    
+
     granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
@@ -38,7 +38,7 @@ class TimeSeries(EntityType):
     start_date = Date(description=_('Start date'),
                           required=True,
                           default='TODAY')
-    
+
     data = Bytes(required=True,
                  description = _('Timeseries data'))
 
@@ -49,11 +49,11 @@ class TimeSeriesHandle(EntityType):
                   fulltextindexed=True,
                   maxsize=255,
                   unique=True)
-    
+
     data_type = String(required=True,
                        vocabulary = [_('Float'), _('Integer'), _('Boolean')],
                        default = _('Float'))
-    
+
     granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
@@ -73,7 +73,7 @@ class TimeSeriesHandle(EntityType):
 
     end_date = Datetime(description=_('End date'),
                         required=True)
-                        
+
 
     defined_by = SubjectRelation(('ExcelTSValue',
                                   'BlockConstantTSValue',
