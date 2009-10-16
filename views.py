@@ -5,14 +5,14 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
-from cubicweb.web.views import primary
-from cubicweb.web.views import baseviews
 from logilab.mtconverter import xml_escape
+
+from cubicweb.web import uicfg, formfields
 from cubicweb.schema import display_name
-from cubicweb.common.uilib import cut, printable_value
-from cubicweb.web.views.plots import FlotPlotWidget, datetime2ticks
+from cubicweb.common import tags
 from cubicweb.selectors import implements
-from cubicweb.web import uicfg
+
+from cubicweb.web.views import primary, baseviews, plots
 
 #uicfg.autoform_is_inlined.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'), True)
 
@@ -34,7 +34,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
         for ts in self.rset.entities():
             plots.append(ts.timestamped_array())
         return plots
-    
+
     def call(self, width=None, height=None):
         form = self.req.form
         width = width or form.get('width', 500)
@@ -44,14 +44,14 @@ class TimeSeriesPlotView(baseviews.EntityView):
         for ts in self.rset.entities():
             names.append(ts.dc_title())
             plots.append(ts.timestamped_array())
-        plotwidget = FlotPlotWidget(names, plots, timemode=True)
+        plotwidget = plots.FlotPlotWidget(names, plots, timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
     def cell_call(self, row, col, width=None, height=None):
         ts = self.rset.get_entity(row, col)
-        plotwidget = FlotPlotWidget([ts.dc_title()],
-                                    [ts.timestamped_array()],
-                                    timemode=True)
+        plotwidget = plots.FlotPlotWidget([ts.dc_title()],
+                                          [ts.timestamped_array()],
+                                          timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
 
@@ -79,3 +79,109 @@ class TimeSeriesSummaryView(baseviews.EntityView):
             w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr), getattr(entity, attr)))
             w(u'</tr>')
         w(u'</table>')
+
+
+## NOTE: this seems generic enough to be backported in CW
+class RelationSwitchField(formfields.Field):
+    """field used to choose among a list of relation.
+    """
+    needs_multipart = True # csv-based timeseries require a file upload
+
+    def __init__(self, name, **kwargs):
+        # XXX hack field name to avoid automatic HiddenRelationField creation
+        #     when field name matches an existing subject / object relation
+        #     (no longer needed in 3.6)
+        internal_name = '_%s_' % name
+        super(RelationSwitchField, self).__init__(name=internal_name, **kwargs)
+        self.rtype = name
+
+    def find_targettypes(self, entity):
+        eschema = entity.e_schema
+        if self.role == 'subject':
+            return eschema.subjrels[self.rtype].objects(eschema)
+        else:
+            return eschema.objrels[self.rtype].subjects(eschema)
+
+    def selected(self, entity):
+        """return which couple (rtype, target_type) should be selected
+        in the combobox
+        """
+        targettypes = self.find_targettypes(entity)
+        if not entity.has_eid():
+            return targettypes[0]
+        related = getattr(entity, self.rtype)
+        if related:
+            return related[0].e_schema
+        elif self.required:
+            # if relation is required, we should never arrive here
+            raise ValueError('%s.%s is required but not set on eid %s'
+                             % (entity.e_schema, self.rtype, entity.eid))
+        # if not required, just pick the first one
+        return targettypes[0]
+
+    def initial_form(self, form, entity, ttype):
+        """return the initial inline form:
+        - either the inline-edition form of the existing relation
+        - or the inline-creation form of the first relation in the combobox
+        """
+        rtype = self.rtype
+        i18nctx = 'inlined:%s.%s.%s' % (entity.e_schema, rtype, 'subject')
+        if entity.has_eid():
+            return form.view('inline-edition', entity.related(rtype),
+                             rtype=rtype, role=self.role,
+                             ptype=entity.e_schema, peid=entity.eid,
+                             i18nctx=i18nctx)
+        else:
+            return form.view('inline-creation', None, etype=ttype,
+                             peid=entity.eid, ptype=entity.e_schema,
+                             rtype=rtype, role=self.role,
+                             i18nctx=i18nctx)
+
+    def render(self, form, renderer):
+        entity = form.edited_entity
+        eschema = entity.e_schema
+        data = []
+        w = data.append
+        selected = self.selected(entity)
+        # XXX hack to bypass a CW / jquery ajax/onload bug: we don't
+        #     want the onload methods to be called each time an ajax
+        #     query is done
+        form.req.html_headers.define_var('docloaded', False)
+        form.req.html_headers.add_post_inline_script(u"""
+function switchInlinedForm() {
+    var value = jQuery(this).val().split(';'); // holderId;eid;ttype;rtype;role
+    var $holder = jQuery('#' + value[0]);
+    $holder.prev().remove();
+    var i18nctx = ''; // XXX
+    addInlineCreationForm(value[1], value[2], value[3], value[4],
+                          i18nctx, $holder);
+}
+        """)
+        form.req.add_onload(u'''if (!docloaded) {
+  jQuery("input:radio").change(switchInlinedForm);''
+  docloaded = true;
+}
+''')
+        formid = u'f%s' % hex(id(self))
+        w(u'<div>')
+        for targettype in self.find_targettypes(entity):
+            inputargs = {
+                'value': u'%s;%s;%s;%s;%s' % (formid, entity.eid, targettype,
+                                              self.rtype, self.role),
+                }
+            if targettype == selected:
+                inputargs['checked'] = u'checked'
+            w(tags.input(type=u'radio', name=self.rtype, **inputargs))
+            w(u'%s <br />' % display_name(form.req, targettype,
+                                          context='inlined:%s.%s.%s' % (eschema, self.rtype, self.role)))
+        w(u'</div>')
+        w(u'<div>%s</div>' % self.initial_form(form, entity, selected))
+        w(u'<div id="%s"></div>' % formid) # needed by addInlineCreationForm()
+        return u'\n'.join(data)
+
+uicfg.autoform_field.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'),
+                                    RelationSwitchField(role='subject',
+                                                        name='defined_by',
+                                                        label=('TimeSeriesHandle', 'defined_by'),
+                                                        required=True))
+
