@@ -179,9 +179,21 @@ function switchInlinedForm() {
         w(u'<div id="%s"></div>' % formid) # needed by addInlineCreationForm()
         return u'\n'.join(data)
 
+## forms ######################################################################
 uicfg.autoform_field.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'),
                                     RelationSwitchField(role='subject',
                                                         name='defined_by',
                                                         label=('TimeSeriesHandle', 'defined_by'),
                                                         required=True))
+
+uicfg.autoform_is_inlined.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
+                                         True)
+
+## primary views ##############################################################
+uicfg.primaryview_section.tag_object_of(('*', 'defined_by', 'ConstantAndExceptionTSValue'),
+                                         'attributes')
+uicfg.primaryview_section.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
+                                         'relations')
+uicfg.primaryview_display_ctrl.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
+                                              {'vid': 'list', 'order': 10})
 

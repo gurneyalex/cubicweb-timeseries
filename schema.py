@@ -95,7 +95,15 @@ class BlockConstantTSValue(_TimeSeriesValue):
     composite de start date, value
     """
 
+class TSConstantExceptionBlock(EntityType):
+    start_date = Datetime(required=True)
+    stop_date = Datetime(required=True)
+    value = Float(required=True) # XXX add a value_unit metadata attribute
+
 class ConstantAndExceptionTSValue(_TimeSeriesValue):
     """
     default value + composite start-end, value
     """
+    value = Float(required=True) # XXX add a value_unit metadata attribute
+    has_exceptions = SubjectRelation('TSConstantExceptionBlock', cardinality='*1',
+                                     composite='subject')
