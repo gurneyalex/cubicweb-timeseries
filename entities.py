@@ -6,7 +6,7 @@
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
 from cubicweb import Binary
-from cubicweb.entities import AnyEntity
+from cubicweb.entities import AnyEntity, fetch_config
 
 import pickle
 import csv
@@ -251,7 +251,17 @@ class AbstractCalendar:
         return the day of week for a given date as an integer (0 is monday -> 6 is sunday)
         """
         raise NotImplementedError
-                  
+
+class TSConstantExceptionBlock(AnyEntity):
+    id = 'TSConstantExceptionBlock'
+    fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
+
+    def dc_title(self):
+        return u'[%s; %s] : %s' % (self.printable_value('start_date'),
+                                   self.printable_value('stop_date'),
+                                   self.printable_value('value'))
+
+
 class DateTime:
     """
     representation of a date + time, linked to a calendar.
