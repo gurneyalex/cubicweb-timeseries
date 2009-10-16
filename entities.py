@@ -261,6 +261,13 @@ class TSConstantExceptionBlock(AnyEntity):
                                    self.printable_value('stop_date'),
                                    self.printable_value('value'))
 
+class TSConstantBlock(AnyEntity):
+    id = 'TSConstantBlock'
+    fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
+
+    def dc_title(self):
+        return self.req._(u'from %s: %s') % (self.printable_value('start_date'),
+                                             self.printable_value('value'))
 
 class DateTime:
     """

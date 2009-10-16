@@ -89,11 +89,15 @@ class ExcelTSValue(_TimeSeriesValue):
     """
     the current version adapted a little bit
     """
+class TSConstantBlock(EntityType):
+    start_date = Datetime(required=True)
+    value = Float(required=True) # XXX add a value_unit metadata attribute
 
 class BlockConstantTSValue(_TimeSeriesValue):
     """
     composite de start date, value
     """
+    blocks = SubjectRelation('TSConstantBlock', cardinality='+1', composite='subject')
 
 class TSConstantExceptionBlock(EntityType):
     start_date = Datetime(required=True)
