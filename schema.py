@@ -89,16 +89,13 @@ class ExcelTSValue(_TimeSeriesValue):
     """
     the current version adapted a little bit
     """
-    foo = String(maxsize=16)
 
 class BlockConstantTSValue(_TimeSeriesValue):
     """
     composite de start date, value
     """
-    foo = String(maxsize=16)
 
 class ConstantAndExceptionTSValue(_TimeSeriesValue):
     """
     default value + composite start-end, value
     """
-    foo = String(maxsize=16)
