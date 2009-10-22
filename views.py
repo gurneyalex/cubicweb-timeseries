@@ -12,23 +12,25 @@ from cubicweb.schema import display_name
 from cubicweb.common import tags
 from cubicweb.selectors import implements
 
-from cubicweb.web.views import primary, baseviews, plots
+from cubicweb.web.views import primary, baseviews, plots, tabs
 
 #uicfg.autoform_is_inlined.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'), True)
 
-class TimeSeriesPrimaryView(primary.PrimaryView):
+class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = implements('TimeSeries')
+    tabs = [_('ts_summary'), _('ts_plot'), _('ts_values')]
+    default_tab = 'ts_summary'
 
-    def summary(self, entity):
-        entity.view('ts_plot', w=self.w, width=640, height=480)
-        entity.view('ts_summary', w=self.w)
+    def cell_call(self, row, col):
+        entity = self.complete_entity(row, col)
+        self.render_entity_title(entity)
+        self.render_tabs(self.tabs, self.default_tab, entity)
 
-    def render_entity_attributes(self, entity):
-        pass
 
 class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'
     __select__ = implements('TimeSeries')
+    title = None
     def build_plot_data(self, entity):
         plots = []
         for ts in self.rset.entities():
@@ -40,11 +42,11 @@ class TimeSeriesPlotView(baseviews.EntityView):
         width = width or form.get('width', 500)
         height = height or form.get('height', 400)
         names = []
-        plots = []
+        plot_list = []
         for ts in self.rset.entities():
             names.append(ts.dc_title())
-            plots.append(ts.timestamped_array())
-        plotwidget = plots.FlotPlotWidget(names, plots, timemode=True)
+            plot_list.append(ts.timestamped_array())
+        plotwidget = plots.FlotPlotWidget(names, plot_list, timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
     def cell_call(self, row, col, width=None, height=None):
@@ -55,12 +57,26 @@ class TimeSeriesPlotView(baseviews.EntityView):
         plotwidget.render(self.req, width, height, w=self.w)
 
 
+class TimeSeriesValuesView(baseviews.EntityView):
+    id = 'ts_values'
+    __select__ = implements('TimeSeries')
+    title = None
+    def cell_call(self, row, col):
+        entity = self.entity(row, col)
+        w = self.w
+        w(u'<table>')
+        for date, value in entity.timestamped_array():
+            w(u'<tr><td>%s</td><td>%.2e</td></tr>' % (date, value))
+        w(u'</table>')
+
+
 class TimeSeriesSummaryView(baseviews.EntityView):
     id = 'ts_summary'
     __select__ = implements('TimeSeries')
     summary_attrs = (_('first'), _('last'),
                      _('min'), _('max'),
                      _('average'), _('sum'))
+    title = None
     def cell_call(self, row, col):
         w = self.w
         entity = self.rset.get_entity(row, col)
