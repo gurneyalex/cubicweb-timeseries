@@ -64,8 +64,9 @@ class TimeSeriesValuesView(baseviews.EntityView):
     title = None
     def cell_call(self, row, col):
         entity = self.entity(row, col)
-        w = self.w
-        w(u'<table>')
+        w = self.w; _ = self.req._
+        w(u'<table class="listing">')
+        w(u'<tr><th>%s</th><th>%s</th></tr>' % (_('date'), _('value')))
         for date, value in entity.timestamped_array():
             w(u'<tr><td>%s</td><td>%.2e</td></tr>' % (date, value))
         w(u'</table>')
