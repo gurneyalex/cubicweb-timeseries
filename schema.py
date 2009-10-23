@@ -9,7 +9,7 @@
 
 _ = unicode
 
-from yams.buildobjs import EntityType, String, Bytes, Date, Datetime, SubjectRelation
+from yams.buildobjs import EntityType, String, Bytes, Date, Datetime, SubjectRelation, Float
 from yams.constraints import StaticVocabularyConstraint
 
 class TimeSeries(EntityType):
