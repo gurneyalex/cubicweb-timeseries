@@ -46,6 +46,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
         for ts in self.rset.entities():
             names.append(ts.dc_title())
             plot_list.append(ts.timestamped_array())
+        self.req.form['jsoncall'] = True
         plotwidget = plots.FlotPlotWidget(names, plot_list, timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
