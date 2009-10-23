@@ -60,8 +60,6 @@ class TimeSeriesPlotView(baseviews.EntityView):
         plotwidget.render(self.req, width, height, w=self.w)
 
 
-from itertools import chain
-
 class TimeSeriesValuesView(baseviews.EntityView):
     id = 'ts_values'
     __select__ = implements('TimeSeries')
@@ -69,17 +67,16 @@ class TimeSeriesValuesView(baseviews.EntityView):
     def cell_call(self, row, col):
         entity = self.entity(row, col)
         w = self.w; _ = self.req._
-        gen = iter(entity.timestamped_array())
-        d1, v1 = gen.next()
-        if isinstance(v1, float):
+        dt = entity.data_type
+        if dt == 'Float':
             format = '%.2e'
-        elif isinstance(v1, int):
+        elif dt in ('Integer', 'Boolean'):
             format = '%d'
         else:
             format = '%s'
         w(u'<table class="listing">')
         w(u'<tr><th>%s</th><th>%s</th></tr>' % (_('date'), _('value')))
-        for date, value in chain([(d1, v1)], gen):
+        for date, value in entity.timestamped_array():
             w(u'<tr><td>%s</td><td>%s</td></tr>' % (date, format % value))
         w(u'</table>')
 
