@@ -51,6 +51,8 @@ class TimeSeriesPlotView(baseviews.EntityView):
 
     def cell_call(self, row, col, width=None, height=None):
         ts = self.rset.get_entity(row, col)
+        width = width or form.get('width', 500)
+        height = height or form.get('height', 400)
         plotwidget = plots.FlotPlotWidget([ts.dc_title()],
                                           [ts.timestamped_array()],
                                           timemode=True)
