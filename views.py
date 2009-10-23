@@ -46,6 +46,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
         for ts in self.rset.entities():
             names.append(ts.dc_title())
             plot_list.append(ts.timestamped_array())
+        self.req.form['jsoncall'] = True
         plotwidget = plots.FlotPlotWidget(names, plot_list, timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
@@ -65,8 +66,9 @@ class TimeSeriesValuesView(baseviews.EntityView):
     title = None
     def cell_call(self, row, col):
         entity = self.entity(row, col)
-        w = self.w
-        w(u'<table>')
+        w = self.w; _ = self.req._
+        w(u'<table class="listing">')
+        w(u'<tr><th>%s</th><th>%s</th></tr>' % (_('date'), _('value')))
         for date, value in entity.timestamped_array():
             w(u'<tr><td>%s</td><td>%.2e</td></tr>' % (date, value))
         w(u'</table>')
