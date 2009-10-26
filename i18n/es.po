@@ -13,10 +13,34 @@ msgstr ""
 msgid "15 min"
 msgstr ""
 
+# schema pot file, generated on 2009-10-26 17:22:40
+#
+# singular and plural forms for each entity type
+msgid "BlockConstantTSValue"
+msgstr ""
+
+msgid "BlockConstantTSValue_plural"
+msgstr ""
+
 msgid "Boolean"
 msgstr ""
 
 msgid "Calendar used"
+msgstr ""
+
+msgid "ConstantAndExceptionTSValue"
+msgstr ""
+
+msgid "ConstantAndExceptionTSValue_plural"
+msgstr ""
+
+msgid "End date"
+msgstr ""
+
+msgid "ExcelTSValue"
+msgstr ""
+
+msgid "ExcelTSValue_plural"
 msgstr ""
 
 msgid "Float"
@@ -28,13 +52,69 @@ msgstr ""
 msgid "Integer"
 msgstr ""
 
+msgid "New BlockConstantTSValue"
+msgstr ""
+
+msgid "New ConstantAndExceptionTSValue"
+msgstr ""
+
+msgid "New ExcelTSValue"
+msgstr ""
+
+msgid "New TSConstantBlock"
+msgstr ""
+
+msgid "New TSConstantExceptionBlock"
+msgstr ""
+
 msgid "New TimeSeries"
+msgstr ""
+
+msgid "New TimeSeriesHandle"
 msgstr ""
 
 msgid "Start date"
 msgstr ""
 
+msgid "TSConstantBlock"
+msgstr ""
+
+msgid "TSConstantBlock_plural"
+msgstr ""
+
+msgid "TSConstantExceptionBlock"
+msgstr ""
+
+msgid "TSConstantExceptionBlock_plural"
+msgstr ""
+
+msgid "This BlockConstantTSValue"
+msgstr ""
+
+msgid "This ConstantAndExceptionTSValue"
+msgstr ""
+
+msgid "This ExcelTSValue"
+msgstr ""
+
+msgctxt "inlined:BlockConstantTSValue.blocks.subject"
+msgid "This TSConstantBlock"
+msgstr ""
+
+msgid "This TSConstantBlock"
+msgstr ""
+
+msgctxt "inlined:ConstantAndExceptionTSValue.has_exceptions.subject"
+msgid "This TSConstantExceptionBlock"
+msgstr ""
+
+msgid "This TSConstantExceptionBlock"
+msgstr ""
+
 msgid "This TimeSeries"
+msgstr ""
+
+msgid "This TimeSeriesHandle"
 msgstr ""
 
 #, python-format
@@ -47,13 +127,64 @@ msgstr ""
 msgid "TimeSeries"
 msgstr ""
 
+msgid "TimeSeriesHandle"
+msgstr ""
+
+msgid "TimeSeriesHandle_plural"
+msgstr ""
+
 msgid "TimeSeries_plural"
 msgstr ""
 
 msgid "Timeseries data"
 msgstr ""
 
+msgid "add BlockConstantTSValue blocks TSConstantBlock subject"
+msgstr ""
+
+msgid ""
+"add ConstantAndExceptionTSValue has_exceptions TSConstantExceptionBlock "
+"subject"
+msgstr ""
+
+msgctxt "inlined:BlockConstantTSValue.blocks.subject"
+msgid "add a TSConstantBlock"
+msgstr ""
+
+msgctxt "inlined:ConstantAndExceptionTSValue.has_exceptions.subject"
+msgid "add a TSConstantExceptionBlock"
+msgstr ""
+
 msgid "average"
+msgstr ""
+
+# subject and object forms for each relation type
+# (no object form for final or symetric relation types)
+msgid "blocks"
+msgstr ""
+
+msgctxt "BlockConstantTSValue"
+msgid "blocks"
+msgstr ""
+
+msgctxt "TSConstantBlock"
+msgid "blocks_object"
+msgstr ""
+
+msgid "blocks_object"
+msgstr ""
+
+msgid "composite de start date, value"
+msgstr ""
+
+msgid ""
+"creating TSConstantBlock (BlockConstantTSValue %(linkto)s blocks "
+"TSConstantBlock)"
+msgstr ""
+
+msgid ""
+"creating TSConstantExceptionBlock (ConstantAndExceptionTSValue %(linkto)s "
+"has_exceptions TSConstantExceptionBlock)"
 msgstr ""
 
 msgid "daily"
@@ -75,7 +206,50 @@ msgctxt "TimeSeries"
 msgid "data_type"
 msgstr ""
 
+msgctxt "TimeSeriesHandle"
+msgid "data_type"
+msgstr ""
+
+msgid "date"
+msgstr ""
+
+msgid "default value + composite start-end, value"
+msgstr ""
+
+msgid "defined_by"
+msgstr ""
+
+msgctxt "TimeSeriesHandle"
+msgid "defined_by"
+msgstr ""
+
+msgctxt "BlockConstantTSValue"
+msgid "defined_by_object"
+msgstr ""
+
+msgctxt "ExcelTSValue"
+msgid "defined_by_object"
+msgstr ""
+
+msgctxt "ConstantAndExceptionTSValue"
+msgid "defined_by_object"
+msgstr ""
+
+msgid "defined_by_object"
+msgstr ""
+
+msgid "end_date"
+msgstr ""
+
+msgctxt "TimeSeriesHandle"
+msgid "end_date"
+msgstr ""
+
 msgid "first"
+msgstr ""
+
+#, python-format
+msgid "from %s: %s"
 msgstr ""
 
 msgid "gas"
@@ -88,7 +262,25 @@ msgctxt "TimeSeries"
 msgid "granularity"
 msgstr ""
 
+msgctxt "TimeSeriesHandle"
+msgid "granularity"
+msgstr ""
+
 msgid "gregorian"
+msgstr ""
+
+msgid "has_exceptions"
+msgstr ""
+
+msgctxt "ConstantAndExceptionTSValue"
+msgid "has_exceptions"
+msgstr ""
+
+msgctxt "TSConstantExceptionBlock"
+msgid "has_exceptions_object"
+msgstr ""
+
+msgid "has_exceptions_object"
 msgstr ""
 
 msgid "hourly"
@@ -106,6 +298,10 @@ msgstr ""
 msgid "monthly"
 msgstr ""
 
+msgctxt "TimeSeriesHandle"
+msgid "name"
+msgstr ""
+
 msgctxt "TimeSeries"
 msgid "name"
 msgstr ""
@@ -113,21 +309,79 @@ msgstr ""
 msgid "normalized"
 msgstr ""
 
+msgctxt "inlined:BlockConstantTSValue.blocks.subject"
+msgid "remove this TSConstantBlock"
+msgstr ""
+
+msgctxt "inlined:ConstantAndExceptionTSValue.has_exceptions.subject"
+msgid "remove this TSConstantExceptionBlock"
+msgstr ""
+
+msgid "start_date"
+msgstr ""
+
+msgctxt "TSConstantExceptionBlock"
 msgid "start_date"
 msgstr ""
 
 msgctxt "TimeSeries"
 msgid "start_date"
+msgstr ""
+
+msgctxt "TimeSeriesHandle"
+msgid "start_date"
+msgstr ""
+
+msgctxt "TSConstantBlock"
+msgid "start_date"
+msgstr ""
+
+msgid "stop_date"
+msgstr ""
+
+msgctxt "TSConstantExceptionBlock"
+msgid "stop_date"
 msgstr ""
 
 msgid "sum"
 msgstr ""
 
+msgid "the current version adapted a little bit"
+msgstr ""
+
+msgid "ts_plot"
+msgstr ""
+
+msgid "ts_summary"
+msgstr ""
+
+msgid "ts_values"
+msgstr ""
+
 msgid "use_calendar"
 msgstr ""
 
 msgctxt "TimeSeries"
 msgid "use_calendar"
+msgstr ""
+
+msgctxt "TimeSeriesHandle"
+msgid "use_calendar"
+msgstr ""
+
+msgctxt "TSConstantBlock"
+msgid "value"
+msgstr ""
+
+msgctxt "TSConstantExceptionBlock"
+msgid "value"
+msgstr ""
+
+msgctxt "ConstantAndExceptionTSValue"
+msgid "value"
+msgstr ""
+
+msgid "value"
 msgstr ""
 
 msgid "weekly"
