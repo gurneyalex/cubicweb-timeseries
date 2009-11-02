@@ -36,7 +36,7 @@ class TimeSeries(EntityType):
                           vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
                           default='gregorian')
 
-    start_date = Date(description=_('Start date'),
+    start_date = Datetime(description=_('Start date'),
                       required=True,
                       default='TODAY')
 
