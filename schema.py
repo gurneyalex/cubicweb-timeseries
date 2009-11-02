@@ -9,7 +9,7 @@
 
 _ = unicode
 
-from yams.buildobjs import (EntityType, String, Bytes, Date, Datetime, SubjectRelation,
+from yams.buildobjs import (EntityType, String, Bytes, Date, Boolean, Datetime, SubjectRelation,
                             Float)
 from yams.constraints import StaticVocabularyConstraint
 
@@ -31,17 +31,19 @@ class TimeSeries(EntityType):
                          default='daily')
 
     use_calendar = String(description=_('Calendar used'),
-                      required=True,
-                      internationalizable=True,
-                      vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
-                      default='gregorian')
+                          required=True,
+                          internationalizable=True,
+                          vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
+                          default='gregorian')
 
     start_date = Date(description=_('Start date'),
-                          required=True,
-                          default='TODAY')
+                      required=True,
+                      default='TODAY')
 
     data = Bytes(required=True,
                  description = _('Timeseries data'))
+
+    is_constant = Boolean(required=True, default=False)
 
 
 
