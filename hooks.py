@@ -8,7 +8,7 @@ class TimeSeriesDataReadHook(hooksmanager.Hook):
     def call(self, session, entity):
         if 'data' in entity.edited_attributes:
             entity.grok_data()
-        if entity.name is None: 
+        if entity.name is None:
             entity.name = u"TS_%s" % entity.eid
-            
+
 

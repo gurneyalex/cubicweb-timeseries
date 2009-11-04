@@ -27,7 +27,8 @@ class TimeSeries(EntityType):
                          required=True,
                          internationalizable=True,
                          vocabulary = [_('15 min'), _('hourly'), _('daily'),
-                                       _('weekly'), _('monthly'), _('yearly')],
+                                       _('weekly'), _('monthly'), _('yearly'),
+                                       _('constant')],
                          default='daily')
 
     use_calendar = String(description=_('Calendar used'),
@@ -42,9 +43,6 @@ class TimeSeries(EntityType):
 
     data = Bytes(required=True,
                  description = _('Timeseries data'))
-
-    is_constant = Boolean(required=True, default=False)
-
 
 
 class TimeSeriesHandle(EntityType):
