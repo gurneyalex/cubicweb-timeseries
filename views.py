@@ -24,7 +24,10 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     def cell_call(self, row, col):
         entity = self.complete_entity(row, col)
         self.render_entity_title(entity)
-        self.render_tabs(self.tabs, self.default_tab, entity)
+        if entity.is_constant:
+            self.w(u'<div>%s: %.2f  </div>' % (self.req._('constant value'), entity.first))
+        else:
+            self.render_tabs(self.tabs, self.default_tab, entity)
 
 
 class TimeSeriesPlotView(baseviews.EntityView):
