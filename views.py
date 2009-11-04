@@ -90,25 +90,38 @@ class TimeSeriesSummaryView(baseviews.EntityView):
     summary_attrs = (_('first'), _('last'),
                      _('min'), _('max'),
                      _('average'), _('sum'))
+
+    characteristics_attrs = ('start_date', 'granularity', 'use_calendar')
+
     title = None
-    def cell_call(self, row, col):
+
+    def summary(self, entity):
         w = self.w
-        entity = self.rset.get_entity(row, col)
         w(u'<h2>Summary</h2>')
         w(u'<table>')
         for attr in self.summary_attrs:
             w(u'<tr>')
-            w(u'<td>%s: </td><td> %.2f </td>' % (self.req._(attr), getattr(entity, attr)))
+            w(u'<td>%s: </td><td> %.2f </td>' % (self.req._(attr),
+                                                 getattr(entity, attr)))
             w(u'</tr>')
         w(u'</table>')
 
+    def characteristics(self, entity):
+        w = self.w
         w(u'<h2>Characteristics</h2>')
         w(u'<table>')
-        for attr in ('start_date', 'granularity', 'use_calendar'):
+        for attr in self.characteristics_attrs:
             w(u'<tr>')
-            w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr), getattr(entity, attr)))
+            w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr),
+                                               getattr(entity, attr)))
             w(u'</tr>')
         w(u'</table>')
+
+    def cell_call(self, row, col):
+        w = self.w
+        entity = self.rset.get_entity(row, col)
+        self.summary(entity)
+        self.characteristics(entity)
 
 
 ## NOTE: this seems generic enough to be backported in CW
