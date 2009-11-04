@@ -41,7 +41,13 @@ class TimeSeries(AnyEntity):
     def dc_title(self):
         return self.name
 
+    @property
+    def is_constant(self):
+        return self.granularity == u'constant'
+
     def dc_long_title(self):
+        if self.is_constant:
+            return self.req._(u'Constant time series (value: %.2f)' % self.first)
         return self.req._(u'Time series %s starting on %s with %d values' %
                           (self.name, self.start_date, self.length))
 
