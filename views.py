@@ -79,8 +79,12 @@ class TimeSeriesValuesView(baseviews.EntityView):
             format = '%s'
         w(u'<table class="listing">')
         w(u'<tr><th>%s</th><th>%s</th></tr>' % (_('date'), _('value')))
+        if entity.granularity in (u'15min', 'hourly'):
+            fmt = '%Y/%m/%d %H:%M'
+        else:
+            fmt = '%Y/%m/%d'
         for date, value in entity.timestamped_array():
-            w(u'<tr><td>%s</td><td>%s</td></tr>' % (date, format % value))
+            w(u'<tr><td>%s</td><td>%s</td></tr>' % (date.strftime(fmt), format % value))
         w(u'</table>')
 
 
@@ -101,8 +105,8 @@ class TimeSeriesSummaryView(baseviews.EntityView):
         w(u'<table>')
         for attr in self.summary_attrs:
             w(u'<tr>')
-            w(u'<td>%s: </td><td> %.2f </td>' % (self.req._(attr),
-                                                 getattr(entity, attr)))
+            w(u'<td>%s: </td><td> %s</td>' % (self.req._(attr), 
+                                              getattr(entity, attr)))
             w(u'</tr>')
         w(u'</table>')
 
