@@ -21,8 +21,7 @@ TIME_DELTAS = {'15 min': datetime.timedelta(minutes=15),
                'hourly': datetime.timedelta(hours=1),
                'daily': datetime.timedelta(days=1),
                'weekly': datetime.timedelta(weeks=1),
-               'monthly': datetime.timedelta(days=30), # XXX
-               'yearly': datetime.timedelta(days=365),
+               # monthly and yearly do not have a fixed length
                }
 
 class TimeSeries(AnyEntity):
@@ -77,13 +76,63 @@ class TimeSeries(AnyEntity):
         pickle.dump(numpy_array, self.data)
 
     def timestamped_array(self):
-        step = TIME_DELTAS[self.granularity]
         date = self.start_date
         data = []
         for v in self.array:
             data.append((date, self.python_value(v)))
-            date += step
+            date = self.get_next_date(date)
         return data
+
+    def get_next_date(self, date):
+        if self.granularity in TIME_DELTAS:
+            return date + TIME_DELTAS[self.granularity]
+        elif self.granularity == 'monthly':
+            return self.get_next_month(date)
+        elif self.granularity == 'yearly':
+            return self.get_next_year(date)
+        else:
+            raise ValueError(self.granularity)
+
+    def get_next_month(self, date):
+        year = date.year
+        month = date.month
+        day = date.day
+        if month == 12:
+            month = 1
+            year += 1
+        else:
+            month += 1
+        while True:
+            try:
+                newdate = datetime.date(year, month, day)
+            except ValueError:
+                day -= 1
+            else:
+                break
+
+        if isinstance(date, datetime.datetime):
+            return datetime.datetime.combine(newdate, date.time())
+        else:
+            return date
+
+    def get_next_year(self, date):
+        year = date.year + 1 
+        month = date.month
+        day = date.day
+
+        while True:
+            try:
+                newdate = datetime.date(year, month, day)
+            except ValueError:
+                day -= 1
+            else:
+                break
+
+        if isinstance(date, datetime.datetime):
+            return datetime.datetime.combine(newdate, date.time())
+        else:
+            return date
+
 
     def compressed_timestamped_array(self):
         """
