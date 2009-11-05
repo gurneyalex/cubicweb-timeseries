@@ -45,6 +45,11 @@ class TimeSeries(EntityType):
                  description = _('Timeseries data'))
 
 
+
+#
+# Below is some work in progress, not yet used in Pylos
+#
+
 class TimeSeriesHandle(EntityType):
     name = String(required=True,
                   fulltextindexed=True,
