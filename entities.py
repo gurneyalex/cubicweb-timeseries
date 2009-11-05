@@ -85,6 +85,23 @@ class TimeSeries(AnyEntity):
             date += step
         return data
 
+    def compressed_timestamped_array(self):
+        """
+        eliminates duplicated values in piecewise constant timeseries
+        """
+        data = self.timestamped_array()
+        compressed_data = [data[0]]
+        delta = datetime.timedelta(seconds=1)
+        last_date = data[-1][0]
+        for date, value in data[1:]:
+            previous_value = compressed_data[-1][1]
+            if value != previous_value:
+                compressed_data.append((date - delta, previous_value))
+                compressed_data.append((date, value))
+            elif date == last_date:
+                compressed_data.append((date, value))
+        return compressed_data
+
     def python_value(self, v):
         _dtypes = {'Float': float,
                    'Integer': int,
