@@ -9,7 +9,7 @@
 
 _ = unicode
 
-from yams.buildobjs import (EntityType, String, Bytes, Date, Boolean, Datetime, SubjectRelation,
+from yams.buildobjs import (EntityType, String, Bytes, Boolean, Datetime, SubjectRelation,
                             Float)
 from yams.constraints import StaticVocabularyConstraint
 
