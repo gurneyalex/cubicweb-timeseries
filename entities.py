@@ -190,11 +190,21 @@ class TimeSeries(AnyEntity):
     def average(self):
         return self.array.mean()
 
-
-
     @property
     def calendar(self):
         return ALL_CALENDARS[self.use_calendar]
+
+    def get_values_between(self, start_date, end_date):
+        values = []
+        if start_date is None:
+            start_date = self.start_date
+        for tstamp, value in self.timestamped_array():
+            if tstamp < start_date:
+                continue
+            elif end_date is not None and tstamp >= end_date:
+                break
+            values.append(value)
+        return numpy.array(values)
 
     def _numpy_from_csv(self, file):
         sniffer = csv.Sniffer()
