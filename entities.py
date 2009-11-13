@@ -255,6 +255,22 @@ class TimeSeries(AnyEntity):
             raise ValueError('Unable to read a Timeseries in %s' % file.filename)
         return numpy.array(values, dtype=self.dtype)
 
+    def compute_sum_average(self, start_date, end_date, func='sum'):
+        assert func in ('sum', 'average')
+        if start_date < self.start_date:
+            raise ValueError('%s date is before the time series\'s'
+                             'start date (%s)' % (start_date, self.start_date))
+        if self.granularity == 'constant':
+            if func == 'sum':
+                raise ValueError('sum can\'t be computed with a constant granularity')
+            return self.first
+        if self.granularity in ('daily', 'weekly', 'monthly', 'yearly'):
+            start_ord = start_date.toordinal()
+            end_ord = end_date.toordinal()
+            nb_days = end_ord - start_ord
+
+        self.timestamped_array()
+
 class AbstractCalendar:
 
     def get_offset(self, date, granularity):
