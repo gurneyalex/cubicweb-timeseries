@@ -334,3 +334,11 @@ class ComputeSumAverageTC(EnvBasedTC):
         average = self.quart_ts.aggregated_value(start_date, end_date, 'average')
         data = self.quart_ts.array
         self.assertFloatAlmostEquals(average, data[2*24*4:22*24*4].mean())
+
+
+
+class TimeSeriesTC(EnvBasedTC):
+    def test_auto_name(self):
+        data=numpy.arange(10)
+        ts = self.add_entity('TimeSeries', data=data)
+        self.assert_(ts.name.startswith(u'TS_%s' % ts.eid))
