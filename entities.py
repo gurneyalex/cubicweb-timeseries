@@ -89,7 +89,7 @@ class TimeSeries(AnyEntity):
 
     def aggregated_value(self, start, end, mode):
         if self.granularity == 'constant':
-            if func == 'sum':
+            if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
             return self.first
         if start < self.start_date:
