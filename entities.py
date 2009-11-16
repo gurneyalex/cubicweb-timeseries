@@ -385,8 +385,8 @@ class AbstractCalendar:
 
     def _get_frac_offset_monthly(self, date):
         ordinal = self.ordinal(date)
-        start_of_month = self.ordinal(datetime.datetime(date.year, date.month, 1))
-        delta = date-start_of_month
+        start_of_month = datetime.datetime(date.year, date.month, 1)
+        delta = date - start_of_month
         seconds = delta.days*3600*24+delta.seconds
         return seconds / (days_in_month(start_of_month)*3600*24)
 
