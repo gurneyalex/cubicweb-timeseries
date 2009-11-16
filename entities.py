@@ -5,11 +5,15 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
+from __future__ import division
+
 from cubicweb import Binary
 from cubicweb.entities import AnyEntity, fetch_config
+from cubicweb.utils import days_in_month, days_in_year
 
 import pickle
 import csv
+from math import floor, ceil
 
 # TODO: remove datetime and use our own calendars
 import datetime
@@ -17,7 +21,7 @@ import datetime
 import numpy
 import xlrd
 
-TIME_DELTAS = {'15 min': datetime.timedelta(minutes=15),
+TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                'hourly': datetime.timedelta(hours=1),
                'daily': datetime.timedelta(days=1),
                'weekly': datetime.timedelta(weeks=1),
@@ -82,6 +86,30 @@ class TimeSeries(AnyEntity):
             data.append((date, self.python_value(v)))
             date = self.get_next_date(date)
         return data
+
+    def aggregated_value(self, start, end, mode):
+        if self.granularity == 'constant':
+            if func == 'sum':
+                raise ValueError("sum can't be computed with a constant granularity")
+            return self.first
+        if start < self.start_date:
+            raise IndexError('%s date is before the time series\'s'
+                             'start date (%s)' % (start, self.start_date))
+        values = self.get_by_date(slice(start,end))
+        coefs = numpy.ones(values.shape, float)
+        start_frac =  self.calendar.get_frac_offset(start, self.granularity)
+        end_frac =  self.calendar.get_frac_offset(end, self.granularity)
+        coefs[0] -= start_frac
+        if end_frac != 0:
+            coefs[-1] -= 1-end_frac
+        sigma = (values*coefs).sum()
+        if mode == 'sum':
+            return sigma
+        elif mode == 'average':
+            return sigma / sum(coefs)
+        else:
+            raise ValueError('unknown mode %s' % mode)
+
 
     def get_next_date(self, date):
         if self.granularity in TIME_DELTAS:
@@ -255,82 +283,117 @@ class TimeSeries(AnyEntity):
             raise ValueError('Unable to read a Timeseries in %s' % file.filename)
         return numpy.array(values, dtype=self.dtype)
 
-    def compute_sum_average(self, start_date, end_date, func='sum'):
-        assert func in ('sum', 'average')
-        if start_date < self.start_date:
-            raise ValueError('%s date is before the time series\'s'
-                             'start date (%s)' % (start_date, self.start_date))
-        if self.granularity == 'constant':
-            if func == 'sum':
-                raise ValueError('sum can\'t be computed with a constant granularity')
-            return self.first
-        if self.granularity in ('daily', 'weekly', 'monthly', 'yearly'):
-            start_ord = start_date.toordinal()
-            end_ord = end_date.toordinal()
-            nb_days = end_ord - start_ord
+    def get_absolute(self, index):
+        index = self._make_relative_index(index)
+        return self.get_relative(index)
 
-        self.timestamped_array()
+    def get_by_date(self, date):
+        if type(date) is slice:
+            assert date.step is None
+            if date.start is None:
+                start = None
+            else:
+                start = self.calendar.get_offset(date.start, self.granularity)
+            if date.stop is None:
+                stop = None
+            else:
+                stop = self.calendar.get_offset(date.stop, self.granularity)
+            index = slice(start, stop, None)
+        else:
+            index = self.calendar.get_offset(date, self.granularity)
+        return self.get_absolute(index)
+
+    def _make_relative_index(self, index):
+        if isinstance(index, (int, float)):
+            return int(floor(index - self._start_offset))
+        elif type(index) is slice:
+            if index.start is None:
+                start = None
+            else:
+                start = int(floor(index.start - self._start_offset))
+            if index.stop is None:
+                stop = None
+            else:
+                stop = int(ceil(index.stop - self._start_offset))
+                if stop > len(self.array):
+                    raise IndexError('stop is too big')
+            return slice(start, stop, index.step)
+        else:
+            raise TypeError('Unsupported index type %s' % type(index))
+
+    def get_relative(self, index):
+        try:
+            return self.array[index]
+        except IndexError, exc:
+            raise IndexError(exc.args+(index,))
+
+    @property
+    def _start_offset(self):
+        try:
+            return self.__start_offset
+        except AttributeError:
+            self.__start_offset = self.calendar.get_offset(self.start_date, self.granularity)
+            return self.__start_offset
+
 
 class AbstractCalendar:
 
     def get_offset(self, date, granularity):
-        if isinstance(date, str):
-            date = self._parse_iso(date)
         offset_method = getattr(self, '_get_offset_%s'%granularity)
-        return offset_method(date)
+        return offset_method(date) + self.get_frac_offset(date, granularity)
+
+    def get_frac_offset(self, date, granularity):
+        frac_offset_method = getattr(self, '_get_frac_offset_%s'%granularity)
+        return frac_offset_method(date)
 
     def _get_offset_15min(self, date):
-        return (date._ordinal*24+date.hour)*4 + date.minute//15
+        return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60) 
 
-    def _get_offset_1h(self, date):
-        return date._ordinal*24+date.hour # XXX DST!
+    def _get_offset_hourly(self, date):
+        return self.ordinal(date)*24+self.seconds(date)//3600 # XXX DST!
 
-    def _get_offset_1d(self, date):
-        return date._ordinal
+    def _get_offset_daily(self, date):
+        return self.ordinal(date)
 
-    def _get_offset_1w(self, date):
-        return date._ordinal//7
+    def _get_offset_weekly(self, date):
+        ordinal = self.ordinal(date) - 1
+        return ordinal//7 
 
-    def _get_offset_1m(self, date):
+    def _get_offset_monthly(self, date):
+        ordinal = self.ordinal(date)
+        date = datetime.date.fromordinal(ordinal)
         return (date.year-1)*12+date.month-1
 
-    def _get_offset_1y(self, date):
+    def _get_offset_yearly(self, date):
         return date.year-1
 
-    def _parse_iso(self, isodate):
-        if len(isodate) == 8: # just a date
-            date = isodate
-            hour = 0
-            minute = 0
-            second = 0
-        else:
-            assert isodate[8] == 'T'
-            date, time = isodate.split('T')
-            hour, minute, sec = time.split(':')
-            hour = int(hour)
-            minute = int(minute)
-            second = int(floor(float(sec)))
-        year = int(date[:4])
-        month = int(date[4:6])
-        day = int(date[6:])
+    def _get_frac_offset_15min(self, date):
+        rem = self.seconds(date) % (15*60)
+        return rem / (15*60)
 
-        return DateTime(year, month, day, hour, minute, second, self, isodate)
+    def _get_frac_offset_hourly(self, date):
+        rem = self.seconds(date) % 3600
+        return rem/3600
 
-    def date_from_ordinal_and_seconds(self, ordinal, seconds=0):
-        """
-        return a DateTime instance with the given ordinal ans seconds
-        """
-        year, day, month = self._ymd_from_ordinal(ordinal)
-        hour, minute, second = self._hms_from_seconds(seconds)
-        return DateTime(year, month, day, hour, minute, second, self)
+    def _get_frac_offset_daily(self, date):
+        rem = self.seconds(date)
+        return rem/(3600*24)
 
-    def _ymd_from_ordinal(self, ordinal):
-        raise NotImplementedError
+    def _get_frac_offset_weekly(self, date):
+        ordinal = self.ordinal(date) - 1 
+        return (ordinal % 7) / 7 + self.seconds(date)/(3600*24*7)
 
-    def _hms_from_seconds(self, seconds):
-        hour, rem_secs = divmod(seconds, 3600)
-        minute, second = divmod(rem_secs, 60)
-        return hour, minute, second
+    def _get_frac_offset_monthly(self, date):
+        ordinal = self.ordinal(date)
+        start_of_month = self.ordinal(datetime.datetime(date.year, date.month, 1))
+        delta = date-start_of_month
+        seconds = delta.days*3600*24+delta.seconds
+        return seconds / (days_in_month(start_of_month)*3600*24)
+
+    def _get_frac_offset_yearly(self, date):
+        frac_ordinal = self.ordinal(date) + self.seconds(date) / (3600*24)
+        start_of_year = self.ordinal(datetime.datetime(date.year, 1, 1))
+        return  (frac_ordinal-start_of_year) / days_in_year(date)
 
     def ordinal(self, date):
         """
@@ -342,13 +405,85 @@ class AbstractCalendar:
         """
         return the number of seconds since the begining of the day for that date
         """
-        return date.second+60*date.minute+3600*date.hour # XXX DST
+        return date.second+60*date.minute+3600*date.hour
 
     def day_of_week(self, date):
         """
         return the day of week for a given date as an integer (0 is monday -> 6 is sunday)
         """
         raise NotImplementedError
+
+
+class GregorianCalendar(AbstractCalendar):
+    def ordinal(self, date):
+        return date.toordinal()
+
+    def day_of_week(self, date):
+        return date.weekday()
+
+
+
+class GasCalendar(AbstractCalendar):
+    def __init__(self):
+        self.day_offset = datetime.timedelta(hours=6)
+        self.year_month_offset = datetime.timedelta(days=31+30+31)
+
+    def ordinal(self, date):
+        return (date-self.day_offset).toordinal()
+
+    def seconds(self, date):
+        """
+        return the number of seconds since the begining of the day for that date
+        """
+        date = date - self.day_offset
+        return date.second+60*date.minute+3600*date.hour
+
+    def day_of_week(self, date):
+        return datetime.fromordinal(self.ordinal(date)).weekday()
+
+    def _get_offset_yearly(self, date):
+        return (date - self.year_month_offset - self.day_offset).year-1
+
+    def _get_frac_offset_yearly(self, date):
+        if date.month < 10:
+            year = date.year - 1
+            nb_days = days_in_year(date)
+        else:
+            year = date.year
+            nb_days = days_in_year(date+self.year_month_offset)
+        start_of_year = datetime.datetime(year, 10, 1, 6)
+        delta = date - start_of_year
+        return  (delta.days + delta.seconds/(3600*24)) / nb_days
+
+    def _get_frac_offset_monthly(self, date):
+        ordinal = self.ordinal(date)
+        date_ = datetime.datetime.fromordinal(ordinal)
+        start_of_month = datetime.datetime(date_.year, date_.month, 1, 6)
+        delta = date - start_of_month
+        seconds = delta.days*3600*24+delta.seconds
+        return seconds / (days_in_month(start_of_month)*3600*24)
+
+
+class NormalizedCalendar(AbstractCalendar):
+    """
+    Normalized calendar has 365 days, and starts on monday
+    XXX: DST ?
+    """
+    def __init__(self):
+        self.month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        self.cum_month_length =  [0] + numpy.cumsum(self.month_length[:-1]).tolist()
+
+    def ordinal(self, date):
+        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1
+
+    def day_of_week(self, date):
+        return (self.cum_month_length[date.month-1] + date.day-1) % 7
+
+ALL_CALENDARS = {'gregorian': GregorianCalendar(),
+                 'normalized': NormalizedCalendar(),
+                 'gas': GasCalendar(),
+                 }
+
 
 class TSConstantExceptionBlock(AnyEntity):
     id = 'TSConstantExceptionBlock'
@@ -367,106 +502,4 @@ class TSConstantBlock(AnyEntity):
         return self.req._(u'from %s: %s') % (self.printable_value('start_date'),
                                              self.printable_value('value'))
 
-class DateTime:
-    """
-    representation of a date + time, linked to a calendar.
-    Meant to be immutable. Please consider the attributes read-only.
 
-    XXX timezone management (core work required in calendar)
-
-    """
-    def __init__(self, year, month, day, hour, minute, second, calendar, iso_str=None):
-        # boundary checks
-        assert 0 < year < 3000
-        assert 1 <= month <= 12
-        assert 1 <= day <= 31 # could be enhanced
-        assert 0 <= hour < 24
-        assert 0 <= minute < 60
-        assert 0 <= second < 60
-
-        self._calendar = calendar
-        if iso_str is None:
-            iso_str = '%d%d%dT%d:%d:%d' % (year, month, day, hour, minute, second)
-        self._iso_str = iso_str
-        self.year = year
-        self.month = month
-        self.day = day
-        self.hour = hour
-        self.minute = minute
-        self.second = second
-        # self._ordinal : integer giving the number of days since the epoch
-        self._ordinal = calendar.ordinal(self)
-        # self._seconds : integer giving the number of seconds since the beginning of day
-        self._seconds = calendar.seconds(self)
-
-    def __repr__(self):
-        return "<DateTime %s>" % self._iso_str
-
-    def as_iso(self):
-        return self._iso_str
-
-    def as_datetime(self):
-        return datetime.datetime(self.year, self.month, self.day, self.hour, self.minute, self.second)
-
-    def day_of_week(self):
-        return self._calendar.day_of_week(self)
-
-    def __eq__(self, other):
-        if not isinstance(other, DateTime):
-            return NotImplemented
-        # XXX can we safely use identity of calendars ?
-        return self._calendar is other._calendar and \
-               self._ordinal == other._ordinal and \
-               self._seconds == other._seconds
-
-
-
-
-
-class GregorianCalendar(AbstractCalendar):
-    def ordinal(self, date):
-        return self.__as_datetime(date).toordinal()
-
-    @staticmethod
-    def __as_datetime(date):
-        return datetime.datetime(date.year, date.month, date.day,
-                                 date.hour, date.minute, date.second)
-
-    def day_of_week(self, date):
-        return self.__as_datetime(date).weekday()
-
-    def _ymd_from_ordinal(self, ordinal):
-        date = datetime.fromordinal(ordinal)
-        return date.year, date.month, date.day
-
-class GasCalendar(AbstractCalendar):
-    pass
-
-class NormalizedCalendar(AbstractCalendar):
-    """
-    Normalized calendar has 365 days, and starts on monday
-    XXX: DST ?
-    """
-    def __init__(self):
-        self.month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        self.cum_month_length =  [0] + numpy.cumsum(self.month_length[:-1]).tolist()
-
-    def ordinal(self, date):
-        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1
-
-    def day_of_week(self, date):
-        return (self.cum_month_length[date.month-1] + date.day-1) % 7
-
-    def _ymd_from_ordinal(self, ordinal):
-        year, days = divmod(ordinal, 365)
-        year = year+1
-        for month, cumdays in enumerate(self.cum_month_length):
-            if days < cumdays:
-                break
-        day = days - self.cum_month_length[month-1] + 1
-        return year, day, month
-
-ALL_CALENDARS = {'gregorian': GregorianCalendar(),
-                 'normalized': NormalizedCalendar(),
-                 'gas': GasCalendar(),
-                 }

@@ -26,7 +26,7 @@ class TimeSeries(EntityType):
     granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
-                         vocabulary = [_('15 min'), _('hourly'), _('daily'),
+                         vocabulary = [_('15min'), _('hourly'), _('daily'),
                                        _('weekly'), _('monthly'), _('yearly'),
                                        _('constant')],
                          default='daily')
