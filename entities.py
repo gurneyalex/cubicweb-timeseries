@@ -101,7 +101,7 @@ class TimeSeries(AnyEntity):
                              "start date (%s)" % (start, self.start_date))
         values = self.get_by_date(slice(start,end))
         if len(values) == 0:
-            return values
+            raise IndexError
         coefs = numpy.ones(values.shape, float)
         start_frac =  self.calendar.get_frac_offset(start, self.granularity)
         end_frac =  self.calendar.get_frac_offset(end, self.granularity)
