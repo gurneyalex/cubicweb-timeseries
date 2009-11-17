@@ -87,6 +87,10 @@ class TimeSeries(AnyEntity):
             date = self.get_next_date(date)
         return data
 
+    @property
+    def end_date(self):
+        return self.timestamped_array()[-1][0]
+    
     def aggregated_value(self, start, end, mode):
         if self.granularity == 'constant':
             if mode == 'sum':
