@@ -87,15 +87,21 @@ class TimeSeries(AnyEntity):
             date = self.get_next_date(date)
         return data
 
+    @property
+    def end_date(self):
+        return self.timestamped_array()[-1][0]
+    
     def aggregated_value(self, start, end, mode):
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
             return self.first
-        if start < self.start_date:
-            raise IndexError('%s date is before the time series\'s'
-                             'start date (%s)' % (start, self.start_date))
+        if end < self.start_date:
+            raise IndexError("%s date is before the time series's "
+                             "start date (%s)" % (start, self.start_date))
         values = self.get_by_date(slice(start,end))
+        if len(values) == 0:
+            return values
         coefs = numpy.ones(values.shape, float)
         start_frac =  self.calendar.get_frac_offset(start, self.granularity)
         end_frac =  self.calendar.get_frac_offset(end, self.granularity)
@@ -315,8 +321,8 @@ class TimeSeries(AnyEntity):
                 stop = None
             else:
                 stop = int(ceil(index.stop - self._start_offset))
-                if stop > len(self.array):
-                    raise IndexError('stop is too big')
+                if start > len(self.array):
+                    raise IndexError('start is too big')
             return slice(start, stop, index.step)
         else:
             raise TypeError('Unsupported index type %s' % type(index))
