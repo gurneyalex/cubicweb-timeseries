@@ -102,6 +102,8 @@ class TimeSeries(AnyEntity):
         values = self.get_by_date(slice(start,end))
         if len(values) == 0:
             raise IndexError()
+        if mode == 'last':
+            return values[-1]
         coefs = numpy.ones(values.shape, float)
         start_frac =  self.calendar.get_frac_offset(start, self.granularity)
         end_frac =  self.calendar.get_frac_offset(end, self.granularity)
