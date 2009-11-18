@@ -229,18 +229,18 @@ class TimeSeries(AnyEntity):
         return ALL_CALENDARS[self.use_calendar]
 
     def get_values_between(self, start_date, end_date):
-        if self.granularity == 'constant':
-            return numpy.array([self.first])
-        values = []
         if start_date is None:
             start_date = self.start_date
+        if self.granularity == 'constant':
+            return [(start_date, self.first),]
+        values = []
         for tstamp, value in self.timestamped_array():
             if tstamp < start_date:
                 continue
             elif end_date is not None and tstamp >= end_date:
                 break
-            values.append(value)
-        return numpy.array(values)
+            values.append((tstamp, value))
+        return values
 
     def _numpy_from_csv(self, file):
         sniffer = csv.Sniffer()
