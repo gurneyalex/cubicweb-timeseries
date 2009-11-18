@@ -21,7 +21,7 @@ class TSaccessTC(EnvBasedTC):
                                'SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
-        
+
         self.yearlyts = self.execute('INSERT TimeSeries SP: SP name "tsyearly", '
                                'SP data_type "Float", SP granularity "yearly", '
                                'SP use_calendar "gas", SP start_date %(s)s, '
@@ -162,8 +162,20 @@ class TSaccessTC(EnvBasedTC):
         date1 = datetime(2009, 10, 2, 12)
         date2 = datetime(2009, 10, 4, 12)
         result = self.dailyts.aggregated_value(date1, date2, 'sum')
-        expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + .25*self.dailyts.array[3]) 
+        expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + .25*self.dailyts.array[3])
         self.assertEquals(result, expected)
+
+    def test_aggregated_value_last(self):
+        date1 = datetime(2009, 10, 2, 12)
+        date2 = datetime(2009, 10, 4, 12)
+        result = self.dailyts.aggregated_value(date1, date2, 'last')
+        expected = self.dailyts.array[3]
+        self.assertEquals(result, expected)
+
+    def test_aggregated_value_last_before_start(self):
+        date1 = datetime(2009, 9, 2, 12)
+        date2 = datetime(2009, 10, 1, 6)
+        self.assertRaises(IndexError, self.dailyts.aggregated_value,date1, date2, 'last')
 
     def test_aggregated_value_average_below_gran(self):
         date1 = datetime(2009, 10, 2, 12)
@@ -183,14 +195,14 @@ class TSaccessTC(EnvBasedTC):
         date1 = datetime(2009, 10, 2, 6)
         date2 = datetime(2009, 10, 4, 12)
         result = self.dailyts.aggregated_value(date1, date2, 'sum')
-        expected = (1*self.dailyts.array[1] + 1*self.dailyts.array[2] + .25*self.dailyts.array[3]) 
+        expected = (1*self.dailyts.array[1] + 1*self.dailyts.array[2] + .25*self.dailyts.array[3])
         self.assertEquals(result, expected)
 
     def test_aggregated_value_sum_exact_end(self):
         date1 = datetime(2009, 10, 2, 12)
         date2 = datetime(2009, 10, 5, 6)
         result = self.dailyts.aggregated_value(date1, date2, 'sum')
-        expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + 1*self.dailyts.array[3]) 
+        expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + 1*self.dailyts.array[3])
         self.assertEquals(result, expected)
 
 
@@ -244,7 +256,7 @@ class ComputeSumAverageTC(EnvBasedTC):
         self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'average')
 
     def test_end_date_error(self):
-        start_date = datetime(2009, 10, 03)
+        start_date = datetime(2009, 12, 03)
         end_date = datetime(2009, 12, 23)
         self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'sum')
         self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'average')
