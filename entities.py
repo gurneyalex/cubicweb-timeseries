@@ -103,7 +103,9 @@ class TimeSeries(AnyEntity):
         if len(values) == 0:
             raise IndexError()
         if mode == 'last':
-            return values[-1]
+            last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
+            tstamp = self.timestamped_array()[last_index][0]
+            return tstamp, values[-1]
         coefs = numpy.ones(values.shape, float)
         start_frac =  self.calendar.get_frac_offset(start, self.granularity)
         end_frac =  self.calendar.get_frac_offset(end, self.granularity)
@@ -112,9 +114,9 @@ class TimeSeries(AnyEntity):
             coefs[-1] -= 1-end_frac
         sigma = (values*coefs).sum()
         if mode == 'sum':
-            return sigma
+            return start, sigma
         elif mode == 'average':
-            return sigma / sum(coefs)
+            return start, sigma / sum(coefs)
         else:
             raise ValueError('unknown mode %s' % mode)
 
@@ -293,9 +295,13 @@ class TimeSeries(AnyEntity):
             raise ValueError('Unable to read a Timeseries in %s' % file.filename)
         return numpy.array(values, dtype=self.dtype)
 
-    def get_absolute(self, index):
-        index = self._make_relative_index(index)
+    def get_absolute(self, abs_index):
+        index = self._make_relative_index(abs_index)
         return self.get_relative(index)
+
+    def get_rel_index(self, date):
+        abs_index = self.calendar.get_offset(date, self.granularity)
+        return self._make_relative_index(abs_index)
 
     def get_by_date(self, date):
         if type(date) is slice:
@@ -313,23 +319,23 @@ class TimeSeries(AnyEntity):
             index = self.calendar.get_offset(date, self.granularity)
         return self.get_absolute(index)
 
-    def _make_relative_index(self, index):
-        if isinstance(index, (int, float)):
-            return int(floor(index - self._start_offset))
-        elif type(index) is slice:
-            if index.start is None:
+    def _make_relative_index(self, abs_index):
+        if isinstance(abs_index, (int, float)):
+            return int(floor(abs_index - self._start_offset))
+        elif type(abs_index) is slice:
+            if abs_index.start is None:
                 start = None
             else:
-                start = int(floor(index.start - self._start_offset))
-            if index.stop is None:
+                start = int(floor(abs_index.start - self._start_offset))
+            if abs_index.stop is None:
                 stop = None
             else:
-                stop = int(ceil(index.stop - self._start_offset))
+                stop = int(ceil(abs_index.stop - self._start_offset))
                 if start > len(self.array):
                     raise IndexError('start is too big')
-            return slice(start, stop, index.step)
+            return slice(start, stop, abs_index.step)
         else:
-            raise TypeError('Unsupported index type %s' % type(index))
+            raise TypeError('Unsupported index type %s' % type(abs_index))
 
     def get_relative(self, index):
         try:
