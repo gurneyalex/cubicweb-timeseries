@@ -229,6 +229,8 @@ class TimeSeries(AnyEntity):
         return ALL_CALENDARS[self.use_calendar]
 
     def get_values_between(self, start_date, end_date):
+        if self.granularity == 'constant':
+            return numpy.array([self.first])
         values = []
         if start_date is None:
             start_date = self.start_date
