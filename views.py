@@ -5,11 +5,12 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
+from __future__ import with_statement
+_ = unicode
 from logilab.mtconverter import xml_escape
-
+from cwtags.tag import div, h2, table, tr, td, th, input
 from cubicweb.web import uicfg, formfields
 from cubicweb.schema import display_name
-from cubicweb.common import tags
 from cubicweb.selectors import implements
 
 from cubicweb.web.views import primary, baseviews, plots, tabs
@@ -25,9 +26,35 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
         entity = self.complete_entity(row, col)
         self.render_entity_title(entity)
         if entity.is_constant:
-            self.w(u'<div>%s: %.2f  </div>' % (self.req._('constant value'), entity.first))
+            self.w(div(u'%s: %.2f' % (self.req._('constant value'), entity.first)))
         else:
             self.render_tabs(self.tabs, self.default_tab, entity)
+
+class TimeSeriesSummaryView(tabs.PrimaryTab):
+    id = 'ts_summary'
+    __select__ = implements('TimeSeries')
+    summary_attrs = (_('first'), _('last'),
+                     _('min'), _('max'),
+                     _('average'), _('sum'))
+
+    characteristics_attrs = ('start_date', 'granularity', 'use_calendar')
+
+    def summary(self, entity):
+        w = self.w; _ = self.req._
+        w(h2(_('summary')))
+        with table(w):
+            for attr in self.summary_attrs:
+                self.field(attr, getattr(entity, attr), show_label=True, tr=True, table=True)
+
+    def characteristics(self, entity):
+        w = self.w; _ = self.req._
+        w(h2(_('characteristics')))
+        with table(w):
+            for attr in self.characteristics_attrs:
+                self.field(display_name(self.req, attr), entity.view('reledit', rtype=attr), tr=True, table=True)
+
+    def render_entity_attributes(self, entity):
+        self.characteristics(entity)
 
 
 class TimeSeriesPlotView(baseviews.EntityView):
@@ -55,8 +82,8 @@ class TimeSeriesPlotView(baseviews.EntityView):
 
     def cell_call(self, row, col, width=None, height=None):
         ts = self.rset.get_entity(row, col)
-        width = width or form.get('width', 500)
-        height = height or form.get('height', 400)
+        width = width or self.req.form.get('width', 500)
+        height = height or self.req.form.get('height', 400)
         plotwidget = plots.FlotPlotWidget([ts.dc_title()],
                                           [ts.timestamped_array()],
                                           timemode=True)
@@ -77,55 +104,14 @@ class TimeSeriesValuesView(baseviews.EntityView):
             format = '%d'
         else:
             format = '%s'
-        w(u'<table class="listing">')
-        w(u'<tr><th>%s</th><th>%s</th></tr>' % (_('date'), _('value')))
-        if entity.granularity in (u'15min', 'hourly'):
-            fmt = '%Y/%m/%d %H:%M'
-        else:
-            fmt = '%Y/%m/%d'
-        for date, value in entity.timestamped_array():
-            w(u'<tr><td>%s</td><td>%s</td></tr>' % (date.strftime(fmt), format % value))
-        w(u'</table>')
-
-
-class TimeSeriesSummaryView(baseviews.EntityView):
-    id = 'ts_summary'
-    __select__ = implements('TimeSeries')
-    summary_attrs = (_('first'), _('last'),
-                     _('min'), _('max'),
-                     _('average'), _('sum'))
-
-    characteristics_attrs = ('start_date', 'granularity', 'use_calendar')
-
-    title = None
-
-    def summary(self, entity):
-        w = self.w
-        w(u'<h2>Summary</h2>')
-        w(u'<table>')
-        for attr in self.summary_attrs:
-            w(u'<tr>')
-            w(u'<td>%s: </td><td> %s</td>' % (self.req._(attr), 
-                                              getattr(entity, attr)))
-            w(u'</tr>')
-        w(u'</table>')
-
-    def characteristics(self, entity):
-        w = self.w
-        w(u'<h2>Characteristics</h2>')
-        w(u'<table>')
-        for attr in self.characteristics_attrs:
-            w(u'<tr>')
-            w(u'<td>%s: </td><td> %s </td>' % (display_name(self.req, attr),
-                                               getattr(entity, attr)))
-            w(u'</tr>')
-        w(u'</table>')
-
-    def cell_call(self, row, col):
-        w = self.w
-        entity = self.rset.get_entity(row, col)
-        self.summary(entity)
-        self.characteristics(entity)
+        with table(w, Class='listing'):
+            w(tr(th(_('date')), th(_('value'))))
+            if entity.granularity in (u'15min', 'hourly'):
+                fmt = '%Y/%m/%d %H:%M'
+            else:
+                fmt = '%Y/%m/%d'
+            for date, value in entity.timestamped_array():
+                w(tr(td(date.strftime(fmt)), td(format % value)))
 
 
 ## NOTE: this seems generic enough to be backported in CW
@@ -210,21 +196,20 @@ function switchInlinedForm() {
 }
 ''')
         formid = u'f%s' % hex(id(self))
-        w(u'<div>')
-        for targettype in self.find_targettypes(entity):
-            inputargs = {
-                'value': u'%s;%s;%s;%s;%s' % (formid, entity.eid, targettype,
-                                              self.rtype, self.role),
-                }
-            if targettype == selected:
-                inputargs['checked'] = u'checked'
-            w(tags.input(type=u'radio', name=self.rtype, **inputargs))
-            w(u'%s <br />' % display_name(form.req, targettype,
-                                          context='inlined:%s.%s.%s' % (eschema, self.rtype, self.role)))
-        w(u'</div>')
-        w(u'<div>%s</div>' % self.initial_form(form, entity, selected))
-        w(u'<div id="%s"></div>' % formid) # needed by addInlineCreationForm()
-        return u'\n'.join(data)
+        with div(w):
+            for targettype in self.find_targettypes(entity):
+                inputargs = {
+                    'value': u'%s;%s;%s;%s;%s' % (formid, entity.eid, targettype,
+                                                  self.rtype, self.role),
+                    }
+                if targettype == selected:
+                    inputargs['checked'] = u'checked'
+                w(input(type=u'radio', name=self.rtype, **inputargs))
+                w(u'%s <br />' % display_name(form.req, targettype,
+                                              context='inlined:%s.%s.%s' % (eschema, self.rtype, self.role)))
+        w(div(self.initial_form(form, entity, selected)))
+        w(div(u'', id=formid)) # needed by addInlineCreationForm()
+        return u'\n'.join(unicode(x) for x in data)
 
 ## forms ######################################################################
 uicfg.autoform_field.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'),
