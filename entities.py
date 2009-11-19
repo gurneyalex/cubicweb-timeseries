@@ -99,7 +99,7 @@ class TimeSeries(AnyEntity):
         if end < self.start_date:
             raise IndexError("%s date is before the time series's "
                              "start date (%s)" % (start, self.start_date))
-        values = self.get_by_date(slice(start,end))
+        values = self.get_by_date(slice(start, end))
         if len(values) == 0:
             raise IndexError()
         if mode == 'last':
