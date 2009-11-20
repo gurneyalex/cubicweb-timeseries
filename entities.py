@@ -95,7 +95,7 @@ class TimeSeries(AnyEntity):
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
-            return self.first
+            return start, self.first
         if end < self.start_date:
             raise IndexError("%s date is before the time series's "
                              "start date (%s)" % (start, self.start_date))
