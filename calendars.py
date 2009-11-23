@@ -1,12 +1,11 @@
 """
 
 """
-
+from __future__ import division
 import numpy
 import datetime
 
 from cubicweb.utils import days_in_month, days_in_year
-
 
 __ALL_CALENDARS = {}
 
