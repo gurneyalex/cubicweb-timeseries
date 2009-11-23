@@ -1,8 +1,12 @@
-from __future__ import division
+"""
+
+"""
+
 import numpy
 import datetime
 
-from logilab.common.date import days_in_month, days_in_year
+from cubicweb.utils import days_in_month, days_in_year
+
 
 __ALL_CALENDARS = {}
 
@@ -12,36 +16,33 @@ def register_calendar(name, calendar):
 def get_calendar(name):
     return __ALL_CALENDARS[name]
 
-def get_all_calendars():
-    return __ALL_CALENDARS.values()
-
-class AbstractCalendar(object):
+class AbstractCalendar:
 
     def get_offset(self, date, granularity):
-        offset_method = getattr(self, '_get_offset_%s' % granularity)
+        offset_method = getattr(self, '_get_offset_%s'%granularity)
         return offset_method(date) + self.get_frac_offset(date, granularity)
 
     def get_frac_offset(self, date, granularity):
-        frac_offset_method = getattr(self, '_get_frac_offset_%s' % granularity)
+        frac_offset_method = getattr(self, '_get_frac_offset_%s'%granularity)
         return frac_offset_method(date)
 
     def _get_offset_15min(self, date):
-        return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60)
+        return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60) 
 
     def _get_offset_hourly(self, date):
-        return self.ordinal(date)*24 + self.seconds(date)//3600 # XXX DST!
+        return self.ordinal(date)*24+self.seconds(date)//3600 # XXX DST!
 
     def _get_offset_daily(self, date):
         return self.ordinal(date)
 
     def _get_offset_weekly(self, date):
         ordinal = self.ordinal(date) - 1
-        return ordinal//7
+        return ordinal//7 
 
     def _get_offset_monthly(self, date):
         ordinal = self.ordinal(date)
         date = datetime.date.fromordinal(ordinal)
-        return (date.year-1)*12 + date.month-1
+        return (date.year-1)*12+date.month-1
 
     def _get_offset_yearly(self, date):
         return date.year-1
@@ -52,21 +53,21 @@ class AbstractCalendar(object):
 
     def _get_frac_offset_hourly(self, date):
         rem = self.seconds(date) % 3600
-        return rem / 3600
+        return rem/3600
 
     def _get_frac_offset_daily(self, date):
         rem = self.seconds(date)
-        return rem / (3600*24)
+        return rem/(3600*24)
 
     def _get_frac_offset_weekly(self, date):
-        ordinal = self.ordinal(date) - 1
+        ordinal = self.ordinal(date) - 1 
         return (ordinal % 7) / 7 + self.seconds(date)/(3600*24*7)
 
     def _get_frac_offset_monthly(self, date):
         ordinal = self.ordinal(date)
         start_of_month = datetime.datetime(date.year, date.month, 1)
         delta = date - start_of_month
-        seconds = delta.days*3600*24 + delta.seconds
+        seconds = delta.days*3600*24+delta.seconds
         return seconds / (days_in_month(start_of_month)*3600*24)
 
     def _get_frac_offset_yearly(self, date):
@@ -84,7 +85,7 @@ class AbstractCalendar(object):
         """
         return the number of seconds since the begining of the day for that date
         """
-        return date.second+60*date.minute + 3600*date.hour
+        return date.second+60*date.minute+3600*date.hour
 
     def day_of_week(self, date):
         """
@@ -92,53 +93,6 @@ class AbstractCalendar(object):
         """
         raise NotImplementedError
 
-    def start_of_day(self, tstamp):
-        """
-        return datetime of the begining of day for tstamp
-        """
-        raise NotImplementedError
-
-    def is_day_start(self, tstamp):
-        raise NotImplementedError
-
-    def is_month_start(self, tstamp):
-        raise NotImplementedError
-
-    def is_year_start(self, tstamp):
-        raise NotImplementedError
-
-    def next_week_start(self, date):
-        """
-        return a datetime object on next monday
-        """
-        raise NotImplementedError
-
-    def next_month_start(self, date):
-        """
-        return a datetime object on the first day of the next month
-        """
-        raise NotImplementedError
-
-    def prev_month_start(self, date):# XXX rename to month_start?
-        raise NotImplementedError
-
-    def next_year_start(self, date):
-        raise NotImplementedError
-
-    def prev_year_start(self, date):# XXX rename to year_start?
-        raise NotImplementedError
-
-    def prev_year_start(self, date):
-        raise NotImplementedError
-
-    def strftime(self, date, fmt):
-        return date.strftime(fmt)
-
-    def date_to_datetime(self, date):
-        return datetime.datetime.combine(date, datetime.time(0))
-
-    def get_month_number(self, date):
-        raise NotImplementedError
 
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):
@@ -147,49 +101,65 @@ class GregorianCalendar(AbstractCalendar):
     def day_of_week(self, date):
         return date.weekday()
 
-    def start_of_day(self, tstamp):
-        """
-        return datetime of the begining of day for tstamp
-        """
-        return datetime.datetime(tstamp.year, tstamp.month, tstamp.day, 0)
-
-    def is_day_start(self, tstamp):
-        return tstamp.hour == 0 and tstamp.minute == 0 and tstamp.second == 0
-
-    def is_month_start(self, tstamp):
-        return tstamp.day == 1 and self.is_day_start(tstamp)
-
-    def is_year_start(self, tstamp):
-        return tstamp.month == 1  and self.is_month_start(tstamp)
-
-    def next_week_start(self, date):
-        """
-        return a datetime object on next monday
-        """
-        date = self.start_of_day(date)
-        monday = date + datetime.timedelta(days=7-date.weekday())
-        if monday.weekday() != 0:
-            raise RuntimeError('severe problem in next_week_start implementation')
-        return monday
-
-    def next_month_start(self, date):
-        """
-        return a datetime object on the first day of the next month
-        """
-        date = self.start_of_day(date)
-        return date + datetime.timedelta(days=(days_in_month(date)-date.day+1))
-
-    def prev_month_start(self, date):# XXX rename to month_start?
-        return datetime.datetime(date.year, date.month, 1, 0)
-
-    def next_year_start(self, date):
-        return datetime.datetime(date.year + 1, 1, 1, 0)
-
-    def prev_year_start(self, date):# XXX rename to year_start?
-        return datetime.datetime(date.year, 1, 1, 0)
-
-    def get_month_number(self, date):
-        return date.month
-
 register_calendar('gregorian', GregorianCalendar())
+
+
+class GasCalendar(AbstractCalendar):
+    def __init__(self):
+        self.day_offset = datetime.timedelta(hours=6)
+        self.year_month_offset = datetime.timedelta(days=31+30+31)
+
+    def ordinal(self, date):
+        return (date-self.day_offset).toordinal()
+
+    def seconds(self, date):
+        """
+        return the number of seconds since the begining of the day for that date
+        """
+        date = date - self.day_offset
+        return date.second+60*date.minute+3600*date.hour
+
+    def day_of_week(self, date):
+        return datetime.datetime.fromordinal(self.ordinal(date)).weekday()
+
+    def _get_offset_yearly(self, date):
+        return (date - self.year_month_offset - self.day_offset).year-1
+
+    def _get_frac_offset_yearly(self, date):
+        if date.month < 10:
+            year = date.year - 1
+            nb_days = days_in_year(date)
+        else:
+            year = date.year
+            nb_days = days_in_year(date+self.year_month_offset)
+        start_of_year = datetime.datetime(year, 10, 1, 6)
+        delta = date - start_of_year
+        return  (delta.days + delta.seconds/(3600*24)) / nb_days
+
+    def _get_frac_offset_monthly(self, date):
+        ordinal = self.ordinal(date)
+        date_ = datetime.datetime.fromordinal(ordinal)
+        start_of_month = datetime.datetime(date_.year, date_.month, 1, 6)
+        delta = date - start_of_month
+        seconds = delta.days*3600*24+delta.seconds
+        return seconds / (days_in_month(start_of_month)*3600*24)
+
+register_calendar('gas', GasCalendar())
+
+class NormalizedCalendar(AbstractCalendar):
+    """
+    Normalized calendar has 365 days, and starts on monday
+    XXX: DST ?
+    """
+    def __init__(self):
+        self.month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        self.cum_month_length =  [0] + numpy.cumsum(self.month_length[:-1]).tolist()
+
+    def ordinal(self, date):
+        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1
+
+    def day_of_week(self, date):
+        return (self.cum_month_length[date.month-1] + date.day-1) % 7
+
+register_calendar('normalized', NormalizedCalendar())
 

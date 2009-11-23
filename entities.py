@@ -9,7 +9,8 @@ from __future__ import division
 
 from cubicweb import Binary
 from cubicweb.entities import AnyEntity, fetch_config
-from cubicweb.utils import days_in_month, days_in_year
+
+from cubes.timeseries.calendar import get_calendar
 
 import pickle
 import csv
@@ -90,7 +91,7 @@ class TimeSeries(AnyEntity):
     @property
     def end_date(self):
         return self.timestamped_array()[-1][0]
-    
+
     def aggregated_value(self, start, end, mode):
         if self.granularity == 'constant':
             if mode == 'sum':
@@ -154,7 +155,7 @@ class TimeSeries(AnyEntity):
             return date
 
     def get_next_year(self, date):
-        year = date.year + 1 
+        year = date.year + 1
         month = date.month
         day = date.day
 
@@ -230,7 +231,7 @@ class TimeSeries(AnyEntity):
 
     @property
     def calendar(self):
-        return ALL_CALENDARS[self.use_calendar]
+        return get_calendar(self.use_calendar)
 
     def get_values_between(self, start_date, end_date):
         if start_date is None:
@@ -352,154 +353,10 @@ class TimeSeries(AnyEntity):
             return self.__start_offset
 
 
-class AbstractCalendar:
 
-    def get_offset(self, date, granularity):
-        offset_method = getattr(self, '_get_offset_%s'%granularity)
-        return offset_method(date) + self.get_frac_offset(date, granularity)
-
-    def get_frac_offset(self, date, granularity):
-        frac_offset_method = getattr(self, '_get_frac_offset_%s'%granularity)
-        return frac_offset_method(date)
-
-    def _get_offset_15min(self, date):
-        return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60) 
-
-    def _get_offset_hourly(self, date):
-        return self.ordinal(date)*24+self.seconds(date)//3600 # XXX DST!
-
-    def _get_offset_daily(self, date):
-        return self.ordinal(date)
-
-    def _get_offset_weekly(self, date):
-        ordinal = self.ordinal(date) - 1
-        return ordinal//7 
-
-    def _get_offset_monthly(self, date):
-        ordinal = self.ordinal(date)
-        date = datetime.date.fromordinal(ordinal)
-        return (date.year-1)*12+date.month-1
-
-    def _get_offset_yearly(self, date):
-        return date.year-1
-
-    def _get_frac_offset_15min(self, date):
-        rem = self.seconds(date) % (15*60)
-        return rem / (15*60)
-
-    def _get_frac_offset_hourly(self, date):
-        rem = self.seconds(date) % 3600
-        return rem/3600
-
-    def _get_frac_offset_daily(self, date):
-        rem = self.seconds(date)
-        return rem/(3600*24)
-
-    def _get_frac_offset_weekly(self, date):
-        ordinal = self.ordinal(date) - 1 
-        return (ordinal % 7) / 7 + self.seconds(date)/(3600*24*7)
-
-    def _get_frac_offset_monthly(self, date):
-        ordinal = self.ordinal(date)
-        start_of_month = datetime.datetime(date.year, date.month, 1)
-        delta = date - start_of_month
-        seconds = delta.days*3600*24+delta.seconds
-        return seconds / (days_in_month(start_of_month)*3600*24)
-
-    def _get_frac_offset_yearly(self, date):
-        frac_ordinal = self.ordinal(date) + self.seconds(date) / (3600*24)
-        start_of_year = self.ordinal(datetime.datetime(date.year, 1, 1))
-        return  (frac_ordinal-start_of_year) / days_in_year(date)
-
-    def ordinal(self, date):
-        """
-        return the number of days since Jan 1st, 0001 (this one being having ordinal 0)
-        """
-        raise NotImplementedError
-
-    def seconds(self, date):
-        """
-        return the number of seconds since the begining of the day for that date
-        """
-        return date.second+60*date.minute+3600*date.hour
-
-    def day_of_week(self, date):
-        """
-        return the day of week for a given date as an integer (0 is monday -> 6 is sunday)
-        """
-        raise NotImplementedError
-
-
-class GregorianCalendar(AbstractCalendar):
-    def ordinal(self, date):
-        return date.toordinal()
-
-    def day_of_week(self, date):
-        return date.weekday()
-
-
-
-class GasCalendar(AbstractCalendar):
-    def __init__(self):
-        self.day_offset = datetime.timedelta(hours=6)
-        self.year_month_offset = datetime.timedelta(days=31+30+31)
-
-    def ordinal(self, date):
-        return (date-self.day_offset).toordinal()
-
-    def seconds(self, date):
-        """
-        return the number of seconds since the begining of the day for that date
-        """
-        date = date - self.day_offset
-        return date.second+60*date.minute+3600*date.hour
-
-    def day_of_week(self, date):
-        return datetime.fromordinal(self.ordinal(date)).weekday()
-
-    def _get_offset_yearly(self, date):
-        return (date - self.year_month_offset - self.day_offset).year-1
-
-    def _get_frac_offset_yearly(self, date):
-        if date.month < 10:
-            year = date.year - 1
-            nb_days = days_in_year(date)
-        else:
-            year = date.year
-            nb_days = days_in_year(date+self.year_month_offset)
-        start_of_year = datetime.datetime(year, 10, 1, 6)
-        delta = date - start_of_year
-        return  (delta.days + delta.seconds/(3600*24)) / nb_days
-
-    def _get_frac_offset_monthly(self, date):
-        ordinal = self.ordinal(date)
-        date_ = datetime.datetime.fromordinal(ordinal)
-        start_of_month = datetime.datetime(date_.year, date_.month, 1, 6)
-        delta = date - start_of_month
-        seconds = delta.days*3600*24+delta.seconds
-        return seconds / (days_in_month(start_of_month)*3600*24)
-
-
-class NormalizedCalendar(AbstractCalendar):
-    """
-    Normalized calendar has 365 days, and starts on monday
-    XXX: DST ?
-    """
-    def __init__(self):
-        self.month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        self.cum_month_length =  [0] + numpy.cumsum(self.month_length[:-1]).tolist()
-
-    def ordinal(self, date):
-        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1
-
-    def day_of_week(self, date):
-        return (self.cum_month_length[date.month-1] + date.day-1) % 7
-
-ALL_CALENDARS = {'gregorian': GregorianCalendar(),
-                 'normalized': NormalizedCalendar(),
-                 'gas': GasCalendar(),
-                 }
-
+#
+# Below is some work in progress, not yet used in Pylos
+#
 
 class TSConstantExceptionBlock(AnyEntity):
     id = 'TSConstantExceptionBlock'
