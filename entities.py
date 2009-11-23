@@ -237,7 +237,7 @@ class TimeSeries(AnyEntity):
         if start_date is None:
             start_date = self.start_date
         if self.granularity == 'constant':
-            return [(start_date, self.first),]
+            return [(start_date, self.first), ]
         values = []
         for tstamp, value in self.timestamped_array():
             if tstamp < start_date:
@@ -282,8 +282,7 @@ class TimeSeries(AnyEntity):
     def _numpy_from_excel(self, file):
         xl_data = file.read()
         wb = xlrd.open_workbook(filename=file.filename,
-                                file_contents=xl_data
-                                )
+                                file_contents=xl_data)
         sheet = wb.sheet_by_index(0)
         dates = []
         values = []

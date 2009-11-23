@@ -19,18 +19,18 @@ def get_calendar(name):
 class AbstractCalendar:
 
     def get_offset(self, date, granularity):
-        offset_method = getattr(self, '_get_offset_%s'%granularity)
+        offset_method = getattr(self, '_get_offset_%s' % granularity)
         return offset_method(date) + self.get_frac_offset(date, granularity)
 
     def get_frac_offset(self, date, granularity):
-        frac_offset_method = getattr(self, '_get_frac_offset_%s'%granularity)
+        frac_offset_method = getattr(self, '_get_frac_offset_%s' % granularity)
         return frac_offset_method(date)
 
     def _get_offset_15min(self, date):
         return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60) 
 
     def _get_offset_hourly(self, date):
-        return self.ordinal(date)*24+self.seconds(date)//3600 # XXX DST!
+        return self.ordinal(date)*24 + self.seconds(date)//3600 # XXX DST!
 
     def _get_offset_daily(self, date):
         return self.ordinal(date)
@@ -42,7 +42,7 @@ class AbstractCalendar:
     def _get_offset_monthly(self, date):
         ordinal = self.ordinal(date)
         date = datetime.date.fromordinal(ordinal)
-        return (date.year-1)*12+date.month-1
+        return (date.year-1)*12 + date.month-1
 
     def _get_offset_yearly(self, date):
         return date.year-1
@@ -53,11 +53,11 @@ class AbstractCalendar:
 
     def _get_frac_offset_hourly(self, date):
         rem = self.seconds(date) % 3600
-        return rem/3600
+        return rem / 3600
 
     def _get_frac_offset_daily(self, date):
         rem = self.seconds(date)
-        return rem/(3600*24)
+        return rem / (3600*24)
 
     def _get_frac_offset_weekly(self, date):
         ordinal = self.ordinal(date) - 1 
@@ -67,7 +67,7 @@ class AbstractCalendar:
         ordinal = self.ordinal(date)
         start_of_month = datetime.datetime(date.year, date.month, 1)
         delta = date - start_of_month
-        seconds = delta.days*3600*24+delta.seconds
+        seconds = delta.days*3600*24 + delta.seconds
         return seconds / (days_in_month(start_of_month)*3600*24)
 
     def _get_frac_offset_yearly(self, date):
@@ -85,7 +85,7 @@ class AbstractCalendar:
         """
         return the number of seconds since the begining of the day for that date
         """
-        return date.second+60*date.minute+3600*date.hour
+        return date.second+60*date.minute + 3600*date.hour
 
     def day_of_week(self, date):
         """
@@ -117,7 +117,7 @@ class GasCalendar(AbstractCalendar):
         return the number of seconds since the begining of the day for that date
         """
         date = date - self.day_offset
-        return date.second+60*date.minute+3600*date.hour
+        return date.second+60*date.minute + 3600*date.hour
 
     def day_of_week(self, date):
         return datetime.datetime.fromordinal(self.ordinal(date)).weekday()
