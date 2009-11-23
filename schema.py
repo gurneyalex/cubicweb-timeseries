@@ -34,7 +34,7 @@ class TimeSeries(EntityType):
     use_calendar = String(description=_('Calendar used'),
                           required=True,
                           internationalizable=True,
-                          vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
+                          vocabulary = (_('gregorian'), _('normalized'),),
                           default='gregorian')
 
     start_date = Datetime(description=_('Start date'),
@@ -70,7 +70,7 @@ class TimeSeriesHandle(EntityType):
     use_calendar = String(description=_('Calendar used'),
                       required=True,
                       internationalizable=True,
-                      vocabulary = (_('gregorian'), _('normalized'), _('gas'),),
+                      vocabulary = (_('gregorian'), _('normalized'), ),
                       default='gregorian')
 
     start_date = Datetime(description=_('Start date'),

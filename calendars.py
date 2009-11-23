@@ -104,47 +104,6 @@ class GregorianCalendar(AbstractCalendar):
 register_calendar('gregorian', GregorianCalendar())
 
 
-class GasCalendar(AbstractCalendar):
-    def __init__(self):
-        self.day_offset = datetime.timedelta(hours=6)
-        self.year_month_offset = datetime.timedelta(days=31+30+31)
-
-    def ordinal(self, date):
-        return (date-self.day_offset).toordinal()
-
-    def seconds(self, date):
-        """
-        return the number of seconds since the begining of the day for that date
-        """
-        date = date - self.day_offset
-        return date.second+60*date.minute + 3600*date.hour
-
-    def day_of_week(self, date):
-        return datetime.datetime.fromordinal(self.ordinal(date)).weekday()
-
-    def _get_offset_yearly(self, date):
-        return (date - self.year_month_offset - self.day_offset).year-1
-
-    def _get_frac_offset_yearly(self, date):
-        if date.month < 10:
-            year = date.year - 1
-            nb_days = days_in_year(date)
-        else:
-            year = date.year
-            nb_days = days_in_year(date+self.year_month_offset)
-        start_of_year = datetime.datetime(year, 10, 1, 6)
-        delta = date - start_of_year
-        return  (delta.days + delta.seconds/(3600*24)) / nb_days
-
-    def _get_frac_offset_monthly(self, date):
-        ordinal = self.ordinal(date)
-        date_ = datetime.datetime.fromordinal(ordinal)
-        start_of_month = datetime.datetime(date_.year, date_.month, 1, 6)
-        delta = date - start_of_month
-        seconds = delta.days*3600*24+delta.seconds
-        return seconds / (days_in_month(start_of_month)*3600*24)
-
-register_calendar('gas', GasCalendar())
 
 class NormalizedCalendar(AbstractCalendar):
     """

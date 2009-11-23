@@ -10,7 +10,7 @@ from __future__ import division
 from cubicweb import Binary
 from cubicweb.entities import AnyEntity, fetch_config
 
-from cubes.timeseries.calendar import get_calendar
+from cubes.timeseries.calendars import get_calendar
 
 import pickle
 import csv
