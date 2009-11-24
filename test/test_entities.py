@@ -4,6 +4,7 @@ import numpy
 from datetime import datetime
 
 from cubicweb.devtools.apptest import EnvBasedTC
+from logilab.common.testlib import unittest_main
 
 class TSaccessTC(EnvBasedTC):
     def setup_database(self):
@@ -355,3 +356,6 @@ class TimeSeriesTC(EnvBasedTC):
         data=numpy.arange(10)
         ts = self.add_entity('TimeSeries', data=data)
         self.assert_(ts.name.startswith(u'TS_%s' % ts.eid))
+
+if __name__ == '__main__':
+    unittest_main()
