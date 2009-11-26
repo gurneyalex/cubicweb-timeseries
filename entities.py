@@ -284,14 +284,15 @@ class TimeSeries(AnyEntity):
         wb = xlrd.open_workbook(filename=file.filename,
                                 file_contents=xl_data)
         sheet = wb.sheet_by_index(0)
-        dates = []
         values = []
         for row in xrange(sheet.nrows):
-            if sheet.cell_type(row, 0) != xlrd.XL_CELL_DATE:
-                continue
-            dates.append(sheet.cell_value(row, 0))
-            values.append(sheet.cell_value(row, 1))
-        if not dates or not values:
+            cell_value = sheet.cell_value(row, 0)
+            try:
+                float(cell_value)
+            except ValueError:
+                raise ValueError('Invalid data type in cell (%d, %d)' % (row, 0))
+            values.append(sheet.cell_value(row, 0))
+        if not values:
             raise ValueError('Unable to read a Timeseries in %s' % file.filename)
         return numpy.array(values, dtype=self.dtype)
 
