@@ -15,7 +15,7 @@ from cubicweb.selectors import implements
 
 from cubicweb.web.views import primary, baseviews, plots, tabs
 
-#uicfg.autoform_is_inlined.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'), True)
+uicfg.autoform_section.tag_subject_of(('TimeSeries', 'use_calendar', '*'), 'generated')
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = implements('TimeSeries')
