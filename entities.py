@@ -43,17 +43,17 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return self.name
+        return self.name #pylint:disable-msg=E1101
 
     @property
     def is_constant(self):
-        return self.granularity == u'constant'
+        return self.granularity == u'constant' #pylint:disable-msg=E1101
 
     def dc_long_title(self):
         if self.is_constant:
             return self.req._(u'Constant time series (value: %.2f)' % self.first)
         return self.req._(u'Time series %s starting on %s with %d values' %
-                          (self.name, self.start_date, self.length))
+                          (self.name, self.start_date, self.length)) #pylint:disable-msg=E1101
 
     def grok_data(self):
         """
@@ -63,6 +63,7 @@ class TimeSeries(AnyEntity):
         pickled numpy array. Ensure it a pickle numpy array before
         storing object in db.
         """
+        #pylint:disable-msg=E1101,E0203
         try:
             filename = self.data.filename.lower()
         except AttributeError:
@@ -81,7 +82,7 @@ class TimeSeries(AnyEntity):
         pickle.dump(numpy_array, self.data)
 
     def timestamped_array(self):
-        date = self.start_date
+        date = self.start_date #pylint:disable-msg=E1101
         data = []
         for v in self.array:
             data.append((date, self.python_value(v)))
@@ -93,6 +94,7 @@ class TimeSeries(AnyEntity):
         return self.timestamped_array()[-1][0]
 
     def aggregated_value(self, start, end, mode):
+        #pylint:disable-msg=E1101
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
@@ -123,6 +125,7 @@ class TimeSeries(AnyEntity):
 
 
     def get_next_date(self, date):
+        #pylint:disable-msg=E1101
         if self.granularity in TIME_DELTAS:
             return date + TIME_DELTAS[self.granularity]
         elif self.granularity == 'monthly':
@@ -195,11 +198,11 @@ class TimeSeries(AnyEntity):
                    'Integer': int,
                    'Boolean': bool,
                    }
-        return _dtypes[self.data_type](v)
+        return _dtypes[self.data_type](v) #pylint:disable-msg=E1101
 
     @property
     def dtype(self):
-        return self._dtypes[self.data_type]
+        return self._dtypes[self.data_type] #pylint:disable-msg=E1101
 
     @property
     def first(self):
@@ -231,9 +234,10 @@ class TimeSeries(AnyEntity):
 
     @property
     def calendar(self):
-        return get_calendar(self.use_calendar)
+        return get_calendar(self.use_calendar) #pylint:disable-msg=E1101
 
     def get_values_between(self, start_date, end_date):
+        #pylint:disable-msg=E1101
         if start_date is None:
             start_date = self.start_date
         if self.granularity == 'constant':
@@ -254,7 +258,7 @@ class TimeSeries(AnyEntity):
             dialect = sniffer.sniff(raw_data, sniffer.preferred)
             has_header = sniffer.has_header(raw_data)
         except csv.Error, exc:
-            self.exception('Problem sniffing file %s', file.filename)
+            self.exception('Problem sniffing file %s', file.filename) #pylint:disable-msg=E1101
             dialect = csv.excel
             has_header = False
         file.seek(0)
@@ -270,7 +274,7 @@ class TimeSeries(AnyEntity):
                 val = float(values[-1])
             except ValueError:
                 if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', file.filename)
+                    self.debug('error while parsing first line of %s', file.filename) #pylint:disable-msg=E1101
                     continue # assume there was a header
                 else:
                     raise ValueError('unable to read value on line %d of %s' % (reader.line_num, file.filename))
@@ -301,10 +305,11 @@ class TimeSeries(AnyEntity):
         return self.get_relative(index)
 
     def get_rel_index(self, date):
-        abs_index = self.calendar.get_offset(date, self.granularity)
+        abs_index = self.calendar.get_offset(date, self.granularity) #pylint:disable-msg=E1101
         return self._make_relative_index(abs_index)
 
     def get_by_date(self, date):
+        #pylint:disable-msg=E1101
         if type(date) is slice:
             assert date.step is None
             if date.start is None:
@@ -349,7 +354,7 @@ class TimeSeries(AnyEntity):
         try:
             return self.__start_offset
         except AttributeError:
-            self.__start_offset = self.calendar.get_offset(self.start_date, self.granularity)
+            self.__start_offset = self.calendar.get_offset(self.start_date, self.granularity) #pylint:disable-msg=E1101
             return self.__start_offset
 
 

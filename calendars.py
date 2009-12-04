@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import division
 import numpy
 import datetime
@@ -26,7 +23,7 @@ class AbstractCalendar:
         return frac_offset_method(date)
 
     def _get_offset_15min(self, date):
-        return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60) 
+        return (self.ordinal(date)*24+date.hour)*4 + self.seconds(date)//(15*60)
 
     def _get_offset_hourly(self, date):
         return self.ordinal(date)*24 + self.seconds(date)//3600 # XXX DST!
@@ -36,7 +33,7 @@ class AbstractCalendar:
 
     def _get_offset_weekly(self, date):
         ordinal = self.ordinal(date) - 1
-        return ordinal//7 
+        return ordinal//7
 
     def _get_offset_monthly(self, date):
         ordinal = self.ordinal(date)
@@ -59,7 +56,7 @@ class AbstractCalendar:
         return rem / (3600*24)
 
     def _get_frac_offset_weekly(self, date):
-        ordinal = self.ordinal(date) - 1 
+        ordinal = self.ordinal(date) - 1
         return (ordinal % 7) / 7 + self.seconds(date)/(3600*24*7)
 
     def _get_frac_offset_monthly(self, date):
