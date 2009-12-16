@@ -81,7 +81,7 @@ class TimeSeries(AnyEntity):
             elif filename.endswith('.xls'):
                 numpy_array = self._numpy_from_excel(self.data)
             elif filename.endswith('.txt'):
-                pass
+                numpy_array = self._numpy_from_txt(self.data)
             else:
                 raise ValueError('Unsupported file type %s' % self.data.filename)
 
@@ -258,6 +258,9 @@ class TimeSeries(AnyEntity):
                 break
             values.append((tstamp, value))
         return values
+
+    def _numpy_from_txt(self, file):
+        return numpy.array([float(x.strip()) for x in file])
 
     def _numpy_from_csv(self, file):
         sniffer = csv.Sniffer()
