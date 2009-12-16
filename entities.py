@@ -13,6 +13,7 @@ from cubicweb.entities import AnyEntity, fetch_config
 from cubes.timeseries.calendars import get_calendar
 
 import pickle
+import zlib
 import csv
 from math import floor, ceil
 
@@ -39,7 +40,13 @@ class TimeSeries(AnyEntity):
     @property
     def array(self):
         if not hasattr(self, '_array'):
-            self._array = pickle.load(self.data)
+            raw_data = self.data.getvalue()
+            try:
+                raw_data = zlib.decompress(raw_data)
+            except zlib.error:
+                # assume uncompressed data
+                pass
+            self._array = pickle.loads(raw_data)
         return self._array
 
     def dc_title(self):
@@ -79,7 +86,8 @@ class TimeSeries(AnyEntity):
                 raise ValueError('Unsupported file type %s' % self.data.filename)
 
         self.data = Binary()
-        pickle.dump(numpy_array, self.data)
+        compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
+        self.data.write(compressed_data)
 
     def timestamped_array(self):
         date = self.start_date #pylint:disable-msg=E1101
