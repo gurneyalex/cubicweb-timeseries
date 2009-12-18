@@ -14,11 +14,6 @@ from yams.buildobjs import (EntityType, String, Bytes, Boolean, #pylint:disable-
 from yams.constraints import StaticVocabularyConstraint
 
 class TimeSeries(EntityType):
-    name = String(required=True,
-                  fulltextindexed=True,
-                  maxsize=255,
-                  unique=True)
-
     data_type = String(required=True,
                        vocabulary = [_('Float'), _('Integer'), _('Boolean')],
                        default = _('Float'))
@@ -51,11 +46,6 @@ class TimeSeries(EntityType):
 #
 
 class TimeSeriesHandle(EntityType):
-    name = String(required=True,
-                  fulltextindexed=True,
-                  maxsize=255,
-                  unique=True)
-
     data_type = String(required=True,
                        vocabulary = [_('Float'), _('Integer'), _('Boolean')],
                        default = _('Float'))

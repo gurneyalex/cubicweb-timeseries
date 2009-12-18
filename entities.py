@@ -50,7 +50,7 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return self.name #pylint:disable-msg=E1101
+        return 'TS %s' % self.eid #pylint:disable-msg=E1101
 
     @property
     def is_constant(self):
@@ -60,7 +60,7 @@ class TimeSeries(AnyEntity):
         if self.is_constant:
             return self.req._(u'Constant time series (value: %.2f)' % self.first)
         return self.req._(u'Time series %s starting on %s with %d values' %
-                          (self.name, self.start_date, self.length)) #pylint:disable-msg=E1101
+                          (self.dc_title(), self.start_date, self.length)) #pylint:disable-msg=E1101
 
     def grok_data(self):
         """

@@ -10,27 +10,27 @@ class TSaccessTC(EnvBasedTC):
     def setup_database(self):
         data = numpy.arange(10)
         start_date = datetime(2009, 10, 1)
-        self.dailyts = self.execute('INSERT TimeSeries SP: SP name "tsdaily", '
+        self.dailyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "daily", '
                                'SP use_calendar "gregorian", SP start_date %(s)s, '
                                'SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
-        self.monthlyts = self.execute('INSERT TimeSeries SP: SP name "tsmonthly", '
+        self.monthlyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "monthly", '
                                'SP use_calendar "gregorian", SP start_date %(s)s, '
                                'SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
 
-        self.yearlyts = self.execute('INSERT TimeSeries SP: SP name "tsyearly", '
+        self.yearlyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "yearly", '
                                'SP use_calendar "gregorian", SP start_date %(s)s, '
                                'SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
 
-        self.weeklyts = self.execute('INSERT TimeSeries SP: SP name "tsweekly", '
+        self.weeklyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "weekly", '
                                'SP use_calendar "gregorian", SP start_date %(s)s, '
                                'SP data %(d)s',
@@ -148,10 +148,6 @@ class TSaccessTC(EnvBasedTC):
         self.assertEquals(self.weeklyts.get_by_date(slice(date1, date2)).tolist(),
                           self.weeklyts.array[1:2].tolist())
 
-
-
-
-
     def test_aggregated_value_average(self):
         date1 = datetime(2009, 10, 2, 6)
         date2 = datetime(2009, 10, 4, 6)
@@ -213,38 +209,38 @@ class ComputeSumAverageTC(EnvBasedTC):
     def setup_database(self):
         start_date = datetime(2009, 10, 1, 0)
         yearly_start_date = datetime(2009, 1, 1, 0)
-        self.yearly_ts = self.execute('INSERT TimeSeries SP: SP name "tsyearly", '
+        self.yearly_ts = self.execute('INSERT TimeSeries SP: '
                                       'SP data_type "Float", SP granularity "yearly", '
                                       'SP use_calendar "gregorian", SP start_date %(s)s, '
                                       'SP data %(d)s',
                                       {'d': numpy.arange(3)*10,
                                        's': yearly_start_date}).get_entity(0, 0)
-        self.monthly_ts = self.execute('INSERT TimeSeries SP: SP name "tsmonthly", '
+        self.monthly_ts = self.execute('INSERT TimeSeries SP: '
                                      'SP data_type "Float", SP granularity "monthly", '
                                      'SP use_calendar "gregorian", SP start_date %(s)s, '
                                      'SP data %(d)s',
                                      {'d': numpy.arange(12),
                                       's': start_date}).get_entity(0, 0)
-        self.weekly_ts = self.execute('INSERT TimeSeries SP: SP name "tsweekly", '
+        self.weekly_ts = self.execute('INSERT TimeSeries SP: '
                                      'SP data_type "Float", SP granularity "weekly", '
                                      'SP use_calendar "gregorian", SP start_date %(s)s, '
                                      'SP data %(d)s',
                                      {'d': numpy.arange(10),
                                       's':  datetime(2009, 9, 28, 6)}).get_entity(0, 0)
 
-        self.daily_ts = self.execute('INSERT TimeSeries SP: SP name "tsdaily", '
+        self.daily_ts = self.execute('INSERT TimeSeries SP: '
                                      'SP data_type "Float", SP granularity "daily", '
                                      'SP use_calendar "gregorian", SP start_date %(s)s, '
                                      'SP data %(d)s',
                                      {'d': numpy.arange(60),
                                       's': start_date}).get_entity(0, 0)
-        self.hourly_ts = self.execute('INSERT TimeSeries SP: SP name "tshourly", '
+        self.hourly_ts = self.execute('INSERT TimeSeries SP: '
                                       'SP data_type "Float", SP granularity "hourly", '
                                       'SP use_calendar "gregorian", SP start_date %(s)s, '
                                       'SP data %(d)s',
                                       {'d': numpy.arange(720),
                                        's': start_date}).get_entity(0, 0)
-        self.quart_ts = self.execute('INSERT TimeSeries SP: SP name "ts15min", '
+        self.quart_ts = self.execute('INSERT TimeSeries SP: '
                                       'SP data_type "Float", SP granularity "15min", '
                                       'SP use_calendar "gregorian", SP start_date %(s)s, '
                                       'SP data %(d)s',
@@ -349,13 +345,6 @@ class ComputeSumAverageTC(EnvBasedTC):
         data = self.quart_ts.array
         self.assertFloatAlmostEquals(average, data[2*24*4:22*24*4].mean())
 
-
-
-class TimeSeriesTC(EnvBasedTC):
-    def test_auto_name(self):
-        data=numpy.arange(10)
-        ts = self.add_entity('TimeSeries', data=data)
-        self.assert_(ts.name.startswith(u'TS_%s' % ts.eid))
 
 if __name__ == '__main__':
     unittest_main()
