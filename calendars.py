@@ -89,6 +89,44 @@ class AbstractCalendar:
         """
         raise NotImplementedError
 
+    def start_of_day(self, tstamp):
+        """
+        return datetime of the begining of gas day for tstamp
+        """
+        raise NotImplementedError
+
+    def is_day_start(self, tstamp):
+        raise NotImplementedError
+
+    def is_month_start(self, tstamp):
+        raise NotImplementedError
+
+    def is_year_start(self, tstamp):
+        raise NotImplementedError
+
+    def next_week_start(self, date):
+        """
+        return a datetime object on next monday
+        """
+        raise NotImplementedError
+
+    def next_month_start(self, date):
+        """
+        return a datetime object on the first day of the next month
+        """
+        raise NotImplementedError
+
+    def prev_month_start(self, date):# XXX rename to month_start?
+        raise NotImplementedError
+
+    def next_year_start(self, date):
+        raise NotImplementedError
+
+    def prev_year_start(self, date):# XXX rename to year_start?
+        raise NotImplementedError
+
+    def prev_year_start(self, date):
+        raise NotImplementedError
 
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):
@@ -97,24 +135,46 @@ class GregorianCalendar(AbstractCalendar):
     def day_of_week(self, date):
         return date.weekday()
 
+    def start_of_day(self, tstamp):
+        """
+        return datetime of the begining of day for tstamp
+        """
+        return datetime.datetime(tstamp.year, tstamp.month, tstamp.day, 0)
+
+    def is_day_start(self, tstamp):
+        return tstamp.hour == 0 and tstamp.minute == 0 and tstamp.second == 0
+
+    def is_month_start(self, tstamp):
+        return tstamp.day == 1 and self.is_day_start(tstamp)
+
+    def is_year_start(self, tstamp):
+        return tstamp.month == 1  and self.is_month_start(tstamp)
+
+    def next_week_start(self, date):
+        """
+        return a datetime object on next monday
+        """
+        date = self.start_of_day(date)
+        monday = date + datetime.timedelta(days=7-date.weekday())
+        if monday.weekday() != 0:
+            raise RuntimeError('severe problem in next_week_start implementation')
+        return monday
+
+    def next_month_start(self, date):
+        """
+        return a datetime object on the first day of the next month
+        """
+        date = self.start_of_day(date)
+        return date + datetime.timedelta(days=(days_in_month(date)-date.day+1))
+
+    def prev_month_start(self, date):# XXX rename to month_start?
+        return datetime.datetime(date.year, date.month, 1, 0)
+
+    def next_year_start(self, date):
+        return datetime.datetime(date.year + 1, 1, 1, 0)
+
+    def prev_year_start(self, date):# XXX rename to year_start?
+        return datetime.datetime(date.year, 1, 1, 0)
+
 register_calendar('gregorian', GregorianCalendar())
-
-
-
-class NormalizedCalendar(AbstractCalendar):
-    """
-    Normalized calendar has 365 days, and starts on monday
-    XXX: DST ?
-    """
-    def __init__(self):
-        self.month_length = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-        self.cum_month_length =  [0] + numpy.cumsum(self.month_length[:-1]).tolist()
-
-    def ordinal(self, date):
-        return (date.year-1)*365 + self.cum_month_length[date.month-1] + date.day-1
-
-    def day_of_week(self, date):
-        return (self.cum_month_length[date.month-1] + date.day-1) % 7
-
-register_calendar('normalized', NormalizedCalendar())
 
