@@ -13,6 +13,9 @@ msgstr ""
 msgid "15 min"
 msgstr ""
 
+msgid "15min"
+msgstr ""
+
 # schema pot file, generated on 2009-10-26 17:22:40
 #
 # singular and plural forms for each entity type
@@ -26,6 +29,10 @@ msgid "Boolean"
 msgstr ""
 
 msgid "Calendar used"
+msgstr ""
+
+#, python-format
+msgid "Constant time series (value: %.2f)"
 msgstr ""
 
 msgid "ConstantAndExceptionTSValue"
@@ -174,7 +181,16 @@ msgstr ""
 msgid "blocks_object"
 msgstr ""
 
+msgid "characteristics"
+msgstr ""
+
 msgid "composite de start date, value"
+msgstr ""
+
+msgid "constant"
+msgstr ""
+
+msgid "constant value"
 msgstr ""
 
 msgid ""
@@ -252,9 +268,6 @@ msgstr ""
 msgid "from %s: %s"
 msgstr ""
 
-msgid "gas"
-msgstr ""
-
 msgid "granularity"
 msgstr ""
 
@@ -298,17 +311,6 @@ msgstr ""
 msgid "monthly"
 msgstr ""
 
-msgctxt "TimeSeriesHandle"
-msgid "name"
-msgstr ""
-
-msgctxt "TimeSeries"
-msgid "name"
-msgstr ""
-
-msgid "normalized"
-msgstr ""
-
 msgctxt "inlined:BlockConstantTSValue.blocks.subject"
 msgid "remove this TSConstantBlock"
 msgstr ""
@@ -344,6 +346,9 @@ msgid "stop_date"
 msgstr ""
 
 msgid "sum"
+msgstr ""
+
+msgid "summary"
 msgstr ""
 
 msgid "the current version adapted a little bit"
