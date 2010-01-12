@@ -61,6 +61,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'
     __select__ = implements('TimeSeries')
     title = None
+
     def build_plot_data(self, entity):
         plots = []
         for ts in self.rset.entities():
@@ -80,20 +81,13 @@ class TimeSeriesPlotView(baseviews.EntityView):
         plotwidget = plots.FlotPlotWidget(names, plot_list, timemode=True)
         plotwidget.render(self.req, width, height, w=self.w)
 
-    def cell_call(self, row, col, width=None, height=None):
-        ts = self.rset.get_entity(row, col)
-        width = width or self.req.form.get('width', 500)
-        height = height or self.req.form.get('height', 400)
-        plotwidget = plots.FlotPlotWidget([ts.dc_title()],
-                                          [ts.timestamped_array()],
-                                          timemode=True)
-        plotwidget.render(self.req, width, height, w=self.w)
 
 
 class TimeSeriesValuesView(baseviews.EntityView):
     id = 'ts_values'
     __select__ = implements('TimeSeries')
     title = None
+
     def cell_call(self, row, col):
         entity = self.entity(row, col)
         w = self.w; _ = self.req._
