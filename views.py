@@ -14,6 +14,7 @@ from cubicweb.schema import display_name
 from cubicweb.selectors import implements
 
 from cubicweb.web.views import primary, baseviews, plots, tabs
+from cubes.timeseries.plots import TSFlotPlotWidget
 
 uicfg.autoform_section.tag_subject_of(('TimeSeries', 'use_calendar', '*'), 'generated')
 
@@ -69,24 +70,24 @@ class TimeSeriesPlotView(baseviews.EntityView):
 
     def call(self, width=None, height=None):
         form = self.req.form
-        width = width or form.get('width', 500)
-        height = height or form.get('height', 400)
+        width = width or form.get('width', 900)
+        height = height or form.get('height', 250)
         names = []
         plot_list = []
         for ts in self.rset.entities():
             names.append(ts.dc_title())
             plot_list.append(ts.compressed_timestamped_array())
         self.req.form['jsoncall'] = True
-        plotwidget = plots.FlotPlotWidget(names, plot_list, timemode=True)
+        plotwidget = TSFlotPlotWidget(names, plot_list)
         plotwidget.render(self.req, width, height, w=self.w)
 
     def cell_call(self, row, col, width=None, height=None):
         ts = self.rset.get_entity(row, col)
-        width = width or self.req.form.get('width', 500)
-        height = height or self.req.form.get('height', 400)
-        plotwidget = plots.FlotPlotWidget([ts.dc_title()],
-                                          [ts.timestamped_array()],
-                                          timemode=True)
+        width = width or self.req.form.get('width', 900)
+        height = height or self.req.form.get('height', 250)
+        plotwidget = TSFlotPlotWidget([ts.dc_title()],
+                                      [ts.timestamped_array()],
+                                     )
         plotwidget.render(self.req, width, height, w=self.w)
 
 
