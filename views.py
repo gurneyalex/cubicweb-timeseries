@@ -81,15 +81,6 @@ class TimeSeriesPlotView(baseviews.EntityView):
         plotwidget = TSFlotPlotWidget(names, plot_list)
         plotwidget.render(self.req, width, height, w=self.w)
 
-    def cell_call(self, row, col, width=None, height=None):
-        ts = self.rset.get_entity(row, col)
-        width = width or self.req.form.get('width', 900)
-        height = height or self.req.form.get('height', 250)
-        plotwidget = TSFlotPlotWidget([ts.dc_title()],
-                                      [ts.timestamped_array()],
-                                     )
-        plotwidget.render(self.req, width, height, w=self.w)
-
 
 class TimeSeriesValuesView(baseviews.EntityView):
     id = 'ts_values'

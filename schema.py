@@ -91,7 +91,7 @@ class TSConstantBlock(EntityType):
 
 class BlockConstantTSValue(_TimeSeriesValue):
     """
-    composite de start date, value
+    composite of start_date, value
     """
     blocks = SubjectRelation('TSConstantBlock', cardinality='+1', composite='subject')
 

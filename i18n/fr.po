@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cubicweb-timeseries 0.1.0\n"
-"PO-Revision-Date: 2009-10-26 17:38+0100\n"
+"PO-Revision-Date: 2010-01-07 08:27+0100\n"
 "Last-Translator: Alexandre Fayolle <alexandre.fayolle@logilab.fr>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,6 +14,9 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 msgid "15 min"
+msgstr "15 min"
+
+msgid "15min"
 msgstr "15 min"
 
 # schema pot file, generated on 2009-10-26 17:22:40
@@ -30,6 +33,10 @@ msgstr "Booléen"
 
 msgid "Calendar used"
 msgstr "Calendrier utilisé"
+
+#, python-format
+msgid "Constant time series (value: %.2f)"
+msgstr "Série constante (valeur: %.2f)"
 
 msgid "ConstantAndExceptionTSValue"
 msgstr ""
@@ -122,7 +129,7 @@ msgstr ""
 
 #, python-format
 msgid "Time series %s starting on %s with %d values"
-msgstr ""
+msgstr "Série temporelle %s débutant le %s avec %d valeurs"
 
 # schema pot file, generated on 2009-10-01 17:32:57
 #
@@ -177,8 +184,17 @@ msgstr "blocs de"
 msgid "blocks_object"
 msgstr "blocs de"
 
+msgid "characteristics"
+msgstr "Caractéristiques"
+
 msgid "composite de start date, value"
 msgstr ""
+
+msgid "constant"
+msgstr "constante"
+
+msgid "constant value"
+msgstr "valeur constante"
 
 msgid ""
 "creating TSConstantBlock (BlockConstantTSValue %(linkto)s blocks "
@@ -255,9 +271,6 @@ msgstr "première valeur"
 msgid "from %s: %s"
 msgstr "de %s : %s"
 
-msgid "gas"
-msgstr "gaz"
-
 msgid "granularity"
 msgstr "granularité"
 
@@ -301,17 +314,6 @@ msgstr "minimum"
 msgid "monthly"
 msgstr "mensuelle"
 
-msgctxt "TimeSeriesHandle"
-msgid "name"
-msgstr "nom"
-
-msgctxt "TimeSeries"
-msgid "name"
-msgstr "nom"
-
-msgid "normalized"
-msgstr "normalisé"
-
 msgctxt "inlined:BlockConstantTSValue.blocks.subject"
 msgid "remove this TSConstantBlock"
 msgstr ""
@@ -348,6 +350,9 @@ msgstr "fin"
 
 msgid "sum"
 msgstr "somme"
+
+msgid "summary"
+msgstr "Résumé"
 
 msgid "the current version adapted a little bit"
 msgstr ""
@@ -395,3 +400,17 @@ msgstr "annuelle"
 
 #~ msgid "Time series starting on %s with %d values"
 #~ msgstr "Série temporelle débutant le %s avec %d valeurs"
+
+#~ msgid "gas"
+#~ msgstr "gaz"
+
+#~ msgctxt "TimeSeriesHandle"
+#~ msgid "name"
+#~ msgstr "nom"
+
+#~ msgctxt "TimeSeries"
+#~ msgid "name"
+#~ msgstr "nom"
+
+#~ msgid "normalized"
+#~ msgstr "normalisé"
