@@ -23,24 +23,26 @@ from cubicweb.web.views.plots import PlotWidget
 class TSFlotPlotWidget(PlotWidget):
     """PlotRenderer widget using Flot"""
     onload = u"""
-var fig = jQuery("#%(figid)s");
+    
+var mainfig = jQuery("#main%(figid)s");
+var overviewfig = jQuery("#overview%(figid)s");
 
-if (fig.attr('cubicweb:type') != 'prepared-plot') {
+if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cubicweb:type') != 'prepared-plot')){
 
     %(plotdefs)s
     
-    var mainoptions = {points: {show: true, radius: 3},
+    var mainoptions = {points: {show: true, radius: 2},
          lines: {show: true, lineWidth: 1},
-         grid: {hoverable: true},
+         grid: {hoverable: true, clickable: true},
          xaxis: {mode: "time"},
-         selection: {mode: "x"}
+         selection: {mode: "x", color: 'blue'}
          }
          
     var overviewoptions = {points: {show: false},
          lines: {show: true, lineWidth: 1},
-         grid: {hoverable: false},
+         grid: {hoverable: false, clickable: true},
          xaxis: {mode: "time"},
-         selection: {mode: "x"}
+         selection: {mode: "x", color: 'blue'}
          }
 
     var main = jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s], mainoptions);
@@ -66,10 +68,16 @@ if (fig.attr('cubicweb:type') != 'prepared-plot') {
     jQuery("#overview%(figid)s").bind("plotselected", function (event, ranges) {
         main.setSelection(ranges);
     });
-
     
-    fig.attr('cubicweb:type','prepared-plot');
+    jQuery("#reset").click(function () {
+        jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s], mainoptions);
+        overview.clearSelection();
+    });
+    
+    mainfig.attr('cubicweb:type','prepared-plot');
+    overviewfig.attr('cubicweb:type','prepared-plot');
 }
+
 """
 
     def __init__(self, labels, plots):
@@ -86,14 +94,15 @@ if (fig.attr('cubicweb:type') != 'prepared-plot') {
         req.add_js(('jquery.flot.js', 
                     'timeseries.flot.js', 
                     'jquery.flot.selection.js',
-                    'jquery.corner.js'))
+                    'jquery.js'))
         figid = u'figure%s' % req.varmaker.next()
         plotdefs = []
         plotdata = []
         self.w(u'<div id="main%s" style="width: %spx; height: %spx;"></div>' %
                (figid, width, height))
-        self.w(u'<div id="overview%s" style="width: %spx; height: 80px;"></div>' %
-               (figid, width))
+        self.w(u'<div id="overview%s" style="width: %spx; height: %spx;"></div>' %
+               (figid, width, height/3))
+        self.w(u'<button id="reset">Reset</button>')
         for idx, (label, plot) in enumerate(zip(self.labels, self.plots)):
             plotid = '%s_%s' % (figid, idx)
             plotdefs.append('var %s = %s;' % (plotid, self.dump_plot(plot)))
