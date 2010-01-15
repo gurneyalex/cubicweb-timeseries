@@ -12,28 +12,24 @@ class TSaccessTC(EnvBasedTC):
         start_date = datetime(2009, 10, 1)
         self.dailyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "daily", '
-                               'SP use_calendar "gregorian", SP start_date %(s)s, '
-                               'SP data %(d)s',
+                               'SP start_date %(s)s, SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
         self.monthlyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "monthly", '
-                               'SP use_calendar "gregorian", SP start_date %(s)s, '
-                               'SP data %(d)s',
+                               'SP start_date %(s)s, SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
 
         self.yearlyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "yearly", '
-                               'SP use_calendar "gregorian", SP start_date %(s)s, '
-                               'SP data %(d)s',
+                               'SP start_date %(s)s, SP data %(d)s',
                                {'d': data,
                                 's': start_date}).get_entity(0, 0)
 
         self.weeklyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "weekly", '
-                               'SP use_calendar "gregorian", SP start_date %(s)s, '
-                               'SP data %(d)s',
+                               'SP start_date %(s)s, SP data %(d)s',
                                {'d': data,
                                 's': datetime(2009, 10, 5)}).get_entity(0, 0)
 
@@ -211,39 +207,33 @@ class ComputeSumAverageTC(EnvBasedTC):
         yearly_start_date = datetime(2009, 1, 1, 0)
         self.yearly_ts = self.execute('INSERT TimeSeries SP: '
                                       'SP data_type "Float", SP granularity "yearly", '
-                                      'SP use_calendar "gregorian", SP start_date %(s)s, '
-                                      'SP data %(d)s',
+                                      'SP start_date %(s)s, SP data %(d)s',
                                       {'d': numpy.arange(3)*10,
                                        's': yearly_start_date}).get_entity(0, 0)
         self.monthly_ts = self.execute('INSERT TimeSeries SP: '
                                      'SP data_type "Float", SP granularity "monthly", '
-                                     'SP use_calendar "gregorian", SP start_date %(s)s, '
-                                     'SP data %(d)s',
+                                     'SP start_date %(s)s, SP data %(d)s',
                                      {'d': numpy.arange(12),
                                       's': start_date}).get_entity(0, 0)
         self.weekly_ts = self.execute('INSERT TimeSeries SP: '
                                      'SP data_type "Float", SP granularity "weekly", '
-                                     'SP use_calendar "gregorian", SP start_date %(s)s, '
-                                     'SP data %(d)s',
+                                     'SP start_date %(s)s, SP data %(d)s',
                                      {'d': numpy.arange(10),
                                       's':  datetime(2009, 9, 28, 6)}).get_entity(0, 0)
 
         self.daily_ts = self.execute('INSERT TimeSeries SP: '
                                      'SP data_type "Float", SP granularity "daily", '
-                                     'SP use_calendar "gregorian", SP start_date %(s)s, '
-                                     'SP data %(d)s',
+                                     'SP start_date %(s)s, SP data %(d)s',
                                      {'d': numpy.arange(60),
                                       's': start_date}).get_entity(0, 0)
         self.hourly_ts = self.execute('INSERT TimeSeries SP: '
                                       'SP data_type "Float", SP granularity "hourly", '
-                                      'SP use_calendar "gregorian", SP start_date %(s)s, '
-                                      'SP data %(d)s',
+                                      'SP start_date %(s)s, SP data %(d)s',
                                       {'d': numpy.arange(720),
                                        's': start_date}).get_entity(0, 0)
         self.quart_ts = self.execute('INSERT TimeSeries SP: '
                                       'SP data_type "Float", SP granularity "15min", '
-                                      'SP use_calendar "gregorian", SP start_date %(s)s, '
-                                      'SP data %(d)s',
+                                      'SP start_date %(s)s, SP data %(d)s',
                                       {'d': numpy.arange(2880),
                                        's': start_date}).get_entity(0, 0)
 

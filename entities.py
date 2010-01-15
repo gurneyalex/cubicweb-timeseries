@@ -241,6 +241,10 @@ class TimeSeries(AnyEntity):
         return self.array.mean()
 
     @property
+    def use_calendar(self):
+        return 'gregorian'
+
+    @property
     def calendar(self):
         return get_calendar(self.use_calendar) #pylint:disable-msg=E1101
 
