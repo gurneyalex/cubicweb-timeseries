@@ -16,8 +16,6 @@ from cubicweb.selectors import implements
 from cubicweb.web.views import primary, baseviews, plots, tabs
 from cubes.timeseries.plots import TSFlotPlotWidget
 
-uicfg.autoform_section.tag_subject_of(('TimeSeries', 'use_calendar', '*'), 'generated')
-
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = implements('TimeSeries')
     tabs = [_('ts_summary'), _('ts_plot'), _('ts_values')]
@@ -38,7 +36,7 @@ class TimeSeriesSummaryView(tabs.PrimaryTab):
                      _('min'), _('max'),
                      _('average'), _('sum'))
 
-    characteristics_attrs = ('start_date', 'granularity', 'use_calendar')
+    characteristics_attrs = ('start_date', 'granularity')
 
     def summary(self, entity):
         w = self.w; _ = self.req._
@@ -47,15 +45,14 @@ class TimeSeriesSummaryView(tabs.PrimaryTab):
             for attr in self.summary_attrs:
                 self.field(attr, getattr(entity, attr), show_label=True, tr=True, table=True)
 
-    def characteristics(self, entity):
+    def render_entity_attributes(self, entity):
         w = self.w; _ = self.req._
-        w(h2(_('characteristics')))
+        w(h2(self.req._('characteristics')))
         with table(w):
             for attr in self.characteristics_attrs:
-                self.field(display_name(self.req, attr), entity.view('reledit', rtype=attr), tr=True, table=True)
-
-    def render_entity_attributes(self, entity):
-        self.characteristics(entity)
+                self.field(display_name(self.req, attr), entity.view('reledit', rtype=attr),
+                           tr=True, table=True)
+            self.field(self.req._('calendar'), entity.use_calendar, tr=True, table=True)
 
 
 class TimeSeriesPlotView(baseviews.EntityView):
