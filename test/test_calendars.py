@@ -2,6 +2,9 @@ from datetime import datetime
 
 from logilab.common.testlib import TestCase, unittest_main
 
+# this import is for apycot
+from cubicweb.devtools.apptest import EnvBasedTC
+
 from cubes.timeseries.calendars import GregorianCalendar
 
 class GasCalendarDateFunctionsTC(TestCase):
