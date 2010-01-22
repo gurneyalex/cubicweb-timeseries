@@ -40,7 +40,7 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
          
     var overviewoptions = {points: {show: false},
          lines: {show: true, lineWidth: 1},
-         grid: {hoverable: false, clickable: true},
+         grid: {hoverable: false},
          xaxis: {mode: "time"},
          selection: {mode: "x", color: 'blue'}
          }
