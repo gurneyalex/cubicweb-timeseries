@@ -8,7 +8,7 @@
 from __future__ import with_statement
 _ = unicode
 from logilab.mtconverter import xml_escape
-from cwtags.tag import div, h2, table, tr, td, th, input
+from cwtags.tag import span, div, h1, h2, table, tr, td, th, input
 from cubicweb.web import uicfg, formfields
 from cubicweb.schema import display_name
 from cubicweb.selectors import implements
@@ -16,10 +16,21 @@ from cubicweb.selectors import implements
 from cubicweb.web.views import primary, baseviews, plots, tabs
 from cubes.timeseries.plots import TSFlotPlotWidget
 
+from cubes.pegase.views import build_help_zone   #XXX: to be moved in CW?
+
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = implements('TimeSeries')
     tabs = [_('ts_summary'), _('ts_plot'), _('ts_values')]
     default_tab = 'ts_summary'
+    
+    def render_entity_title(self, entity):
+        _ = self.req._; w = self.w
+        etype = entity.e_schema.type
+        divid = '%s-help_%s' % (etype, entity.eid)
+        label = u'%s : %s' % (span(xml_escape(_(entity.id)), Class='title_type'),
+                              xml_escape(entity.dc_title()))
+        url_suffix = etype
+        self.w(build_help_zone(self, divid, label, url_suffix, tag=h1))
 
     def cell_call(self, row, col):
         entity = self.complete_entity(row, col)
@@ -44,6 +55,9 @@ class TimeSeriesSummaryView(tabs.PrimaryTab):
         with table(w):
             for attr in self.summary_attrs:
                 self.field(attr, getattr(entity, attr), show_label=True, tr=True, table=True)
+            
+    def _prepare_side_boxes(self, entity):
+        return []
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self.req._
