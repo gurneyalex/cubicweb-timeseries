@@ -4,7 +4,7 @@
 modname = 'timeseries'
 distname = 'cubicweb-timeseries'
 
-numversion = (1, 0, 0)
+numversion = (0, 5, 1)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
@@ -14,15 +14,12 @@ http://www.logilab.fr -- mailto:contact@logilab.fr'''
 author = 'LOGILAB S.A. (Paris, FRANCE)'
 author_email = 'contact@logilab.fr'
 
-short_desc = 'timeseries component for the CubicWeb framework'
-long_desc = '''\
-This cube provides a new datatype for time dependent values, handle the storage
-in a RDBMS, various ways of specifying the values, and several default views.
-'''
+short_desc = 'Timeseries component for the CubicWeb framework'
+long_desc = '''Timeseries component for the CubicWeb framework'''
 
 web = 'http://www.cubicweb.org/project/%s' % distname
 
-pyversions = ['2.5', '2.6']
+pyversions = ['2.4', '2.5']
 
 
 from os import listdir as _listdir
@@ -50,7 +47,6 @@ for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18
 
 
 cube_eid = None # <=== FIXME if you need direct bug-subscription
-__depends_cubes__ = {}
-__depends__ = {'cubicweb': '>= 3.9.4'}
-__recommends_cubes__ = {}
+__use__ = ()
+__recommend__ = ()
 
