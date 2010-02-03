@@ -22,7 +22,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = implements('TimeSeries')
     tabs = [_('ts_summary'), _('ts_plot'), _('ts_values')]
     default_tab = 'ts_summary'
-    
+
     def render_entity_title(self, entity):
         _ = self.req._; w = self.w
         etype = entity.e_schema.type
@@ -40,22 +40,17 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
         else:
             self.render_tabs(self.tabs, self.default_tab, entity)
 
-class TimeSeriesSummaryView(tabs.PrimaryTab):
+class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     id = 'ts_summary'
     __select__ = implements('TimeSeries')
-    summary_attrs = (_('first'), _('last'),
-                     _('min'), _('max'),
-                     _('average'), _('sum'))
+
 
     characteristics_attrs = ('start_date', 'granularity')
 
     def summary(self, entity):
-        w = self.w; _ = self.req._
-        w(h2(_('summary')))
-        with table(w):
-            for attr in self.summary_attrs:
-                self.field(attr, getattr(entity, attr), show_label=True, tr=True, table=True)
-            
+        self.w(h2(_('summary')))
+        self.wview('summary', entity.as_rset())
+
     def _prepare_side_boxes(self, entity):
         return []
 
@@ -68,6 +63,19 @@ class TimeSeriesSummaryView(tabs.PrimaryTab):
                            tr=True, table=True)
             self.field(self.req._('calendar'), entity.use_calendar, tr=True, table=True)
 
+class TimeSeriesSummaryView(baseviews.EntityView):
+    id = 'summary'
+    __select__ = implements('TimeSeries')
+    summary_attrs = (_('first'), _('last'),
+                     _('min'), _('max'),
+                     _('average'), _('sum'))
+
+    def cell_call(self, row, col, **kwargs):
+        entity = self.entity(row, col)
+        w = self.w; _ = self.req._
+        with table(w):
+            for attr in self.summary_attrs:
+                self.field(attr, getattr(entity, attr), show_label=True, tr=True, table=True)
 
 class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'
