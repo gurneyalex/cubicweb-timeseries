@@ -58,7 +58,7 @@ class TimeSeries(AnyEntity):
 
     def dc_long_title(self):
         if self.is_constant:
-            return self.req._(u'Constant time series (value: %.2f)' % self.first)
+            return self.req._(u'Constant time series (value: %s)' % self.format_float(self.first))
         return self.req._(u'Time series %s starting on %s with %d values' %
                           (self.dc_title(), self.start_date, self.length)) #pylint:disable-msg=E1101
 

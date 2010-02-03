@@ -36,7 +36,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
         entity = self.complete_entity(row, col)
         self.render_entity_title(entity)
         if entity.is_constant:
-            self.w(div(u'%s: %.2f' % (self.req._('constant value'), entity.first)))
+            self.w(div(u'%s: %s' % (self.req._('constant value'), self.format_float(entity.first))))
         else:
             self.render_tabs(self.tabs, self.default_tab, entity)
 
@@ -74,8 +74,13 @@ class TimeSeriesSummaryView(baseviews.EntityView):
         entity = self.entity(row, col)
         w = self.w; _ = self.req._
         with table(w):
-            for attr in self.summary_attrs:
-                self.field(attr, getattr(entity, attr), show_label=True, tr=True, table=True)
+            if entity.is_constant:
+                self.field('constant', self.format_float(entity.first),
+                           show_label=True, tr=True, table=True)
+            else:
+                for attr in self.summary_attrs:
+                    self.field(attr, self.format_float(getattr(entity, attr)),
+                               show_label=True, tr=True, table=True)
 
 class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'
@@ -109,9 +114,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
         entity = self.entity(row, col)
         w = self.w; _ = self.req._
         dt = entity.data_type
-        if dt == 'Float':
-            format = '%.2e'
-        elif dt in ('Integer', 'Boolean'):
+        if dt in ('Integer', 'Boolean'):
             format = '%d'
         else:
             format = '%s'
@@ -122,6 +125,8 @@ class TimeSeriesValuesView(baseviews.EntityView):
             else:
                 fmt = '%Y/%m/%d'
             for date, value in entity.timestamped_array():
+                if dt == 'Float':
+                    value = self.format_float(value)
                 w(tr(td(date.strftime(fmt)), td(format % value)))
 
 
