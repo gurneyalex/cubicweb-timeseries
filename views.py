@@ -68,7 +68,7 @@ class TimeSeriesSummaryView(baseviews.EntityView):
     __select__ = implements('TimeSeries')
     summary_attrs = (_('first'), _('last'),
                      _('min'), _('max'),
-                     _('average'), _('sum'))
+                     _('average'))
 
     def cell_call(self, row, col, **kwargs):
         entity = self.entity(row, col)
