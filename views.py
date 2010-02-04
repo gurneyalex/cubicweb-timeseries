@@ -66,8 +66,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 class TimeSeriesSummaryView(baseviews.EntityView):
     id = 'summary'
     __select__ = implements('TimeSeries')
-    summary_attrs = (_('first'), _('last'),
-                     _('min'), _('max'),
+    summary_attrs = (_('min'), _('max'),
                      _('average'))
 
     def cell_call(self, row, col, **kwargs):
