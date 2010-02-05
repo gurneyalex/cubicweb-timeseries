@@ -55,8 +55,9 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 class TimeSeriesSummaryView(baseviews.EntityView):
     id = 'summary'
     __select__ = implements('TimeSeries')
-    summary_attrs = (_('min'), _('max'),
-                     _('average'))
+    summary_attrs = (_('start_date'), _('end_date'),
+                     _('min'), _('max'),
+                     _('average'), _('count'))
 
     def cell_call(self, row, col, **kwargs):
         entity = self.entity(row, col)
@@ -67,8 +68,12 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                            show_label=True, tr=True, table=True)
             else:
                 for attr in self.summary_attrs:
-                    self.field(attr, self.format_float(getattr(entity, attr)),
-                               show_label=True, tr=True, table=True)
+                    try:
+                        self.field(attr, self.format_float(getattr(entity, attr)),
+                                   show_label=True, tr=True, table=True)
+                    except:
+                        self.field(attr, getattr(entity, attr),
+                                   show_label=True, tr=True, table=True)
 
 class TimeSeriesPlotView(baseviews.EntityView):
     id = 'ts_plot'

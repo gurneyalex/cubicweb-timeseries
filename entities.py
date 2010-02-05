@@ -230,6 +230,10 @@ class TimeSeries(AnyEntity):
         return self.array.size
 
     @property
+    def count(self):
+        return self.array.size
+
+    @property
     def min(self):
         return self.array.min()
 
