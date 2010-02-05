@@ -60,7 +60,7 @@ class TimeSeries(AnyEntity):
         if self.is_constant:
             return self.req._(u'Constant time series (value: %s)' % self.format_float(self.first))
         return self.req._(u'Time series %s starting on %s with %d values' %
-                          (self.dc_title(), self.start_date, self.length)) #pylint:disable-msg=E1101
+                          (self.dc_title(), self.start_date, self.count)) #pylint:disable-msg=E1101
 
     def grok_data(self):
         """
@@ -224,10 +224,6 @@ class TimeSeries(AnyEntity):
     @property
     def last(self):
         return self.array[-1]
-
-    @property
-    def length(self):
-        return self.array.size
 
     @property
     def count(self):
