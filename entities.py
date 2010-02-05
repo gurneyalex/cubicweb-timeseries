@@ -192,18 +192,18 @@ class TimeSeries(AnyEntity):
         compressed_data = [data[0]]
         delta = datetime.timedelta(seconds=1)
         last_date = data[-1][0]
-        last_value = data[-1][1]
         for date, value in data[1:]:
             previous_value = compressed_data[-1][1]
             if value != previous_value:
                 compressed_data.append((date - delta, previous_value))
                 compressed_data.append((date, value))
-            elif date == last_date:
-                compressed_data.append((date, value))
+            if date == last_date:
+                if value != previous_value:
+                    compressed_data.append((date, value))
+                    compressed_data.append((self.get_next_date(date), value))
+                else:
+                    compressed_data.append((self.get_next_date(date), value))
         
-        # we have to add a dummy point in order to have the last value shown
-        # for its full interval
-        compressed_data.append((self.get_next_date(last_date), last_value))
         return compressed_data
 
     def python_value(self, v):
