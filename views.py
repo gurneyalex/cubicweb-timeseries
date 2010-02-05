@@ -33,8 +33,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     id = 'ts_summary'
     __select__ = implements('TimeSeries')
 
-
-    characteristics_attrs = ('start_date', 'granularity')
+    characteristics_attrs = ('granularity',)
 
     def summary(self, entity):
         self.w(h2(_('summary')))
