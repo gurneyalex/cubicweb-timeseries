@@ -99,7 +99,7 @@ class TimeSeries(AnyEntity):
 
     @property
     def end_date(self):
-        return self.timestamped_array()[-1][0]
+        return self.get_next_date(self.timestamped_array()[-1][0])
 
     def aggregated_value(self, start, end, mode):
         #pylint:disable-msg=E1101
@@ -192,17 +192,22 @@ class TimeSeries(AnyEntity):
         compressed_data = [data[0]]
         delta = datetime.timedelta(seconds=1)
         last_date = data[-1][0]
-        for date, value in data[1:]:
-            previous_value = compressed_data[-1][1]
-            if value != previous_value:
-                compressed_data.append((date - delta, previous_value))
-                compressed_data.append((date, value))
-            if date == last_date:
+        if len(data) != 1:
+            for date, value in data[1:]:
+                previous_value = compressed_data[-1][1]
                 if value != previous_value:
+                    compressed_data.append((date - delta, previous_value))
                     compressed_data.append((date, value))
-                    compressed_data.append((self.get_next_date(date), value))
-                else:
-                    compressed_data.append((self.get_next_date(date), value))
+                if date == last_date:
+                    if value != previous_value:
+                        compressed_data.append((date, value))
+                        compressed_data.append((self.get_next_date(date), value))
+                    else:
+                        compressed_data.append((self.get_next_date(date), value))
+        else:
+            end_date = self.get_next_date(last_date)
+            value = data[-1][1]
+            compressed_data.append((end_date, value))
         
         return compressed_data
 
