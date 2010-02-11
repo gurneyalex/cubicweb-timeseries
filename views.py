@@ -102,24 +102,78 @@ class TimeSeriesValuesView(baseviews.EntityView):
     id = 'ts_values'
     __select__ = implements('TimeSeries')
     title = None
-    def cell_call(self, row, col):
-        entity = self.entity(row, col)
-        w = self.w; _ = self.req._
-        dt = entity.data_type
-        if dt in ('Integer', 'Boolean'):
-            format = '%d'
+#    def cell_call(self, row, col):
+#        entity = self.entity(row, col)
+#        w = self.w; _ = self.req._
+#        dt = entity.data_type
+#        if dt in ('Integer', 'Boolean'):
+#            format = '%d'
+#        else:
+#            format = '%s'
+#        with table(w, Class='listing'):
+#            w(tr(th(_('date')), th(_('value'))))
+#            if entity.granularity in (u'15min', 'hourly'):
+#                fmt = '%Y/%m/%d %H:%M'
+#            else:
+#                fmt = '%Y/%m/%d'
+#            for date, value in entity.timestamped_array():
+#                if dt == 'Float':
+#                    value = self.format_float(value)
+#                w(tr(td(date.strftime(fmt)), td(format % value)))
+
+    onload = u"""
+    
+jQuery("#TSValues").jqGrid({ 
+        datatype: "local", 
+        height: 250, 
+        colNames:['Date','Value'], 
+        colModel:[ {name:'date',index:'date', width:90, sorttype:"date"}, 
+                   {name:'value',index:'value', width:80, align:"right",sorttype:"float"}, 
+                 ], 
+        multiselect: false, 
+        caption: "values for %(ts_name)s" 
+}); 
+
+var mydata = [%(values)s];
+             
+for(var i=0;i<=mydata.length;i++) 
+        jQuery("#TSValues").jqGrid('addRowData',i+1,mydata[i]); 
+
+"""
+    
+    def build_table_data(self, entity):
+        if entity.granularity in (u'15min', 'hourly'):
+            fmt = '%Y/%m/%d %H:%M'
         else:
-            format = '%s'
-        with table(w, Class='listing'):
-            w(tr(th(_('date')), th(_('value'))))
-            if entity.granularity in (u'15min', 'hourly'):
-                fmt = '%Y/%m/%d %H:%M'
-            else:
-                fmt = '%Y/%m/%d'
-            for date, value in entity.timestamped_array():
-                if dt == 'Float':
-                    value = self.format_float(value)
-                w(tr(td(date.strftime(fmt)), td(format % value)))
+            fmt = '%Y/%m/%d'
+        
+        if entity.data_type in ('Integer', 'Boolean'):
+            values = [ '{date:"%s", value:"%d"}' % (date.strftime(fmt), value)
+                      for date, value in entity.timestamped_array()]
+        else:
+            values = [ '{date:"%s", value:"%s"}' % (date.strftime(fmt), self.format_float(value))
+                      for date, value in entity.timestamped_array()]
+        
+        value_string = ','.join(values)
+        return value_string
+
+    def cell_call(self, row, col):
+        req = self.req
+        entity = self.entity(row, col)
+        print "a"*15
+        if req.ie_browser():
+            print "b"*15
+            req.add_js('excanvas.js')
+        print "c"*15
+        req.add_js(('jquery.jqGrid.min.js',
+                    'jquery.js'))
+        print "d"*15
+        self.w(u'<table id="TSValues"></table>')
+        req.html_headers.add_onload(self.onload %
+                                    {'ts_name': entity.dc_title(),
+                                     'values': self.build_table_data(entity),
+                                     })
+        print self.build_table_data(entity)
 
 
 ## NOTE: this seems generic enough to be backported in CW
