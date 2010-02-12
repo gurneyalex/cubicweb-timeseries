@@ -30,7 +30,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
             self.render_tabs(self.tabs, self.default_tab, entity)
 
 class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
-    id = 'ts_summary'
+    __regid__ = 'ts_summary'
     __select__ = implements('TimeSeries')
 
     characteristics_attrs = ('granularity',)
@@ -52,7 +52,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
             self.field(self.req._('calendar'), entity.use_calendar, tr=True, table=True)
 
 class TimeSeriesSummaryView(baseviews.EntityView):
-    id = 'summary'
+    __regid__ = 'summary'
     __select__ = implements('TimeSeries')
     summary_attrs = (_('start_date'), _('end_date'),
                      _('min'), _('max'),
@@ -75,7 +75,7 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                                    show_label=True, tr=True, table=True)
 
 class TimeSeriesPlotView(baseviews.EntityView):
-    id = 'ts_plot'
+    __regid__ = 'ts_plot'
     __select__ = implements('TimeSeries')
     title = None
     def build_plot_data(self, entity):
@@ -99,7 +99,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
 
 
 class TimeSeriesValuesView(baseviews.EntityView):
-    id = 'ts_values'
+    __regid__ = 'ts_values'
     __select__ = implements('TimeSeries')
     title = None
 

@@ -31,7 +31,7 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                }
 
 class TimeSeries(AnyEntity):
-    id = 'TimeSeries'
+    __regid__ = 'TimeSeries'
 
     _dtypes = {'Float': numpy.float64,
                'Integer': numpy.int32,
@@ -389,7 +389,7 @@ class TimeSeries(AnyEntity):
 #
 
 class TSConstantExceptionBlock(AnyEntity):
-    id = 'TSConstantExceptionBlock'
+    __regid__ = 'TSConstantExceptionBlock'
     fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
 
     def dc_title(self):
@@ -398,7 +398,7 @@ class TSConstantExceptionBlock(AnyEntity):
                                    self.printable_value('value'))
 
 class TSConstantBlock(AnyEntity):
-    id = 'TSConstantBlock'
+    __regid__ = 'TSConstantBlock'
     fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
 
     def dc_title(self):
