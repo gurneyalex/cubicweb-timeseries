@@ -13,9 +13,10 @@ import time
 from simplejson import dumps
 
 from logilab.common import flatten
+from logilab.common.date import datetime2ticks
 from logilab.mtconverter import xml_escape
 
-from cubicweb.utils import make_uid, UStringIO, datetime2ticks
+from cubicweb.utils import make_uid, UStringIO
 from cubicweb.appobject import objectify_selector
 from cubicweb.web.views import baseviews
 from cubicweb.web.views.plots import PlotWidget
@@ -23,21 +24,21 @@ from cubicweb.web.views.plots import PlotWidget
 class TSFlotPlotWidget(PlotWidget):
     """PlotRenderer widget using Flot"""
     onload = u"""
-    
+
 var mainfig = jQuery("#main%(figid)s");
 var overviewfig = jQuery("#overview%(figid)s");
 
 if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cubicweb:type') != 'prepared-plot')){
 
     %(plotdefs)s
-    
+
     var mainoptions = {points: {show: true, radius: 2},
          lines: {show: true, lineWidth: 1},
          grid: {hoverable: true, clickable: true},
          xaxis: {mode: "time"},
          selection: {mode: "x", color: 'blue'}
          }
-         
+
     var overviewoptions = {points: {show: false},
          lines: {show: true, lineWidth: 1},
          grid: {hoverable: false},
@@ -46,34 +47,34 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
          }
 
     var main = jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s], mainoptions);
-    
+
     var overview = jQuery.plot(jQuery("#overview%(figid)s"), [%(plotdata)s], overviewoptions);
-         
+
     jQuery("#main%(figid)s").bind("plothover", onTSPlotHover);
-    
+
     // now connect the two
-    
+
     jQuery("#main%(figid)s").bind("plotselected", function (event, ranges) {
-    
+
         // do the zooming
         main = jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s],
                       jQuery.extend(true, {}, mainoptions, {
                           xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
                       }));
-    
+
         // don't fire event on the overview to prevent eternal loop
         overview.setSelection(ranges, true);
     });
-    
+
     jQuery("#overview%(figid)s").bind("plotselected", function (event, ranges) {
         main.setSelection(ranges);
     });
-    
+
     jQuery("#reset").click(function () {
         jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s], mainoptions);
         overview.clearSelection();
     });
-    
+
     mainfig.attr('cubicweb:type','prepared-plot');
     overviewfig.attr('cubicweb:type','prepared-plot');
 }
@@ -91,8 +92,8 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
     def _render(self, req, width=900, height=250):
         if req.ie_browser():
             req.add_js('excanvas.js')
-        req.add_js(('jquery.flot.js', 
-                    'timeseries.flot.js', 
+        req.add_js(('jquery.flot.js',
+                    'timeseries.flot.js',
                     'jquery.flot.selection.js',
                     'jquery.js'))
         figid = u'figure%s' % req.varmaker.next()

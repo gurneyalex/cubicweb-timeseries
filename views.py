@@ -22,10 +22,10 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     default_tab = 'ts_summary'
 
     def cell_call(self, row, col):
-        entity = self.complete_entity(row, col)
+        entity = self.cw_rset.complete_entity(row, col)
         self.render_entity_title(entity)
         if entity.is_constant:
-            self.w(div(u'%s: %s' % (self.req._('constant value'), self.format_float(entity.first))))
+            self.w(div(u'%s: %s' % (self._cw._('constant value'), self._cw.format_float(entity.first))))
         else:
             self.render_tabs(self.tabs, self.default_tab, entity)
 
@@ -43,13 +43,13 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
         return []
 
     def render_entity_attributes(self, entity):
-        w = self.w; _ = self.req._
-        w(h2(self.req._('characteristics')))
+        w = self.w; _ = self._cw._
+        w(h2(self._cw._('characteristics')))
         with table(w):
             for attr in self.characteristics_attrs:
-                self.field(display_name(self.req, attr), entity.view('reledit', rtype=attr),
+                self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
                            tr=True, table=True)
-            self.field(self.req._('calendar'), entity.use_calendar, tr=True, table=True)
+            self.field(self._cw._('calendar'), entity.use_calendar, tr=True, table=True)
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
@@ -59,16 +59,16 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                      _('average'), _('count'))
 
     def cell_call(self, row, col, **kwargs):
-        entity = self.entity(row, col)
-        w = self.w; _ = self.req._
+        entity = self.cw_rset.get_entity(row, col)
+        w = self.w; _ = self._cw._
         with table(w):
             if entity.is_constant:
-                self.field('constant', self.format_float(entity.first),
+                self.field('constant', self._cw.format_float(entity.first),
                            show_label=True, tr=True, table=True)
             else:
                 for attr in self.summary_attrs:
                     try:
-                        self.field(attr, self.format_float(getattr(entity, attr)),
+                        self.field(attr, self._cw.format_float(getattr(entity, attr)),
                                    show_label=True, tr=True, table=True)
                     except:
                         self.field(attr, getattr(entity, attr),
@@ -80,22 +80,22 @@ class TimeSeriesPlotView(baseviews.EntityView):
     title = None
     def build_plot_data(self, entity):
         plots = []
-        for ts in self.rset.entities():
+        for ts in self.cw_rset.entities():
             plots.append(ts.timestamped_array())
         return plots
 
     def call(self, width=None, height=None):
-        form = self.req.form
+        form = self._cw.form
         width = width or form.get('width', 900)
         height = height or form.get('height', 250)
         names = []
         plot_list = []
-        for ts in self.rset.entities():
+        for ts in self.cw_rset.entities():
             names.append(ts.dc_title())
             plot_list.append(ts.compressed_timestamped_array())
-        self.req.form['jsoncall'] = True
+        self._cw.form['jsoncall'] = True
         plotwidget = TSFlotPlotWidget(names, plot_list)
-        plotwidget.render(self.req, width, height, w=self.w)
+        plotwidget.render(self._cw, width, height, w=self.w)
 
 
 class TimeSeriesValuesView(baseviews.EntityView):
@@ -120,8 +120,8 @@ for(var i=0;i<=mydata.length;i++)
 """
 
     def cell_call(self, row, col):
-        req = self.req
-        entity = self.entity(row, col)
+        req = self._cw
+        entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
         req.add_js(('jquery.jqGrid.min.js',
@@ -143,7 +143,7 @@ for(var i=0;i<=mydata.length;i++)
             values = [ '{date:"%s", value:"%d"}' % (date.strftime(fmt), value)
                       for date, value in entity.timestamped_array()]
         else:
-            values = [ '{date:"%s", value:"%s"}' % (date.strftime(fmt), self.format_float(value))
+            values = [ '{date:"%s", value:"%s"}' % (date.strftime(fmt), self._cw.format_float(value))
                       for date, value in entity.timestamped_array()]
 
         value_string = ','.join(values)
@@ -182,7 +182,7 @@ class RelationSwitchField(formfields.Field):
         related = getattr(entity, self.rtype)
         if related:
             return related[0].e_schema
-        elif self.required:
+        elif self._cwuired:
             # if relation is required, we should never arrive here
             raise ValueError('%s.%s is required but not set on eid %s'
                              % (entity.e_schema, self.rtype, entity.eid))
@@ -216,8 +216,8 @@ class RelationSwitchField(formfields.Field):
         # XXX hack to bypass a CW / jquery ajax/onload bug: we don't
         #     want the onload methods to be called each time an ajax
         #     query is done
-        form.req.html_headers.define_var('docloaded', False)
-        form.req.html_headers.add_post_inline_script(u"""
+        form._cw.html_headers.define_var('docloaded', False)
+        form._cw.html_headers.add_post_inline_script(u"""
 function switchInlinedForm() {
     var value = jQuery(this).val().split(';'); // holderId;eid;ttype;rtype;role
     var $holder = jQuery('#' + value[0]);
@@ -227,7 +227,7 @@ function switchInlinedForm() {
                           i18nctx, $holder);
 }
         """)
-        form.req.add_onload(u'''if (!docloaded) {
+        form._cw.add_onload(u'''if (!docloaded) {
   jQuery("input:radio").change(switchInlinedForm);''
   docloaded = true;
 }
@@ -242,7 +242,7 @@ function switchInlinedForm() {
                 if targettype == selected:
                     inputargs['checked'] = u'checked'
                 w(input(type=u'radio', name=self.rtype, **inputargs))
-                w(u'%s <br />' % display_name(form.req, targettype,
+                w(u'%s <br />' % display_name(form._cw, targettype,
                                               context='inlined:%s.%s.%s' % (eschema, self.rtype, self.role)))
         w(div(self.initial_form(form, entity, selected)))
         w(div(u'', id=formid)) # needed by addInlineCreationForm()
@@ -255,10 +255,10 @@ uicfg.autoform_field.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'),
                                                         label=('TimeSeriesHandle', 'defined_by'),
                                                         required=True))
 
-uicfg.autoform_is_inlined.tag_subject_of(('BlockConstantTSValue', 'blocks', '*'),
-                                         True)
-uicfg.autoform_is_inlined.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
-                                         True)
+uicfg.autoform_section.tag_subject_of(('BlockConstantTSValue', 'blocks', '*'),
+                                         'main', 'inlined')
+uicfg.autoform_section.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
+                                         'main', 'inlined')
 
 ## primary views ##############################################################
 uicfg.primaryview_section.tag_subject_of(('*', 'defined_by', '*'),
