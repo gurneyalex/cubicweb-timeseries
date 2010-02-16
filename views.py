@@ -104,19 +104,26 @@ class TimeSeriesValuesView(baseviews.EntityView):
     title = None
 
     onload = u"""
-jQuery("#TSValues").jqGrid({
-        datatype: "local",
-        height: 250,
-        colNames:['Date','Value'],
-        colModel:[ {name:'date',index:'date', width:90, sorttype:"date"},
-                   {name:'value',index:'value', width:80, align:"right",sorttype:"float"}
-                 ],
-        multiselect: false,
-        caption: "values for %(ts_name)s"
-});
-var mydata = [%(values)s];
-for(var i=0;i<=mydata.length;i++)
-        jQuery("#TSValues").jqGrid('addRowData',i+1,mydata[i]);
+jQuery("#TSValue").jqGrid({
+    datatype: 'local',
+    colNames:['Date', 'Value'],
+    colModel :[ 
+      {name:'date', index:'date', width:90}, 
+      {name:'value', index:'value', width:80, align:'right'}, 
+    ],
+    pager: '#pager',
+    rowNum:10,
+    rowList:[10,20,30],
+    sortname: 'invid',
+    sortorder: 'desc',
+    viewrecords: true,
+    caption: 'Values for %(ts_name)s'
+  });
+
+var mydata = [%(values)s]; 
+
+for(var i=0;i!=mydata.length;i++) 
+    jQuery("#TSValue").jqGrid('addRowData',i+1,mydata[i]); 
 """
 
     def cell_call(self, row, col):
@@ -124,12 +131,15 @@ for(var i=0;i<=mydata.length;i++)
         entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
-        req.add_js(('jquery.jqGrid.min.js',
-                    'jquery.js'))
-        req.html_headers.add_onload(xml_escape(self.onload %
-                                               {'ts_name': entity.dc_title(),
-                                                'values': self.build_table_data(entity),
-                                                }))
+        req.add_js(('jquery.jqGrid.min.js', 'grid.locale-en.js',
+                    'jquery-1.3.2.min.js'))
+        req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
+        req.add_onload(self.onload % 
+                       {'ts_name': entity.dc_title(),
+                        'values': self.build_table_data(entity),
+                       })
+        self.w(u'<table id="TSValues"></table>')
+        self.w(u'<div id="pager"></div> ')
         with div(self.w):
             self.w(u'xxx')
 
