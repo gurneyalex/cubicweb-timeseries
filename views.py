@@ -93,7 +93,6 @@ class TimeSeriesPlotView(baseviews.EntityView):
         for ts in self.cw_rset.entities():
             names.append(ts.dc_title())
             plot_list.append(ts.compressed_timestamped_array())
-        self._cw.form['jsoncall'] = True
         plotwidget = TSFlotPlotWidget(names, plot_list)
         plotwidget.render(self._cw, width, height, w=self.w)
 
@@ -107,9 +106,9 @@ class TimeSeriesValuesView(baseviews.EntityView):
 jQuery("#TSValue").jqGrid({
     datatype: 'local',
     colNames:['Date', 'Value'],
-    colModel :[ 
-      {name:'date', index:'date', width:90}, 
-      {name:'value', index:'value', width:80, align:'right'}, 
+    colModel :[
+      {name:'date', index:'date', width:90},
+      {name:'value', index:'value', width:80, align:'right'},
     ],
     pager: '#pager',
     rowNum:10,
@@ -120,10 +119,10 @@ jQuery("#TSValue").jqGrid({
     caption: 'Values for %(ts_name)s'
   });
 
-var mydata = [%(values)s]; 
+var mydata = [%(values)s];
 
-for(var i=0;i!=mydata.length;i++) 
-    jQuery("#TSValue").jqGrid('addRowData',i+1,mydata[i]); 
+for(var i=0;i!=mydata.length;i++)
+    jQuery("#TSValue").jqGrid('addRowData',i+1,mydata[i]);
 """
 
     def cell_call(self, row, col):
@@ -134,12 +133,10 @@ for(var i=0;i!=mydata.length;i++)
         req.add_js(('jquery.jqGrid.min.js', 'grid.locale-en.js',
                     'jquery-1.3.2.min.js'))
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
-        req.add_onload(self.onload % 
-                       {'ts_name': entity.dc_title(),
-                        'values': self.build_table_data(entity),
-                       })
-        self.w(u'<table id="TSValues"></table>')
-        self.w(u'<div id="pager"></div> ')
+        req.html_headers.add_onload(self.onload %
+                                   {'ts_name': entity.dc_title(),
+                                    'values': self.build_table_data(entity)},
+                                   jsoncall=req.json_request)
         with div(self.w):
             self.w(u'xxx')
 
@@ -230,8 +227,8 @@ class RelationSwitchField(formfields.Field):
         form._cw.html_headers.add_post_inline_script(u"""
 function switchInlinedForm() {
     var value = jQuery(this).val().split(';'); // holderId;eid;ttype;rtype;role
-    var $holder = jQuery('#' + value[0]);
-    $holder.prev().remove();
+    var holder = jQuery('#' + value[0]);
+    holder.prev().remove();
     var i18nctx = ''; // XXX
     addInlineCreationForm(value[1], value[2], value[3], value[4],
                           i18nctx, $holder);
