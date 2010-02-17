@@ -22,7 +22,9 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     default_tab = 'ts_summary'
 
     def cell_call(self, row, col):
+        req = self._cw
         entity = self.cw_rset.complete_entity(row, col)
+        self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
         if entity.is_constant:
             self.w(div(u'%s: %s' % (self._cw._('constant value'), self._cw.format_float(entity.first))))
@@ -67,6 +69,7 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                            show_label=True, tr=True, table=True)
             else:
                 for attr in self.summary_attrs:
+                    # XXX getattr because some are actually properties
                     try:
                         self.field(attr, self._cw.format_float(getattr(entity, attr)),
                                    show_label=True, tr=True, table=True)
@@ -103,26 +106,22 @@ class TimeSeriesValuesView(baseviews.EntityView):
     title = None
 
     onload = u"""
-jQuery("#TSValue").jqGrid({
+jQuery("#tsvalue").jqGrid({
     datatype: 'local',
     colNames:['Date', 'Value'],
     colModel :[
-      {name:'date', index:'date', width:90},
-      {name:'value', index:'value', width:80, align:'right'},
+      {name:'date', index:'date', width:95},
+      {name:'value', index:'value', width:99, align:'right'},
     ],
-    pager: '#pager',
-    rowNum:10,
-    rowList:[10,20,30],
-    sortname: 'invid',
+    sortname: 'date',
     sortorder: 'desc',
     viewrecords: true,
     caption: 'Values for %(ts_name)s'
   });
-
 var mydata = [%(values)s];
 
 for(var i=0;i!=mydata.length;i++)
-    jQuery("#TSValue").jqGrid('addRowData',i+1,mydata[i]);
+    jQuery("#tsvalue").jqGrid('addRowData',i+1,mydata[i]);
 """
 
     def cell_call(self, row, col):
@@ -130,29 +129,26 @@ for(var i=0;i!=mydata.length;i++)
         entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
-        req.add_js(('jquery.jqGrid.min.js', 'grid.locale-en.js',
-                    'jquery-1.3.2.min.js'))
+        req.add_js('jquery.jqGrid.js')
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         req.html_headers.add_onload(self.onload %
                                    {'ts_name': entity.dc_title(),
                                     'values': self.build_table_data(entity)},
                                    jsoncall=req.json_request)
-        with div(self.w):
-            self.w(u'xxx')
+        self.w(table(id='tsvalue'))
+        #self.w(div(id='pager'))
 
     def build_table_data(self, entity):
         if entity.granularity in (u'15min', 'hourly'):
             fmt = '%Y/%m/%d %H:%M'
         else:
             fmt = '%Y/%m/%d'
-
         if entity.data_type in ('Integer', 'Boolean'):
             values = [ '{date:"%s", value:"%d"}' % (date.strftime(fmt), value)
                       for date, value in entity.timestamped_array()]
         else:
             values = [ '{date:"%s", value:"%s"}' % (date.strftime(fmt), self._cw.format_float(value))
                       for date, value in entity.timestamped_array()]
-
         value_string = ','.join(values)
         return value_string
 
