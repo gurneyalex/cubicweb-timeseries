@@ -115,46 +115,46 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
     var chart_options = {
         renderTo: 'main%(figid)s',
         zoomType: 'x'
-    } 
-    
+    }
+
     var color_values = [
         '#007a69',
-        '#4572A7', 
-        '#AA4643', 
-        '#89A54E', 
-        '#80699B', 
-        '#3D96AE', 
-        '#DB843D', 
-        '#92A8CD', 
-        '#A47D7C', 
+        '#4572A7',
+        '#AA4643',
+        '#89A54E',
+        '#80699B',
+        '#3D96AE',
+        '#DB843D',
+        '#92A8CD',
+        '#A47D7C',
         '#B5CA92'
-    ] 
-    
+    ]
+
     var title_options = {
         text: ''
-    } 
-            
+    }
+
     var subtitle_options = {
         text: ''
-    } 
-            
+    }
+
     var xAxis_options = {
         type: 'datetime',
         title: {
             text: null
         }
     }
-            
+
     var yAxis_options = {
         title: {
             text: '.'
         }
     }
-            
+
     var legend_options = {
         enabled: false
     }
-            
+
     var plotOptions_options = {
         line: {
             animation: false,
@@ -165,21 +165,21 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
             shadow: false
         }
     }
-            
+
     var series_data = %(plotdefs)s
-            
+
     var series_options = [{
         type: 'line',
         data: series_data
     }]
-             
+
     var tooltip_options = {
         formatter: function() {
             return Highcharts.dateFormat('%%Y-%%m-%%d %%H:%%M', this.x) + ':<br/>'+
                 + Highcharts.numberFormat(this.y, 2);
         }
     }
-            
+
     var chart = new Highcharts.Chart({
         chart: chart_options,
         colors: color_values,
@@ -192,7 +192,7 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
         tooltip: tooltip_options,
         series: series_options
     });
-            
+
     mainfig.attr('cubicweb:type','prepared-plot');
     overviewfig.attr('cubicweb:type','prepared-plot');
 }
@@ -209,8 +209,8 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
 
     def _render(self, req, width=900, height=250):
         if req.ie_browser():
-            req.add_js('excanvas.compiled.js')
-        req.add_js(('highcharts.js', 
+            req.add_js('excanvas.js')
+        req.add_js(('highcharts.js',
                     'jquery.js'))
         figid = u'figure%s' % req.varmaker.next()
         plotdefs = []
