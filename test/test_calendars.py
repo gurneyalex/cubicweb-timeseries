@@ -3,7 +3,7 @@ from datetime import datetime
 from logilab.common.testlib import TestCase, unittest_main
 
 # this import is for apycot
-from cubicweb.devtools.apptest import EnvBasedTC
+import cubicweb.devtools
 
 from cubes.timeseries.calendars import GregorianCalendar
 
