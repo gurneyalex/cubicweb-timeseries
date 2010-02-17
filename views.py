@@ -13,6 +13,8 @@ from cubicweb.web import uicfg, formfields
 from cubicweb.schema import display_name
 from cubicweb.selectors import implements
 
+from simplejson import dumps
+
 from cubicweb.web.views import primary, baseviews, plots, tabs
 from cubes.timeseries.plots import TSFlotPlotWidget
 
@@ -100,6 +102,34 @@ class TimeSeriesPlotView(baseviews.EntityView):
         plotwidget.render(self._cw, width, height, w=self.w)
 
 
+from cubicweb.web.views.basecontrollers import jsonize, JSonController
+@jsonize
+def get_data(self):
+    form = self._cw.form
+    print form
+    page = int(form.get('page'))
+    rows = int(form.get('rows'))
+    entity = self._cw.execute(form.get('rql')).get_entity(0,0)
+    if entity.granularity in (u'15min', 'hourly'):
+        fmt = '%Y/%m/%d %H:%M'
+    else:
+        fmt = '%Y/%m/%d'
+    if entity.data_type in ('Integer', 'Boolean'):
+        formatter = lambda x:x
+        format = '%d'
+    else:
+        formatter = lambda x:self._cw.format_float(x)
+        format = '%s'
+    values = [{'Date': date.strftime(fmt), 'Value': format % formatter(value)}
+               for date, value in entity.timestamped_array()]
+    start = (page - 1)  * rows
+    end = page * rows
+    out = {'total': len(values), 'page': int(page), 'records': len(values),
+           'rows': values[start:end]}
+    print dumps(out)
+    return out
+JSonController.js_get_data = get_data
+
 class TimeSeriesValuesView(baseviews.EntityView):
     __regid__ = 'ts_values'
     __select__ = implements('TimeSeries')
@@ -107,7 +137,9 @@ class TimeSeriesValuesView(baseviews.EntityView):
 
     onload = u"""
 jQuery("#tsvalue").jqGrid({
-    datatype: 'local',
+    url: '%(url)s',
+    datatype: 'json',
+    height: 300,
     colNames:['Date', 'Value'],
     colModel :[
       {name:'date', index:'date', width:95},
@@ -118,10 +150,6 @@ jQuery("#tsvalue").jqGrid({
     viewrecords: true,
     caption: 'Values for %(ts_name)s'
   });
-var mydata = [%(values)s];
-
-for(var i=0;i!=mydata.length;i++)
-    jQuery("#tsvalue").jqGrid('addRowData',i+1,mydata[i]);
 """
 
     def cell_call(self, row, col):
@@ -131,26 +159,14 @@ for(var i=0;i!=mydata.length;i++)
             req.add_js('excanvas.js')
         req.add_js('jquery.jqGrid.js')
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
+        url = entity.absolute_url('json') + '&fname=get_data'
         req.html_headers.add_onload(self.onload %
                                    {'ts_name': entity.dc_title(),
-                                    'values': self.build_table_data(entity)},
+                                    'url': url},
                                    jsoncall=req.json_request)
         self.w(table(id='tsvalue'))
         #self.w(div(id='pager'))
 
-    def build_table_data(self, entity):
-        if entity.granularity in (u'15min', 'hourly'):
-            fmt = '%Y/%m/%d %H:%M'
-        else:
-            fmt = '%Y/%m/%d'
-        if entity.data_type in ('Integer', 'Boolean'):
-            values = [ '{date:"%s", value:"%d"}' % (date.strftime(fmt), value)
-                      for date, value in entity.timestamped_array()]
-        else:
-            values = [ '{date:"%s", value:"%s"}' % (date.strftime(fmt), self._cw.format_float(value))
-                      for date, value in entity.timestamped_array()]
-        value_string = ','.join(values)
-        return value_string
 
 
 
