@@ -24,7 +24,6 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     default_tab = 'ts_summary'
 
     def cell_call(self, row, col):
-        req = self._cw
         entity = self.cw_rset.complete_entity(row, col)
         self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
@@ -120,11 +119,11 @@ def get_data(self):
     else:
         formatter = lambda x:self._cw.format_float(x)
         format = '%s'
-    values = [{'Date': date.strftime(fmt), 'Value': format % formatter(value)}
-               for date, value in entity.timestamped_array()]
+    values = [{'id': idx, 'cell': (date.strftime(fmt), format % formatter(value))}
+               for idx, (date, value) in enumerate(entity.timestamped_array())]
     start = (page - 1)  * rows
     end = page * rows
-    out = {'total': len(values), 'page': int(page), 'records': len(values),
+    out = {'total': len(values) / rows, 'page': int(page), 'records': len(values),
            'rows': values[start:end]}
     print dumps(out)
     return out
@@ -140,7 +139,7 @@ jQuery("#tsvalue").jqGrid({
     url: '%(url)s',
     datatype: 'json',
     height: 300,
-    colNames:['Date', 'Value'],
+    colNames:['date', 'value'],
     colModel :[
       {name:'date', index:'date', width:95},
       {name:'value', index:'value', width:99, align:'right'},
