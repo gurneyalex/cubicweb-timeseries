@@ -108,6 +108,10 @@ def get_data(self):
     print form
     page = int(form.get('page'))
     rows = int(form.get('rows'))
+    sortcol = ['date', 'value'].index(form.get('sidx'))
+    reversesortorder = form.get('sord') == 'desc'
+    def sortkey(col):
+        return col[sortcol]
     entity = self._cw.execute(form.get('rql')).get_entity(0,0)
     if entity.granularity in (u'15min', 'hourly'):
         fmt = '%Y/%m/%d %H:%M'
@@ -119,8 +123,10 @@ def get_data(self):
     else:
         formatter = lambda x:self._cw.format_float(x)
         format = '%s'
-    values = [{'id': idx, 'cell': (date.strftime(fmt), format % formatter(value))}
-               for idx, (date, value) in enumerate(entity.timestamped_array())]
+    values = [{'id': str(idx), 'cell': (date.strftime(fmt), format % formatter(value))}
+               for idx, (date, value) in enumerate(sorted(entity.timestamped_array(),
+                                                          reverse=reversesortorder,
+                                                          key=sortkey))]
     start = (page - 1)  * rows
     end = page * rows
     out = {'total': len(values) / rows, 'page': int(page), 'records': len(values),
@@ -137,7 +143,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
     onload = u"""
 jQuery("#tsvalue").jqGrid({
     url: '%(url)s',
-    datatype: 'json',
+    datatype: 'jsonp',
     height: 300,
     colNames:['date', 'value'],
     colModel :[
@@ -145,7 +151,7 @@ jQuery("#tsvalue").jqGrid({
       {name:'value', index:'value', width:99, align:'right'},
     ],
     sortname: 'date',
-    sortorder: 'desc',
+    sortorder: 'asc',
     viewrecords: true,
     caption: 'Values for %(ts_name)s'
   });
