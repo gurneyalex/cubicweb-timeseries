@@ -100,12 +100,23 @@ class TimeSeriesPlotView(baseviews.EntityView):
         plotwidget = TSFlotPlotWidget(names, plot_list)
         plotwidget.render(self._cw, width, height, w=self.w)
 
+def get_formatter(req, entity):
+    if entity.granularity in (u'15min', 'hourly'):
+        dateformat = '%Y/%m/%d %H:%M'
+    else:
+        dateformat = '%Y/%m/%d'
+    if entity.data_type in ('Integer', 'Boolean'):
+        numformatter = lambda x:x
+        numformat = '%d'
+    else:
+        numformatter = lambda x:req.format_float(x)
+        numformat = '%s'
+    return dateformat, numformat, numformatter
 
 from cubicweb.web.views.basecontrollers import jsonize, JSonController
 @jsonize
 def get_data(self):
     form = self._cw.form
-    print form
     page = int(form.get('page'))
     rows = int(form.get('rows'))
     sortcol = ['date', 'value'].index(form.get('sidx'))
@@ -113,25 +124,19 @@ def get_data(self):
     def sortkey(col):
         return col[sortcol]
     entity = self._cw.execute(form.get('rql')).get_entity(0,0)
-    if entity.granularity in (u'15min', 'hourly'):
-        fmt = '%Y/%m/%d %H:%M'
-    else:
-        fmt = '%Y/%m/%d'
-    if entity.data_type in ('Integer', 'Boolean'):
-        formatter = lambda x:x
-        format = '%d'
-    else:
-        formatter = lambda x:self._cw.format_float(x)
-        format = '%s'
-    values = [{'id': str(idx), 'cell': (date.strftime(fmt), format % formatter(value))}
+    dateformat, numformat, numformatter = get_formatter(self._cw, entity)
+    # build output
+    values = [{'id': str(idx + 1),
+               'cell': (date.strftime(dateformat), numformat % numformatter(value))}
                for idx, (date, value) in enumerate(sorted(entity.timestamped_array(),
                                                           reverse=reversesortorder,
                                                           key=sortkey))]
     start = (page - 1)  * rows
     end = page * rows
-    out = {'total': len(values) / rows, 'page': int(page), 'records': len(values),
+    out = {'total': str(len(values) / rows),
+           'page': page,
+           'records': str(len(values)),
            'rows': values[start:end]}
-    print dumps(out)
     return out
 JSonController.js_get_data = get_data
 
@@ -143,16 +148,16 @@ class TimeSeriesValuesView(baseviews.EntityView):
     onload = u"""
 jQuery("#tsvalue").jqGrid({
     url: '%(url)s',
-    datatype: 'jsonp',
-    height: 300,
+    datatype: 'json',
+    height: 400,
     colNames:['date', 'value'],
     colModel :[
-      {name:'date', index:'date', width:95},
-      {name:'value', index:'value', width:99, align:'right'},
+      {name:'date', index:'date', width:140},
+      {name:'value', index:'value', width:120, align:'right'},
     ],
     sortname: 'date',
     sortorder: 'asc',
-    viewrecords: true,
+    pager: '#pager',
     caption: 'Values for %(ts_name)s'
   });
 """
@@ -162,7 +167,7 @@ jQuery("#tsvalue").jqGrid({
         entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
-        req.add_js('jquery.jqGrid.js')
+        req.add_js(('grid.locale-en.js', 'jquery.jqGrid.js'))
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         url = entity.absolute_url('json') + '&fname=get_data'
         req.html_headers.add_onload(self.onload %
@@ -170,7 +175,7 @@ jQuery("#tsvalue").jqGrid({
                                     'url': url},
                                    jsoncall=req.json_request)
         self.w(table(id='tsvalue'))
-        #self.w(div(id='pager'))
+        self.w(div(id='pager'))
 
 
 
