@@ -3,10 +3,10 @@ from __future__ import division
 import numpy
 from datetime import datetime
 
-from cubicweb.devtools.apptest import EnvBasedTC
+from cubicweb.devtools.testlib import CubicWebTC
 from logilab.common.testlib import unittest_main
 
-class TSaccessTC(EnvBasedTC):
+class TSaccessTC(CubicWebTC):
     def setup_database(self):
         data = numpy.arange(10)
         start_date = datetime(2009, 10, 1)
@@ -200,7 +200,7 @@ class TSaccessTC(EnvBasedTC):
 
 
 
-class ComputeSumAverageTC(EnvBasedTC):
+class ComputeSumAverageTC(CubicWebTC):
 
     def setup_database(self):
         start_date = datetime(2009, 10, 1, 0)

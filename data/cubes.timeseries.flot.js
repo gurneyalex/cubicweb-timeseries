@@ -19,10 +19,10 @@ function onTSPlotHover(event, pos, item) {
             $("#tooltip").remove();
             var x = item.datapoint[0].toFixed(2),
                 y = item.datapoint[1].toFixed(2);
-            
+
             x = new Date(item.datapoint[0]);
             x = x.strftime("%Y/%m/%d %H:%M");
-            
+
             showTooltip(item.pageX, item.pageY,
             item.series.label + ': (' + x + ' ; ' + y + ')');
         }

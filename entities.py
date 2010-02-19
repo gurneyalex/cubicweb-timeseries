@@ -31,7 +31,7 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                }
 
 class TimeSeries(AnyEntity):
-    id = 'TimeSeries'
+    __regid__ = 'TimeSeries'
 
     _dtypes = {'Float': numpy.float64,
                'Integer': numpy.int32,
@@ -58,8 +58,8 @@ class TimeSeries(AnyEntity):
 
     def dc_long_title(self):
         if self.is_constant:
-            return self.req._(u'Constant time series (value: %s)' % self.format_float(self.first))
-        return self.req._(u'Time series %s starting on %s with %d values' %
+            return self._cw._(u'Constant time series (value: %s)' % self._cw.format_float(self.first))
+        return self._cw._(u'Time series %s starting on %s with %d values' %
                           (self.dc_title(), self.start_date, self.count)) #pylint:disable-msg=E1101
 
     def grok_data(self):
@@ -389,7 +389,7 @@ class TimeSeries(AnyEntity):
 #
 
 class TSConstantExceptionBlock(AnyEntity):
-    id = 'TSConstantExceptionBlock'
+    __regid__ = 'TSConstantExceptionBlock'
     fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
 
     def dc_title(self):
@@ -398,11 +398,11 @@ class TSConstantExceptionBlock(AnyEntity):
                                    self.printable_value('value'))
 
 class TSConstantBlock(AnyEntity):
-    id = 'TSConstantBlock'
+    __regid__ = 'TSConstantBlock'
     fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
 
     def dc_title(self):
-        return self.req._(u'from %s: %s') % (self.printable_value('start_date'),
+        return self._cw._(u'from %s: %s') % (self.printable_value('start_date'),
                                              self.printable_value('value'))
 
 
