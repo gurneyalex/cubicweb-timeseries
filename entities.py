@@ -357,7 +357,7 @@ class TimeSeries(AnyEntity):
             if abs_index.start is None:
                 start = None
             else:
-                start = int(floor(abs_index.start - self._start_offset))
+                start = max(0, int(floor(abs_index.start - self._start_offset)))
             if abs_index.stop is None:
                 stop = None
             else:
