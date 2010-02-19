@@ -32,23 +32,20 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') ||
          xaxis: {mode: "time"},
          selection: {mode: "x", color: 'blue'}
          };
-
     var overviewoptions = {points: {show: false},
          lines: {show: true, lineWidth: 1},
          grid: {hoverable: false},
          xaxis: {mode: "time"},
          selection: {mode: "x", color: 'blue'}
          };
-
     var main = jQuery.plot(mainfig, [%(plotdata)s], mainoptions);
     var overview = jQuery.plot(overviewfig, [%(plotdata)s], overviewoptions);
-
-    jQuery("#main%(figid)s").bind("plothover", onTSPlotHover);
+    mainfig.bind("plothover", onTSPlotHover);
 
     // now connect the two
-    jQuery("#main%(figid)s").bind("plotselected", function (event, ranges) {
+    mainfig.bind("plotselected", function (event, ranges) {
         // do the zooming
-        main = jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s],
+        main = jQuery.plot(mainfig, [%(plotdata)s],
                       jQuery.extend(true, {}, mainoptions, {
                           xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to }
                       }));
@@ -56,12 +53,12 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') ||
         overview.setSelection(ranges, true);
     });
 
-    jQuery("#overview%(figid)s").bind("plotselected", function (event, ranges) {
+    overviewfig.bind("plotselected", function (event, ranges) {
         main.setSelection(ranges);
     });
 
     jQuery("#reset").click(function () {
-        jQuery.plot(jQuery("#main%(figid)s"), [%(plotdata)s], mainoptions);
+        jQuery.plot(mainfig, [%(plotdata)s], mainoptions);
         overview.clearSelection();
     });
 
@@ -116,7 +113,6 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
         renderTo: 'main%(figid)s',
         zoomType: 'x'
     }
-
     var color_values = [
         '#007a69',
         '#4572A7',
@@ -129,32 +125,26 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
         '#A47D7C',
         '#B5CA92'
     ]
-
     var title_options = {
         text: ''
     }
-
     var subtitle_options = {
         text: ''
     }
-
     var xAxis_options = {
         type: 'datetime',
         title: {
             text: null
         }
     }
-
     var yAxis_options = {
         title: {
             text: '.'
         }
     }
-
     var legend_options = {
         enabled: false
     }
-
     var plotOptions_options = {
         line: {
             animation: false,
@@ -165,21 +155,17 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
             shadow: false
         }
     }
-
     var series_data = %(plotdefs)s
-
     var series_options = [{
         type: 'line',
         data: series_data
     }]
-
     var tooltip_options = {
         formatter: function() {
             return Highcharts.dateFormat('%%Y-%%m-%%d %%H:%%M', this.x) + ':<br/>'+
                 + Highcharts.numberFormat(this.y, 2);
         }
     }
-
     var chart = new Highcharts.Chart({
         chart: chart_options,
         colors: color_values,
@@ -192,11 +178,9 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
         tooltip: tooltip_options,
         series: series_options
     });
-
     mainfig.attr('cubicweb:type','prepared-plot');
     overviewfig.attr('cubicweb:type','prepared-plot');
 }
-
 """
 
     def __init__(self, labels, plots):
@@ -225,4 +209,4 @@ if ((mainfig.attr('cubicweb:type') != 'prepared-plot') || (overviewfig.attr('cub
                                     {'plotdefs': '\n'.join(plotdefs),
                                      'figid': figid,
                                      },
-                                    jsoncall=req.form.get('jsoncall', False))
+                                    jsoncall=req.json_request)
