@@ -147,26 +147,30 @@ class TimeSeriesValuesView(baseviews.EntityView):
     title = None
 
     onload = u"""
-jQuery("#tsvalue").jqGrid({
-    url: '%(url)s',
-    datatype: 'json',
-    height: 400,
-    colNames:['date', 'value'],
-    colModel :[
-      {name:'date', index:'date', width:140},
-      {name:'value', index:'value', width:120, align:'right'},
-    ],
-    sortname: 'date',
-    sortorder: 'asc',
-    pager: '#pager',
-    caption: 'Values for %(ts_name)s'
-  });
+var grid = jQuery("#tsvalue");
+if (grid.attr('cubicweb:type') != 'prepared-grid') {
+  grid.jqGrid({
+      url: '%(url)s',
+      datatype: 'json',
+      height: 400,
+      colNames:['date', 'value'],
+      colModel :[
+        {name:'date', index:'date', width:140},
+        {name:'value', index:'value', width:120, align:'right'},
+      ],
+      sortname: 'date',
+      sortorder: 'asc',
+      pager: '#pager',
+      caption: 'Values for %(ts_name)s'
+    });
+  grid.attr('cubicweb:type', 'prepared-grid')
+}
 """
 
     def cell_call(self, row, col):
         req = self._cw
-        # XXX bug in cw 3.6.0
-        #req.demote_to_html()
+        if not req.json_request:
+            req.demote_to_html()
         entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
