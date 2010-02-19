@@ -25,6 +25,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
 
     def cell_call(self, row, col):
         entity = self.cw_rset.complete_entity(row, col)
+        self._cw.demote_to_html()
         self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
         if entity.is_constant:
@@ -164,6 +165,8 @@ jQuery("#tsvalue").jqGrid({
 
     def cell_call(self, row, col):
         req = self._cw
+        # XXX bug in cw 3.6.0
+        #req.demote_to_html()
         entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
