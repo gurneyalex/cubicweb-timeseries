@@ -3,7 +3,7 @@ from __future__ import division
 import numpy
 from datetime import datetime
 
-from cubicweb.devtools.testlib import CubiWebTC
+from cubicweb.devtools.testlib import CubicWebTC
 from logilab.common.testlib import unittest_main
 
 class TSaccessTC(CubicWebTC):
