@@ -151,17 +151,24 @@ var grid = jQuery("#tsvalue");
 if (grid.attr('cubicweb:type') != 'prepared-grid') {
   grid.jqGrid({
       url: '%(url)s',
+      scroll: 1,
       datatype: 'json',
       height: 400,
+      width: 700,
       colNames:['date', 'value'],
       colModel :[
-        {name:'date', index:'date', width:140},
-        {name:'value', index:'value', width:120, align:'right'},
+        {name:'date', index:'date', width:140, align:'center'},
+        {name:'value', index:'value', width:120, align:'center'},
       ],
+      rowNum: 2000,
+      mtype: "GET",
+      rownumbers: true,
+      rownumWidth: 50,
+      gridview: true,
+      viewrecords: true,
       sortname: 'date',
       sortorder: 'asc',
       pager: '#pager',
-      caption: 'Values for %(ts_name)s'
     });
   grid.attr('cubicweb:type', 'prepared-grid')
 }
