@@ -21,7 +21,6 @@ web = 'http://www.cubicweb.org/project/%s' % distname
 
 pyversions = ['2.4']
 
-
 from os import listdir as _listdir
 from os.path import join, isdir, exists, dirname
 from glob import glob
@@ -45,8 +44,10 @@ for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18
 # Note: here, you'll need to add subdirectories if you want
 # them to be included in the debian package
 
-
-cube_eid = None # <=== FIXME if you need direct bug-subscription
-__use__ = ()
-__recommend__ = ()
+__depends_cubes__ = {}
+__depends__ = {'cubicweb': '>= 3.5.12',
+               }
+for key,value in __depends_cubes__.items():
+    __depends__['cubicweb-'+key] = value
+__use__ = tuple(__depends_cubes__)
 
