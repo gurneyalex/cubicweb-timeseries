@@ -62,13 +62,17 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                      _('min'), _('max'),
                      _('average'), _('count'))
 
+
+    def display_constant_fields(self, entity):
+        self.field('constant', self._cw.format_float(entity.first),
+                   show_label=True, tr=True, table=True)
+
     def cell_call(self, row, col, **kwargs):
         entity = self.cw_rset.get_entity(row, col)
         w = self.w; _ = self._cw._
         with table(w):
             if entity.is_constant:
-                self.field('constant', self._cw.format_float(entity.first),
-                           show_label=True, tr=True, table=True)
+                self.display_constant_fields(entity)
             else:
                 for attr in self.summary_attrs:
                     # XXX getattr because some are actually properties
@@ -147,7 +151,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
     title = None
 
     onload = u"""
-var grid = jQuery("#tsvalue");
+var grid = jQuery('#tsvalue');
 if (grid.attr('cubicweb:type') != 'prepared-grid') {
   grid.jqGrid({
       url: '%(url)s',
