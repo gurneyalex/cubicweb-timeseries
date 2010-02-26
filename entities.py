@@ -74,7 +74,10 @@ class TimeSeries(AnyEntity):
         try:
             filename = self.data.filename.lower()
         except AttributeError:
-            numpy_array = self.data
+            data = self.data
+            if isinstance(data, Binary):
+                return
+            numpy_array = data
         else:
             if filename.endswith('.csv'):
                 numpy_array = self._numpy_from_csv(self.data)
