@@ -6,17 +6,21 @@
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
 from __future__ import with_statement
-_ = unicode
-from logilab.mtconverter import xml_escape
-from cwtags.tag import span, div, h2, table, tr, td, th, input
-from cubicweb.web import uicfg, formfields
-from cubicweb.schema import display_name
-from cubicweb.selectors import implements
 
 from simplejson import dumps
 
-from cubicweb.web.views import primary, baseviews, plots, tabs
-from cubes.timeseries.plots import TSFlotPlotWidget
+from logilab.common.date import datetime2ticks
+from logilab.mtconverter import xml_escape
+
+from cwtags.tag import div, h2, table, input, button
+
+from cubicweb.web import uicfg, formfields
+from cubicweb.schema import display_name
+from cubicweb.selectors import implements
+from cubicweb.web.views import primary, baseviews, tabs
+from cubicweb.web.views.basecontrollers import jsonize, JSonController
+
+_ = unicode
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = implements('TimeSeries')
@@ -48,12 +52,12 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self._cw._
-        w(h2(self._cw._('characteristics')))
+        w(h2(_('characteristics')))
         with table(w):
             for attr in self.characteristics_attrs:
                 self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
                            tr=True, table=True)
-            self.field(self._cw._('calendar'), entity.use_calendar, tr=True, table=True)
+            self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
@@ -62,14 +66,13 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                      _('min'), _('max'),
                      _('average'), _('count'))
 
-
     def display_constant_fields(self, entity):
         self.field('constant', self._cw.format_float(entity.first),
                    show_label=True, tr=True, table=True)
 
     def cell_call(self, row, col, **kwargs):
         entity = self.cw_rset.get_entity(row, col)
-        w = self.w; _ = self._cw._
+        w = self.w
         with table(w):
             if entity.is_constant:
                 self.display_constant_fields(entity)
@@ -87,23 +90,32 @@ class TimeSeriesPlotView(baseviews.EntityView):
     __regid__ = 'ts_plot'
     __select__ = implements('TimeSeries')
     title = None
-    def build_plot_data(self, entity):
-        plots = []
-        for ts in self.cw_rset.entities():
-            plots.append(ts.timestamped_array())
-        return plots
+    onload = u"init_ts_plot('%(figid)s', [%(plotdata)s]);"
+
+    def dump_plot(self, plot):
+        plot = [(datetime2ticks(x), y) for x,y in plot]
+        return dumps(plot)
 
     def call(self, width=None, height=None):
-        form = self._cw.form
-        width = width or form.get('width', 900)
-        height = height or form.get('height', 250)
-        names = []
-        plot_list = []
-        for ts in self.cw_rset.entities():
-            names.append(ts.dc_title())
-            plot_list.append(ts.compressed_timestamped_array())
-        plotwidget = TSFlotPlotWidget(names, plot_list)
-        plotwidget.render(self._cw, width, height, w=self.w)
+        req = self._cw; w=self.w
+        if req.ie_browser():
+            req.add_js('excanvas.js')
+        req.add_js(('jquery.flot.js',
+                    'jquery.flot.selection.js',
+                    'cubes.timeseries.js'))
+        width = width or req.form.get('width', 700)
+        height = height or req.form.get('height', 400)
+        figid = u'figure%s' % req.varmaker.next()
+        w(div(id='main%s' % figid, style='width: %spx; height: %spx;' % (width, height)))
+        w(div(id='overview%s' % figid, style='width: %spx; height: %spx;' % (width, height/3)))
+        w(button(req._('Reset'), id='reset'))
+        plotdata = ("{label: '%s', data: %s}" % (xml_escape(ts.dc_title()),
+                                                 self.dump_plot(ts.compressed_timestamped_array()))
+                    for ts in self.cw_rset.entities())
+        req.html_headers.add_onload(self.onload %
+                                    {'figid': figid,
+                                     'plotdata': ','.join(plotdata)},
+                                    jsoncall=req.json_request)
 
 def get_formatter(req, entity):
     if entity.granularity in (u'15min', 'hourly'):
@@ -118,7 +130,6 @@ def get_formatter(req, entity):
         numformat = '%s'
     return dateformat, numformat, numformatter
 
-from cubicweb.web.views.basecontrollers import jsonize, JSonController
 @jsonize
 def get_data(self):
     form = self._cw.form
@@ -150,32 +161,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
     __select__ = implements('TimeSeries')
     title = None
 
-    onload = u"""
-var grid = jQuery('#tsvalue');
-if (grid.attr('cubicweb:type') != 'prepared-grid') {
-  grid.jqGrid({
-      url: '%(url)s',
-      scroll: 1,
-      datatype: 'json',
-      height: 400,
-      width: 400,
-      colNames:['date', 'value'],
-      colModel :[
-        {name:'date', index:'date', width:60, align:'center'},
-        {name:'value', index:'value', width:80, align:'right'},
-      ],
-      rowNum: 2000,
-      rownumbers: true,
-      rownumWidth: 50,
-      gridview: true,
-      viewrecords: true,
-      sortname: 'date',
-      sortorder: 'asc',
-      pager: '#pager',
-    });
-  grid.attr('cubicweb:type', 'prepared-grid')
-}
-"""
+    onload = u"init_ts_grid('tsvalue', '%(url)s');"
 
     def cell_call(self, row, col):
         req = self._cw
@@ -184,16 +170,14 @@ if (grid.attr('cubicweb:type') != 'prepared-grid') {
         entity = self.cw_rset.get_entity(row, col)
         if req.ie_browser():
             req.add_js('excanvas.js')
-        req.add_js(('grid.locale-en.js', 'jquery.jqGrid.js'))
+        req.add_js(('cubes.timeseries.js', 'grid.locale-en.js', 'jquery.jqGrid.js'))
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         url = entity.absolute_url('json') + '&fname=get_data'
         req.html_headers.add_onload(self.onload %
-                                   {'ts_name': entity.dc_title(),
-                                    'url': url},
-                                   jsoncall=req.json_request)
-        self.w(table(id='tsvalue'))
+                                    {'url': url},
+                                    jsoncall=req.json_request)
+        self.w(table(id='tsvalue', cubicweb__type='unprepared'))
         self.w(div(id='pager'))
-
 
 
 
