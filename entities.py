@@ -80,11 +80,11 @@ class TimeSeries(AnyEntity):
             numpy_array = data
         else:
             if filename.endswith('.csv'):
-                numpy_array = self._numpy_from_csv(self.data)
+                numpy_array = self._numpy_from_csv(self.data, filename)
             elif filename.endswith('.xls'):
-                numpy_array = self._numpy_from_excel(self.data)
+                numpy_array = self._numpy_from_excel(self.data, filename)
             elif filename.endswith('.txt'):
-                numpy_array = self._numpy_from_txt(self.data)
+                numpy_array = self._numpy_from_txt(self.data, filename)
             else:
                 raise ValueError('Unsupported file type %s' % self.data.filename)
 
@@ -276,10 +276,13 @@ class TimeSeries(AnyEntity):
             values.append((tstamp, value))
         return values
 
-    def _numpy_from_txt(self, file):
-        return numpy.array([float(x.strip()) for x in file])
+    def _numpy_from_txt(self, file, filename):
+        try:
+            return numpy.array([float(x.strip()) for x in file])
+        except ValueError:
+            raise ValueError('invalid data in %s (expecting one number per line, with . as the decimal separator)', filename)
 
-    def _numpy_from_csv(self, file):
+    def _numpy_from_csv(self, file, filename):
         sniffer = csv.Sniffer()
         raw_data = file.read()
         try:
@@ -297,21 +300,21 @@ class TimeSeries(AnyEntity):
         # TODO: check granularity if we have a date column
         for line, values in enumerate(reader):
             if len(values) not in (1, 2):
-                raise ValueError('Too many columns in %s' % file.filename)
+                raise ValueError('Too many columns in %s' % filename)
             try:
                 val = float(values[-1])
             except ValueError:
                 if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', file.filename) #pylint:disable-msg=E1101
+                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
                     continue # assume there was a header
                 else:
-                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, file.filename))
+                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, filename))
             series.append(val)
 
         return numpy.array(series, dtype = self.dtype)
 
 
-    def _numpy_from_excel(self, file):
+    def _numpy_from_excel(self, file, filename):
         xl_data = file.read()
         wb = xlrd.open_workbook(filename=file.filename,
                                 file_contents=xl_data)
@@ -322,10 +325,10 @@ class TimeSeries(AnyEntity):
             try:
                 float(cell_value)
             except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d)' % (row, 0))
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, 0, filename))
             values.append(sheet.cell_value(row, 0))
         if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % file.filename)
+            raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.dtype)
 
     def get_absolute(self, abs_index):

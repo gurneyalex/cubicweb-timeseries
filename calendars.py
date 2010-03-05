@@ -91,7 +91,7 @@ class AbstractCalendar:
 
     def start_of_day(self, tstamp):
         """
-        return datetime of the begining of gas day for tstamp
+        return datetime of the begining of day for tstamp
         """
         raise NotImplementedError
 
