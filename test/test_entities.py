@@ -270,6 +270,13 @@ class ComputeSumAverageTC(CubicWebTC):
         data = self.monthly_ts.array
         self.assertFloatAlmostEquals(sum_res, (1-2/30)*data[1] + 1*data[2] + 22/31*data[3])
 
+    def test_monthly_sum2(self):
+        start_date = datetime(2009, 11, 3, 0)
+        end_date = datetime(2009, 11, 23, 0)
+        date, sum_res = self.monthly_ts.aggregated_value(start_date, end_date, 'sum')
+        data = self.monthly_ts.array
+        self.assertFloatAlmostEquals(sum_res, (20/30)*data[1])
+
     def test_monthly_average(self):
         start_date = datetime(2009, 11, 3, 0)
         end_date = datetime(2010, 1, 23, 0)
@@ -277,6 +284,13 @@ class ComputeSumAverageTC(CubicWebTC):
         data = self.monthly_ts.array
         expected = ((1-2/30)*data[1] + 1*data[2] + 22/31*data[3]) / (1-2/30+1+22/31)
         self.assertFloatAlmostEquals(average,  expected)
+
+    def test_monthly_average2(self):
+        start_date = datetime(2009, 11, 3, 0)
+        end_date = datetime(2009, 11, 23, 0)
+        date, average = self.monthly_ts.aggregated_value(start_date, end_date, 'average')
+        data = self.monthly_ts.array
+        self.assertFloatAlmostEquals(average,  data[1])
 
     def test_weekly_sum(self):
         start_date = datetime(2009, 10, 10, 0)
@@ -300,12 +314,26 @@ class ComputeSumAverageTC(CubicWebTC):
         data = self.daily_ts.array
         self.assertFloatAlmostEquals(sum_res, data[2:22].sum())
 
+    def test_daily_sum2(self):
+        start_date = datetime(2009, 10, 3, 2)
+        end_date = datetime(2009, 10, 3, 10)
+        date, sum_res = self.daily_ts.aggregated_value(start_date, end_date, 'sum')
+        data = self.daily_ts.array
+        self.assertFloatAlmostEquals(sum_res, data[2]*8/24)
+
     def test_daily_average(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
         date, average = self.daily_ts.aggregated_value(start_date, end_date, 'average')
         data = self.daily_ts.array
         self.assertFloatAlmostEquals(average, data[2:22].mean())
+
+    def test_daily_average2(self):
+        start_date = datetime(2009, 10, 3, 2)
+        end_date = datetime(2009, 10, 3, 10)
+        date, sum_res = self.daily_ts.aggregated_value(start_date, end_date, 'average')
+        data = self.daily_ts.array
+        self.assertFloatAlmostEquals(sum_res, data[2])
 
     def test_hourly_sum(self):
         start_date = datetime(2009, 10, 3, 0)
@@ -334,7 +362,6 @@ class ComputeSumAverageTC(CubicWebTC):
         date, average = self.quart_ts.aggregated_value(start_date, end_date, 'average')
         data = self.quart_ts.array
         self.assertFloatAlmostEquals(average, data[2*24*4:22*24*4].mean())
-
 
 if __name__ == '__main__':
     unittest_main()
