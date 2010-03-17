@@ -128,6 +128,9 @@ class AbstractCalendar(object):
     def prev_year_start(self, date):
         raise NotImplementedError
 
+    def strftime(self, date, fmt):
+        return date.strftime(fmt)
+
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):
         return date.toordinal()
