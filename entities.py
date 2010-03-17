@@ -120,17 +120,17 @@ class TimeSeries(AnyEntity):
             last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
             tstamp = self.timestamped_array()[last_index][0]
             return tstamp, values[-1]
-        coefs = numpy.ones(values.shape, float)
-        start_frac =  self.calendar.get_frac_offset(start, self.granularity)
-        end_frac =  self.calendar.get_frac_offset(end, self.granularity)
-        coefs[0] -= start_frac
-        if end_frac != 0:
-            coefs[-1] -= 1-end_frac
-        sigma = (values*coefs).sum()
         if mode == 'sum':
+            coefs = numpy.ones(values.shape, float)
+            start_frac =  self.calendar.get_frac_offset(start, self.granularity)
+            end_frac =  self.calendar.get_frac_offset(end, self.granularity)
+            coefs[0] -= start_frac
+            if end_frac != 0:
+                coefs[-1] -= 1-end_frac
+            sigma = (values*coefs).sum()
             return start, sigma
         elif mode == 'average':
-            return start, sigma / sum(coefs)
+            return start, values.mean()
         else:
             raise ValueError('unknown mode %s' % mode)
 

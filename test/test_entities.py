@@ -148,7 +148,7 @@ class TSaccessTC(CubicWebTC):
         date1 = datetime(2009, 10, 2, 6)
         date2 = datetime(2009, 10, 4, 6)
         _date, result = self.dailyts.aggregated_value(date1, date2, 'average')
-        expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + .25*self.dailyts.array[3]) / (.75+1+.25)
+        expected = (self.dailyts.array[1] + self.dailyts.array[2] + self.dailyts.array[3]) / (3.)
         self.assertEquals(result, expected)
 
     def test_aggregated_value_sum(self):
@@ -283,7 +283,7 @@ class ComputeSumAverageTC(CubicWebTC):
         end_date = datetime(2010, 1, 23, 0)
         _date, average = self.monthly_ts.aggregated_value(start_date, end_date, 'average')
         data = self.monthly_ts.array
-        expected = ((1-2/30)*data[1] + 1*data[2] + 22/31*data[3]) / (1-2/30+1+22/31)
+        expected = (data[1] + data[2] + data[3]) / (3.)
         self.assertFloatAlmostEquals(average,  expected)
 
     def test_monthly_average2(self):
@@ -305,7 +305,7 @@ class ComputeSumAverageTC(CubicWebTC):
         end_date = datetime(2009, 10, 23, 0)
         _date, average = self.weekly_ts.aggregated_value(start_date, end_date, 'average')
         data = self.weekly_ts.array
-        expected = (2/7*data[1] + 1*data[2] + 4/7*data[3]) / (2/7+1+4/7)
+        expected = (data[1] + data[2] + data[3]) / (3.)
         self.assertFloatAlmostEquals(average, expected)
 
     def test_daily_sum(self):
