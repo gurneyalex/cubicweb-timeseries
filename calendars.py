@@ -12,7 +12,7 @@ def register_calendar(name, calendar):
 def get_calendar(name):
     return __ALL_CALENDARS[name]
 
-class AbstractCalendar:
+class AbstractCalendar(object):
 
     def get_offset(self, date, granularity):
         offset_method = getattr(self, '_get_offset_%s' % granularity)
