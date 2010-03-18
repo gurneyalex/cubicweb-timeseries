@@ -106,6 +106,7 @@ class TimeSeries(AnyEntity):
 
     def aggregated_value(self, start, end, mode):
         #pylint:disable-msg=E1101
+        assert mode in ('sum', 'average', 'last', 'sum_realized'), 'unsupported mode'
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
@@ -120,7 +121,7 @@ class TimeSeries(AnyEntity):
             last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
             tstamp = self.timestamped_array()[last_index][0]
             return tstamp, values[-1]
-        if mode == 'sum':
+        elif mode == 'sum':
             coefs = numpy.ones(values.shape, float)
             start_frac =  self.calendar.get_frac_offset(start, self.granularity)
             end_frac =  self.calendar.get_frac_offset(end, self.granularity)
@@ -131,6 +132,8 @@ class TimeSeries(AnyEntity):
             return start, sigma
         elif mode == 'average':
             return start, values.mean()
+        elif mode == 'sum_realized':
+            return start, values.sum()
         else:
             raise ValueError('unknown mode %s' % mode)
 
