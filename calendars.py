@@ -134,6 +134,10 @@ class AbstractCalendar(object):
     def strftime(self, date, fmt):
         return date.strftime(fmt)
 
+    def date_to_datetime(self, date):
+        return datetime.datetime.combine(date, datetime.time(0))
+
+
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):
         return date.toordinal()
