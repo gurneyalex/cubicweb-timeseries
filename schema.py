@@ -25,8 +25,8 @@ class TimeSeries(EntityType):
                          default='daily')
 
     start_date = Datetime(description=_('Start date'),
-                      required=True,
-                      default='TODAY')
+                          required=True,
+                          default='TODAY')
 
     data = Bytes(required=True,
                  description = _('Timeseries data'))

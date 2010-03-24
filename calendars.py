@@ -2,7 +2,7 @@ from __future__ import division
 import numpy
 import datetime
 
-from cubicweb.utils import days_in_month, days_in_year
+from logilab.common.date import days_in_month, days_in_year
 
 __ALL_CALENDARS = {}
 
@@ -12,7 +12,10 @@ def register_calendar(name, calendar):
 def get_calendar(name):
     return __ALL_CALENDARS[name]
 
-class AbstractCalendar:
+def get_all_calendars():
+    return __ALL_CALENDARS.values()
+
+class AbstractCalendar(object):
 
     def get_offset(self, date, granularity):
         offset_method = getattr(self, '_get_offset_%s' % granularity)
@@ -91,7 +94,7 @@ class AbstractCalendar:
 
     def start_of_day(self, tstamp):
         """
-        return datetime of the begining of gas day for tstamp
+        return datetime of the begining of day for tstamp
         """
         raise NotImplementedError
 
@@ -127,6 +130,13 @@ class AbstractCalendar:
 
     def prev_year_start(self, date):
         raise NotImplementedError
+
+    def strftime(self, date, fmt):
+        return date.strftime(fmt)
+
+    def date_to_datetime(self, date):
+        return datetime.datetime.combine(date, datetime.time(0))
+
 
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):

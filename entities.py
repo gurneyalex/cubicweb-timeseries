@@ -31,7 +31,7 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                }
 
 class TimeSeries(AnyEntity):
-    id = 'TimeSeries'
+    __regid__ = 'TimeSeries'
 
     _dtypes = {'Float': numpy.float64,
                'Integer': numpy.int32,
@@ -58,8 +58,8 @@ class TimeSeries(AnyEntity):
 
     def dc_long_title(self):
         if self.is_constant:
-            return self.req._(u'Constant time series (value: %s)' % self.format_float(self.first))
-        return self.req._(u'Time series %s starting on %s with %d values' %
+            return self._cw._(u'Constant time series (value: %s)' % self._cw.format_float(self.first))
+        return self._cw._(u'Time series %s starting on %s with %d values' %
                           (self.dc_title(), self.start_date, self.count)) #pylint:disable-msg=E1101
 
     def grok_data(self):
@@ -74,14 +74,17 @@ class TimeSeries(AnyEntity):
         try:
             filename = self.data.filename.lower()
         except AttributeError:
-            numpy_array = self.data
+            data = self.data
+            if isinstance(data, Binary):
+                return
+            numpy_array = data
         else:
             if filename.endswith('.csv'):
-                numpy_array = self._numpy_from_csv(self.data)
+                numpy_array = self._numpy_from_csv(self.data, filename)
             elif filename.endswith('.xls'):
-                numpy_array = self._numpy_from_excel(self.data)
+                numpy_array = self._numpy_from_excel(self.data, filename)
             elif filename.endswith('.txt'):
-                numpy_array = self._numpy_from_txt(self.data)
+                numpy_array = self._numpy_from_txt(self.data, filename)
             else:
                 raise ValueError('Unsupported file type %s' % self.data.filename)
 
@@ -103,6 +106,7 @@ class TimeSeries(AnyEntity):
 
     def aggregated_value(self, start, end, mode):
         #pylint:disable-msg=E1101
+        assert mode in ('sum', 'average', 'last', 'sum_realized'), 'unsupported mode'
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
@@ -117,17 +121,19 @@ class TimeSeries(AnyEntity):
             last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
             tstamp = self.timestamped_array()[last_index][0]
             return tstamp, values[-1]
-        coefs = numpy.ones(values.shape, float)
-        start_frac =  self.calendar.get_frac_offset(start, self.granularity)
-        end_frac =  self.calendar.get_frac_offset(end, self.granularity)
-        coefs[0] -= start_frac
-        if end_frac != 0:
-            coefs[-1] -= 1-end_frac
-        sigma = (values*coefs).sum()
-        if mode == 'sum':
+        elif mode == 'sum':
+            coefs = numpy.ones(values.shape, float)
+            start_frac =  self.calendar.get_frac_offset(start, self.granularity)
+            end_frac =  self.calendar.get_frac_offset(end, self.granularity)
+            coefs[0] -= start_frac
+            if end_frac != 0:
+                coefs[-1] -= 1-end_frac
+            sigma = (values*coefs).sum()
             return start, sigma
         elif mode == 'average':
-            return start, sigma / sum(coefs)
+            return start, values.mean()
+        elif mode == 'sum_realized':
+            return start, values.sum()
         else:
             raise ValueError('unknown mode %s' % mode)
 
@@ -273,10 +279,13 @@ class TimeSeries(AnyEntity):
             values.append((tstamp, value))
         return values
 
-    def _numpy_from_txt(self, file):
-        return numpy.array([float(x.strip()) for x in file])
+    def _numpy_from_txt(self, file, filename):
+        try:
+            return numpy.array([float(x.strip()) for x in file])
+        except ValueError:
+            raise ValueError('invalid data in %s (expecting one number per line, with . as the decimal separator)', filename)
 
-    def _numpy_from_csv(self, file):
+    def _numpy_from_csv(self, file, filename):
         sniffer = csv.Sniffer()
         raw_data = file.read()
         try:
@@ -294,21 +303,21 @@ class TimeSeries(AnyEntity):
         # TODO: check granularity if we have a date column
         for line, values in enumerate(reader):
             if len(values) not in (1, 2):
-                raise ValueError('Too many columns in %s' % file.filename)
+                raise ValueError('Too many columns in %s' % filename)
             try:
                 val = float(values[-1])
             except ValueError:
                 if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', file.filename) #pylint:disable-msg=E1101
+                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
                     continue # assume there was a header
                 else:
-                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, file.filename))
+                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, filename))
             series.append(val)
 
         return numpy.array(series, dtype = self.dtype)
 
 
-    def _numpy_from_excel(self, file):
+    def _numpy_from_excel(self, file, filename):
         xl_data = file.read()
         wb = xlrd.open_workbook(filename=file.filename,
                                 file_contents=xl_data)
@@ -319,10 +328,10 @@ class TimeSeries(AnyEntity):
             try:
                 float(cell_value)
             except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d)' % (row, 0))
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, 0, filename))
             values.append(sheet.cell_value(row, 0))
         if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % file.filename)
+            raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.dtype)
 
     def get_absolute(self, abs_index):
@@ -389,7 +398,7 @@ class TimeSeries(AnyEntity):
 #
 
 class TSConstantExceptionBlock(AnyEntity):
-    id = 'TSConstantExceptionBlock'
+    __regid__ = 'TSConstantExceptionBlock'
     fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
 
     def dc_title(self):
@@ -398,11 +407,11 @@ class TSConstantExceptionBlock(AnyEntity):
                                    self.printable_value('value'))
 
 class TSConstantBlock(AnyEntity):
-    id = 'TSConstantBlock'
+    __regid__ = 'TSConstantBlock'
     fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
 
     def dc_title(self):
-        return self.req._(u'from %s: %s') % (self.printable_value('start_date'),
+        return self._cw._(u'from %s: %s') % (self.printable_value('start_date'),
                                              self.printable_value('value'))
 
 
