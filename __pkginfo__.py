@@ -14,8 +14,11 @@ http://www.logilab.fr -- mailto:contact@logilab.fr'''
 author = 'LOGILAB S.A. (Paris, FRANCE)'
 author_email = 'contact@logilab.fr'
 
-short_desc = 'Timeseries component for the CubicWeb framework'
-long_desc = '''Timeseries component for the CubicWeb framework'''
+short_desc = 'timeseries component for the CubicWeb framework'
+long_desc = '''\
+This cube provides a new datatype for time dependent values, handle the storage
+in a RDBMS, various ways of specifying the values, and several default views.
+'''
 
 web = 'http://www.cubicweb.org/project/%s' % distname
 
