@@ -214,7 +214,6 @@ class TimeSeries(AnyEntity):
             end_date = self.get_next_date(last_date)
             value = data[-1][1]
             compressed_data.append((end_date, value))
-        
         return compressed_data
 
     def python_value(self, v):
@@ -226,7 +225,7 @@ class TimeSeries(AnyEntity):
 
     @property
     def dtype(self):
-        return self._dtypes[self.data_type] #pylint:disable-msg=E1101
+        return self._dtypes.get(self.data_type, numpy.float64)
 
     @property
     def first(self):
@@ -313,9 +312,7 @@ class TimeSeries(AnyEntity):
                 else:
                     raise ValueError('unable to read value on line %d of %s' % (reader.line_num, filename))
             series.append(val)
-
-        return numpy.array(series, dtype = self.dtype)
-
+        return numpy.array(series, dtype=self.dtype)
 
     def _numpy_from_excel(self, file, filename):
         xl_data = file.read()
