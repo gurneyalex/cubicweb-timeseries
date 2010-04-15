@@ -104,6 +104,8 @@ class TimeSeries(AnyEntity):
 
     @property
     def end_date(self):
+        if self.granularity in TIME_DELTAS:
+            return self.start_date + self.count*TIME_DELTAS[self.granularity]
         return self.get_next_date(self.timestamped_array()[-1][0])
 
     def aggregated_value(self, start, end, mode):
