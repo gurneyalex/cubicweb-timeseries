@@ -264,12 +264,6 @@ class ComputeSumAverageTC(CubicWebTC):
                                       {'d': numpy.arange(2880),
                                        's': start_date}).get_entity(0, 0)
 
-    def test_start_date_error(self):
-        self.skip('to be checked carefully')
-        start_date = datetime(2009, 9, 3)
-        end_date = datetime(2009, 10, 23)
-        self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'sum')
-        self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'average')
 
     def test_end_date_error(self):
         start_date = datetime(2009, 12, 3)
