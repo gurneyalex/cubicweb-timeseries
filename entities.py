@@ -93,15 +93,19 @@ class TimeSeries(AnyEntity):
         self.data.write(compressed_data)
 
     def timestamped_array(self):
-        date = self.start_date #pylint:disable-msg=E1101
-        data = []
-        for v in self.array:
-            data.append((date, self.python_value(v)))
-            date = self.get_next_date(date)
-        return data
+        if not hasattr(self, '_timestamped_array'):
+            date = self.start_date #pylint:disable-msg=E1101
+            data = []
+            for v in self.array:
+                data.append((date, self.python_value(v)))
+                date = self.get_next_date(date)
+            self._timestamped_array = data
+        return self._timestamped_array
 
     @property
     def end_date(self):
+        if self.granularity in TIME_DELTAS:
+            return self.start_date + self.count*TIME_DELTAS[self.granularity]
         return self.get_next_date(self.timestamped_array()[-1][0])
 
     def aggregated_value(self, start, end, mode):

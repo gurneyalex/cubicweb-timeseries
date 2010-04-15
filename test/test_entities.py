@@ -1,7 +1,7 @@
 from __future__ import division
 
 import numpy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from cubicweb.devtools.testlib import CubicWebTC
 from logilab.common.testlib import unittest_main
@@ -10,6 +10,11 @@ class TSaccessTC(CubicWebTC):
     def setup_database(self):
         data = numpy.arange(10)
         start_date = datetime(2009, 10, 1)
+        self.hourlyts = self.execute('INSERT TimeSeries SP: '
+                               'SP data_type "Float", SP granularity "hourly", '
+                               'SP start_date %(s)s, SP data %(d)s',
+                               {'d': data,
+                                's': start_date}).get_entity(0, 0)
         self.dailyts = self.execute('INSERT TimeSeries SP: '
                                'SP data_type "Float", SP granularity "daily", '
                                'SP start_date %(s)s, SP data %(d)s',
@@ -32,6 +37,28 @@ class TSaccessTC(CubicWebTC):
                                'SP start_date %(s)s, SP data %(d)s',
                                {'d': data,
                                 's': datetime(2009, 10, 5)}).get_entity(0, 0)
+
+    def test_end_date_daily(self):
+        expected_end = self.dailyts.start_date + timedelta(days=10)
+        self.assertEquals(self.dailyts.end_date, expected_end)
+
+    def test_end_date_hourly(self):
+        expected_end = self.dailyts.start_date + timedelta(hours=10)
+        self.assertEquals(self.hourlyts.end_date, expected_end)
+
+    def test_end_date_weekly(self):
+        expected_end = self.weeklyts.start_date + timedelta(days=10*7)
+        self.assertEquals(self.weeklyts.end_date, expected_end)
+
+    def test_end_date_monthly(self):
+        expected_end = datetime(2010, 8, 1)
+        self.assertEquals(self.monthlyts.end_date, expected_end)
+
+    def test_end_date_yearly(self):
+        expected_end = datetime(2019, 10, 1)
+        self.assertEquals(self.yearlyts.end_date, expected_end)
+
+
 
     def test_make_relative_index_daily(self):
         date = datetime(2009, 10, 2, 12)
@@ -237,12 +264,6 @@ class ComputeSumAverageTC(CubicWebTC):
                                       {'d': numpy.arange(2880),
                                        's': start_date}).get_entity(0, 0)
 
-    def test_start_date_error(self):
-        self.skip('to be checked carefully')
-        start_date = datetime(2009, 9, 3)
-        end_date = datetime(2009, 10, 23)
-        self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'sum')
-        self.assertRaises(IndexError, self.daily_ts.aggregated_value, start_date, end_date, 'average')
 
     def test_end_date_error(self):
         start_date = datetime(2009, 12, 3)
@@ -363,6 +384,7 @@ class ComputeSumAverageTC(CubicWebTC):
         _date, average = self.quart_ts.aggregated_value(start_date, end_date, 'average')
         data = self.quart_ts.array
         self.assertFloatAlmostEquals(average, data[2*24*4:22*24*4].mean())
+
 
 if __name__ == '__main__':
     unittest_main()
