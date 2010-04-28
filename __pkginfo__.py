@@ -4,7 +4,7 @@
 modname = 'timeseries'
 distname = 'cubicweb-timeseries'
 
-numversion = (0, 8, 3)
+numversion = (0, 8, 4)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
@@ -50,6 +50,9 @@ for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18
 
 
 cube_eid = None # <=== FIXME if you need direct bug-subscription
-__use__ = ()
-__recommend__ = ()
-
+__depends_cubes__ = {}
+__depends__ = {'cubicweb': '>= 3.7.4'}
+__recommends_cubes__ = {}
+# obsolete (will be gone in cw 3.8.0)
+__use__ = tuple(__depends_cubes__)
+__recommend__ = tuple(__recommends_cubes__)
