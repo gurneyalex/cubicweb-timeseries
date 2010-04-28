@@ -175,7 +175,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
         req.add_js(('cubes.timeseries.js', 'grid.locale-en.js', 'jquery.jqGrid.js'))
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         url = entity.absolute_url('json') + '&fname=get_data'
-        req.html_headers.add_onload(self.onload % {'url': url})
+        req.html_headers.add_onload(self.onload % {'url': xml_escape(url)})
         self.w(table(id='tsvalue', cubicweb__type='unprepared'))
         self.w(div(id='pager'))
 
