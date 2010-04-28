@@ -1004,7 +1004,7 @@ $.fn.jqGrid = function( pin ) {
 				$("tbody:first",t).append(rowData.join(''));
 			}
 			ts.p.totaltime = new Date() - startReq;
-			if(ir>0) {ts.grid.cols = ts.rows[0].cells;if(ts.p.records===0)ts.p.records=len;}
+			if(ir>0) {if(ts.rows[0]){ts.grid.cols = ts.rows[0].cells;};if(ts.p.records===0)ts.p.records=len;}
 			}
 			if(!ts.p.treeGrid && !ts.p.scroll) {ts.grid.bDiv.scrollTop = 0;}
 			ts.p.reccount=ir;
