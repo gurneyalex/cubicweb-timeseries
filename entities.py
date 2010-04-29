@@ -284,9 +284,11 @@ class TimeSeries(AnyEntity):
 
     def _numpy_from_txt(self, file, filename):
         try:
-            return numpy.array([float(x.strip()) for x in file])
+            return numpy.array([float(x.strip().split()[-1]) for x in file])
         except ValueError:
-            raise ValueError('invalid data in %s (expecting one number per line, with . as the decimal separator)', filename)
+            raise ValueError('invalid data in %s (expecting one number per line '
+                             '(with optionally a date in the first column), '
+                             'with . as the decimal separator)', filename)
 
     def _numpy_from_csv(self, file, filename):
         sniffer = csv.Sniffer()
@@ -324,13 +326,14 @@ class TimeSeries(AnyEntity):
                                 file_contents=xl_data)
         sheet = wb.sheet_by_index(0)
         values = []
+        col = sheet.ncols - 1
         for row in xrange(sheet.nrows):
-            cell_value = sheet.cell_value(row, 0)
+            cell_value = sheet.cell_value(row, col)
             try:
-                float(cell_value)
+                cell_value = float(cell_value)
             except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, 0, filename))
-            values.append(sheet.cell_value(row, 0))
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
+            values.append(cell_value)
         if not values:
             raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.dtype)
