@@ -5,7 +5,8 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
-from __future__ import with_statement
+from __future__ import with_statement, division
+import math
 
 try:
     from json import dumps
@@ -151,7 +152,7 @@ def get_data(self):
                                                           key=sortkey))]
     start = (page - 1)  * rows
     end = page * rows
-    out = {'total': str(len(values) / rows),
+    out = {'total': str(math.ceil(len(values) / rows)),
            'page': page,
            'records': str(len(values)),
            'rows': values[start:end]}
