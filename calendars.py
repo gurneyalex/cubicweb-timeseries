@@ -137,6 +137,8 @@ class AbstractCalendar(object):
     def date_to_datetime(self, date):
         return datetime.datetime.combine(date, datetime.time(0))
 
+    def get_month_number(self, date):
+        raise NotImplementedError
 
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):
@@ -185,6 +187,9 @@ class GregorianCalendar(AbstractCalendar):
 
     def prev_year_start(self, date):# XXX rename to year_start?
         return datetime.datetime(date.year, 1, 1, 0)
+
+    def get_month_number(self, date):
+        return date.month
 
 register_calendar('gregorian', GregorianCalendar())
 
