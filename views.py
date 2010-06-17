@@ -45,7 +45,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     __regid__ = 'ts_summary'
     __select__ = implements('TimeSeries')
 
-    characteristics_attrs = ('granularity',)
+    characteristics_attrs = ('unit', 'granularity',)
 
     def summary(self, entity):
         self.w(h2(_('summary')))
@@ -67,11 +67,11 @@ class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
     __select__ = implements('TimeSeries')
     summary_attrs = (_('start_date'), _('end_date'),
-                     _('min'), _('max'),
-                     _('average'), _('count'))
+                     _('min_unit'), _('max_unit'),
+                     _('average_unit'), _('count'))
 
     def display_constant_fields(self, entity):
-        self.field('constant', self._cw.format_float(entity.first),
+        self.field('constant', entity.first_unit,
                    show_label=True, tr=True, table=True)
 
     def cell_call(self, row, col, **kwargs):
@@ -83,12 +83,17 @@ class TimeSeriesSummaryView(baseviews.EntityView):
             else:
                 for attr in self.summary_attrs:
                     # XXX getattr because some are actually properties
-                    try:
-                        self.field(attr, self._cw.format_float(getattr(entity, attr)),
+                    value = getattr(entity, attr)
+                    if type(value) is float:
+                        value = self._cw.format_float(value)
+                    self.field(attr, getattr(entity, attr),
                                    show_label=True, tr=True, table=True)
-                    except:
-                        self.field(attr, getattr(entity, attr),
-                                   show_label=True, tr=True, table=True)
+                    ## try:
+                    ##     self.field(attr, self._cw.format_float(getattr(entity, attr)),
+                    ##                show_label=True, tr=True, table=True)
+                    ## except:
+                    ##     self.field(attr, getattr(entity, attr),
+                    ##                show_label=True, tr=True, table=True)
 
 class TimeSeriesPlotView(baseviews.EntityView):
     __regid__ = 'ts_plot'

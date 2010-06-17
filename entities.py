@@ -232,12 +232,26 @@ class TimeSeries(AnyEntity):
         return self._dtypes.get(self.data_type, numpy.float64)
 
     @property
+    def safe_unit(self):
+        if self.unit is None:
+            return u''
+        return self.unit
+
+    @property
     def first(self):
         return self.array[0]
 
     @property
+    def first_unit(self):
+        return '%s%s' % (self.first, self.safe_unit)
+
+    @property
     def last(self):
         return self.array[-1]
+
+    @property
+    def last_unit(self):
+        return '%s%s' % (self.last, self.safe_unit)
 
     @property
     def count(self):
@@ -248,16 +262,32 @@ class TimeSeries(AnyEntity):
         return self.array.min()
 
     @property
+    def min_unit(self):
+        return '%s%s' % (self.min, self.safe_unit)
+
+    @property
     def max(self):
         return self.array.max()
+
+    @property
+    def max_unit(self):
+        return '%s%s' % (self.max, self.safe_unit)
 
     @property
     def sum(self):
         return self.array.sum()
 
     @property
+    def sum_unit(self):
+        return '%s%s' % (self.sum, self.safe_unit)
+
+    @property
     def average(self):
         return self.array.mean()
+
+    @property
+    def average_unit(self):
+        return '%s%s' % (self.average, self.safe_unit)
 
     @property
     def use_calendar(self):
@@ -400,22 +430,22 @@ class TimeSeries(AnyEntity):
 #
 # Below is some work in progress, not yet used in Pylos
 #
+if False:
+    class TSConstantExceptionBlock(AnyEntity):
+        __regid__ = 'TSConstantExceptionBlock'
+        fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
 
-class TSConstantExceptionBlock(AnyEntity):
-    __regid__ = 'TSConstantExceptionBlock'
-    fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
+        def dc_title(self):
+            return u'[%s; %s] : %s' % (self.printable_value('start_date'),
+                                       self.printable_value('stop_date'),
+                                       self.printable_value('value'))
 
-    def dc_title(self):
-        return u'[%s; %s] : %s' % (self.printable_value('start_date'),
-                                   self.printable_value('stop_date'),
-                                   self.printable_value('value'))
+    class TSConstantBlock(AnyEntity):
+        __regid__ = 'TSConstantBlock'
+        fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
 
-class TSConstantBlock(AnyEntity):
-    __regid__ = 'TSConstantBlock'
-    fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
-
-    def dc_title(self):
-        return self._cw._(u'from %s: %s') % (self.printable_value('start_date'),
-                                             self.printable_value('value'))
+        def dc_title(self):
+            return self._cw._(u'from %s: %s') % (self.printable_value('start_date'),
+                                                 self.printable_value('value'))
 
 
