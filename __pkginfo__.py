@@ -51,6 +51,6 @@ for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18
 
 cube_eid = None # <=== FIXME if you need direct bug-subscription
 __depends_cubes__ = {}
-__depends__ = {'cubicweb': '>= 3.8.3'}
+__depends__ = {'cubicweb': '>= 3.8.5'}
 __recommends_cubes__ = {}
 
