@@ -97,7 +97,8 @@ class TimeSeries(AnyEntity):
         self.data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         self.data.write(compressed_data)
-
+        self._array = numpy_array
+        
     def timestamped_array(self):
         if not hasattr(self, '_timestamped_array'):
             date = self.start_date #pylint:disable-msg=E1101
