@@ -20,14 +20,14 @@ from cwtags.tag import div, h2, table, input, button
 
 from cubicweb.web import uicfg, formfields
 from cubicweb.schema import display_name
-from cubicweb.selectors import implements
+from cubicweb.selectors import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
 from cubicweb.web.views.basecontrollers import jsonize, JSonController
 
 _ = unicode
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
-    __select__ = implements('TimeSeries')
+    __select__ = is_instance('TimeSeries')
     tabs = [_('ts_summary'), _('ts_plot'), _('ts_values')]
     default_tab = 'ts_summary'
 
@@ -43,7 +43,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
 
 class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     __regid__ = 'ts_summary'
-    __select__ = implements('TimeSeries')
+    __select__ = is_instance('TimeSeries')
 
     characteristics_attrs = ('unit', 'granularity',)
 
@@ -65,7 +65,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
-    __select__ = implements('TimeSeries')
+    __select__ = is_instance('TimeSeries')
     summary_attrs = (_('start_date'), _('end_date'),
                      _('min_unit'), _('max_unit'),
                      _('average_unit'), _('count'))
@@ -97,7 +97,7 @@ class TimeSeriesSummaryView(baseviews.EntityView):
 
 class TimeSeriesPlotView(baseviews.EntityView):
     __regid__ = 'ts_plot'
-    __select__ = implements('TimeSeries')
+    __select__ = is_instance('TimeSeries')
     title = None
     onload = u"init_ts_plot('%(figid)s', [%(plotdata)s]);"
 
@@ -166,7 +166,7 @@ JSonController.js_get_data = get_data
 
 class TimeSeriesValuesView(baseviews.EntityView):
     __regid__ = 'ts_values'
-    __select__ = implements('TimeSeries')
+    __select__ = is_instance('TimeSeries')
     title = None
 
     onload = u"init_ts_grid('tsvalue', '%(url)s');"

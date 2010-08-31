@@ -1,10 +1,10 @@
 from cubicweb import ValidationError
 from cubicweb.server.hook import Hook
-from cubicweb.selectors import implements
+from cubicweb.selectors import is_instance
 
 class TimeSeriesDataReadHook(Hook):
     __regid__ = 'timeseries_data_read_hook'
-    __select__ = Hook.__select__ & implements('TimeSeries')
+    __select__ = Hook.__select__ & is_instance('TimeSeries')
     events = ('before_update_entity', 'before_add_entity')
 
     def __call__(self):
@@ -13,7 +13,7 @@ class TimeSeriesDataReadHook(Hook):
 
 class ConstantTimeSeriesValidationHook(Hook):
     __regid__ = 'constant_ts_hook'
-    __select__ = Hook.__select__ & implements('TimeSeries')
+    __select__ = Hook.__select__ & is_instance('TimeSeries')
     events = ('after_update_entity', 'after_add_entity')
 
     def __call__(self):
