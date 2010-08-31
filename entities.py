@@ -7,7 +7,7 @@
 """
 from __future__ import division
 
-from cubicweb import Binary
+from cubicweb import Binary, ValidationError
 from cubicweb.entities import AnyEntity, fetch_config
 
 from cubes.timeseries.calendars import get_calendar
@@ -29,7 +29,7 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                'weekly': datetime.timedelta(weeks=1),
                # monthly and yearly do not have a fixed length
                }
-
+_ = unicode
 class TimeSeries(AnyEntity):
     __regid__ = 'TimeSeries'
 
@@ -88,10 +88,17 @@ class TimeSeries(AnyEntity):
             else:
                 raise ValueError('Unsupported file type %s' % self.data.filename)
 
+        if numpy_array.ndim != 1:
+            raise ValidationError(self.eid,
+                                  {'data': _('data must be a 1-dimensional array')})
+        if numpy_array.size == 0:
+            raise ValidationError(self.eid, 
+                                  {'data': _('data must have at least one value')})
         self.data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         self.data.write(compressed_data)
-
+        self._array = numpy_array
+        
     def timestamped_array(self):
         if not hasattr(self, '_timestamped_array'):
             date = self.start_date #pylint:disable-msg=E1101
