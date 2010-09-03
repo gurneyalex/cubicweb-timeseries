@@ -74,6 +74,9 @@ class TimeSeries(AnyEntity):
         try:
             filename = self.data.filename.lower()
         except AttributeError:
+            # XXX this is a bit dangerous as we break encapsulation doing this
+            #     did the provider not cheat about the inner data type ?
+            #     we should probably check it
             data = self.data
             if isinstance(data, Binary):
                 return
