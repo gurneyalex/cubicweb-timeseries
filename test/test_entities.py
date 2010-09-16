@@ -191,6 +191,22 @@ class TSaccessTC(CubicWebTC):
         _date, result = self.dailyts.aggregated_value([(date1, date2)], 'last')
         expected = self.dailyts.array[3]
         self.assertEquals(result, expected)
+        
+    def test_aggregated_value_last_multiple_interval(self):
+        interval1 = (datetime(2009, 10, 2, 6), datetime(2009, 10, 4, 6))
+        interval2 = (datetime(2009, 10, 5, 6), datetime(2009, 10, 7, 6))
+        interval3 = (datetime(2009, 10, 8, 6), datetime(2009, 10, 9, 6))
+        intervals = [interval1, interval2, interval3]
+        self.assertRaises(ValueError, self.dailyts.aggregated_value, intervals, 'last')
+
+    def test_aggregated_value_last_use_last_interval(self):
+        interval1 = (datetime(2009, 10, 2, 6), datetime(2009, 10, 4, 6))
+        interval2 = (datetime(2009, 10, 5, 6), datetime(2009, 10, 7, 6))
+        interval3 = (datetime(2009, 10, 8, 6), datetime(2009, 10, 9, 6))
+        intervals = [interval1, interval2, interval3]
+        _date, result = self.dailyts.aggregated_value(intervals, 'last', use_last_interval=True)
+        expected = self.dailyts.array[8]
+        self.assertEquals(result, expected)
 
     def test_aggregated_value_last_before_start(self):
         date1 = datetime(2009, 9, 2, 6)
