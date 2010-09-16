@@ -124,14 +124,16 @@ class TimeSeries(AnyEntity):
                 raise IndexError("%s date is before the time series's "
                                  "start date (%s)" % (end, self.start_date))
 
-    def aggregated_value(self, intervals, mode):
+    def aggregated_value(self, intervals, mode, use_last_interval=False):
         #pylint:disable-msg=E1101
         assert mode in ('sum', 'average', 'last', 'sum_realized', 'max'), 'unsupported mode'
+        if use_last_interval and mode != 'last':
+            raise AssertionError, '"use_last_interval" may be True only if mode is "last"'
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
             return intervals[0][0], self.first
-        if mode == 'last' and len(intervals) != 1:
+        if mode == 'last' and len(intervals) != 1 and not use_last_interval:
             raise ValueError('"last" aggregation method cannot be used with more than 1 interval')
         self._check_intervals(intervals)
         values = []
