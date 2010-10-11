@@ -435,9 +435,9 @@ class TimeSeries(AnyEntity):
             if abs_index.stop is None:
                 stop = None
             else:
-                stop = int(ceil(abs_index.stop - self._start_offset))
-                if start > len(self.array):
-                    raise IndexError('start is too big')
+                stop = max(0, int(ceil(abs_index.stop - self._start_offset)))
+            if start > len(self.array):
+                raise IndexError('start is too big')
             return slice(start, stop, abs_index.step)
         else:
             raise TypeError('Unsupported index type %s' % type(abs_index))
