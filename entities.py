@@ -74,6 +74,9 @@ class TimeSeries(AnyEntity):
         try:
             filename = self.data.filename.lower()
         except AttributeError:
+            # XXX this is a bit dangerous as we break encapsulation doing this
+            #     did the provider not cheat about the inner data type ?
+            #     we should probably check it
             data = self.data
             if isinstance(data, Binary):
                 return
@@ -115,36 +118,57 @@ class TimeSeries(AnyEntity):
             return self.start_date + self.count*TIME_DELTAS[self.granularity]
         return self.get_next_date(self.timestamped_array()[-1][0])
 
-    def aggregated_value(self, start, end, mode):
+    def _check_intervals(self, intervals):
+        for start, end in intervals:
+            if end < self.start_date:
+                raise IndexError("%s date is before the time series's "
+                                 "start date (%s)" % (end, self.start_date))
+
+    def aggregated_value(self, intervals, mode, use_last_interval=False):
         #pylint:disable-msg=E1101
-        assert mode in ('sum', 'average', 'last', 'sum_realized'), 'unsupported mode'
+        assert mode in ('sum', 'average', 'last', 'sum_realized', 'max'), 'unsupported mode'
+        if use_last_interval and mode != 'last':
+            raise AssertionError, '"use_last_interval" may be True only if mode is "last"'
         if self.granularity == 'constant':
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
-            return start, self.first
-        if end < self.start_date:
-            raise IndexError("%s date is before the time series's "
-                             "start date (%s)" % (start, self.start_date))
-        values = self.get_by_date(slice(start, end))
-        if len(values) == 0:
-            raise IndexError()
+            return intervals[0][0], self.first
+        if mode == 'last' and len(intervals) != 1 and not use_last_interval:
+            raise ValueError('"last" aggregation method cannot be used with more than 1 interval')
+        self._check_intervals(intervals)
+        values = []
+        flat_values = []
+        for start, end in intervals:
+            interval_values = self.get_by_date(slice(start, end))
+            values.append((start, end, interval_values))
+            flat_values += interval_values.tolist()
+            if len(interval_values) == 0:
+                raise IndexError()
+        flat_values = numpy.array(flat_values)
+        start = intervals[0][0]
+        end = intervals[-1][1]
         if mode == 'last':
             last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
             tstamp = self.timestamped_array()[last_index][0]
-            return tstamp, values[-1]
+            return tstamp, flat_values[-1]
         elif mode == 'sum':
-            coefs = numpy.ones(values.shape, float)
-            start_frac =  self.calendar.get_frac_offset(start, self.granularity)
-            end_frac =  self.calendar.get_frac_offset(end, self.granularity)
-            coefs[0] -= start_frac
-            if end_frac != 0:
-                coefs[-1] -= 1-end_frac
-            sigma = (values*coefs).sum()
-            return start, sigma
+            sigmas = []
+            for start, end, interval_values in values:
+                coefs = numpy.ones(interval_values.shape, float)
+                start_frac =  self.calendar.get_frac_offset(start, self.granularity)
+                end_frac =  self.calendar.get_frac_offset(end, self.granularity)
+                coefs[0] -= start_frac
+                if end_frac != 0:
+                    coefs[-1] -= 1-end_frac
+                sigma = (interval_values*coefs).sum()
+                sigmas.append(sigma)
+            return start, sum(sigmas)
         elif mode == 'average':
-            return start, values.mean()
+            return start, flat_values.mean()
+        elif mode == 'max':
+            return start, flat_values.max()
         elif mode == 'sum_realized':
-            return start, values.sum()
+            return start, flat_values.sum()
         else:
             raise ValueError('unknown mode %s' % mode)
 
