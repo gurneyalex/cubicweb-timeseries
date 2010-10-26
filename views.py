@@ -8,10 +8,7 @@
 from __future__ import with_statement, division
 import math
 
-try:
-    from json import dumps
-except ImportError:
-    from simplejson import dumps
+from cubicweb.utils import json_dumps as dumps
 
 from logilab.common.date import datetime2ticks
 from logilab.mtconverter import xml_escape
@@ -23,6 +20,8 @@ from cubicweb.schema import display_name
 from cubicweb.selectors import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
 from cubicweb.web.views.basecontrollers import jsonize, JSonController
+
+from cubes.timeseries.utils import get_formatter
 
 _ = unicode
 
@@ -125,19 +124,6 @@ class TimeSeriesPlotView(baseviews.EntityView):
                                     {'figid': figid,
                                      'plotdata': ','.join(plotdata)})
 
-def get_formatter(req, entity):
-    if entity.granularity in (u'15min', 'hourly'):
-        dateformat = '%Y/%m/%d %H:%M'
-    else:
-        dateformat = '%Y/%m/%d'
-    if entity.data_type in ('Integer', 'Boolean'):
-        numformatter = lambda x:x
-        numformat = '%d'
-    else:
-        numformatter = lambda x:req.format_float(x)
-        numformat = '%s'
-    return dateformat, numformat, numformatter
-
 @jsonize
 def get_data(self):
     form = self._cw.form
@@ -187,109 +173,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
 
 
 
-## NOTE: this seems generic enough to be backported in CW
-class RelationSwitchField(formfields.Field):
-    """field used to choose among a list of relation.
-    """
-    needs_multipart = True # csv-based timeseries require a file upload
-
-    def __init__(self, name, **kwargs):
-        # XXX hack field name to avoid automatic HiddenRelationField creation
-        #     when field name matches an existing subject / object relation
-        #     (no longer needed in 3.6)
-        internal_name = '_%s_' % name
-        super(RelationSwitchField, self).__init__(name=internal_name, **kwargs)
-        self.rtype = name
-
-    def find_targettypes(self, entity):
-        eschema = entity.e_schema
-        if self.role == 'subject':
-            return eschema.subjrels[self.rtype].objects(eschema)
-        else:
-            return eschema.objrels[self.rtype].subjects(eschema)
-
-    def selected(self, entity):
-        """return which couple (rtype, target_type) should be selected
-        in the combobox
-        """
-        targettypes = self.find_targettypes(entity)
-        if not entity.has_eid():
-            return targettypes[0]
-        related = getattr(entity, self.rtype)
-        if related:
-            return related[0].e_schema
-        elif self._cwuired:
-            # if relation is required, we should never arrive here
-            raise ValueError('%s.%s is required but not set on eid %s'
-                             % (entity.e_schema, self.rtype, entity.eid))
-        # if not required, just pick the first one
-        return targettypes[0]
-
-    def initial_form(self, form, entity, ttype):
-        """return the initial inline form:
-        - either the inline-edition form of the existing relation
-        - or the inline-creation form of the first relation in the combobox
-        """
-        rtype = self.rtype
-        i18nctx = 'inlined:%s.%s.%s' % (entity.e_schema, rtype, 'subject')
-        if entity.has_eid():
-            return form.view('inline-edition', entity.related(rtype),
-                             rtype=rtype, role=self.role,
-                             ptype=entity.e_schema, peid=entity.eid,
-                             i18nctx=i18nctx)
-        else:
-            return form.view('inline-creation', None, etype=ttype,
-                             peid=entity.eid, ptype=entity.e_schema,
-                             rtype=rtype, role=self.role,
-                             i18nctx=i18nctx)
-
-    def render(self, form, renderer):
-        entity = form.edited_entity
-        eschema = entity.e_schema
-        data = []
-        w = data.append
-        selected = self.selected(entity)
-        # XXX hack to bypass a CW / jquery ajax/onload bug: we don't
-        #     want the onload methods to be called each time an ajax
-        #     query is done
-        form._cw.html_headers.define_var('docloaded', False)
-        form._cw.html_headers.add_post_inline_script(u"""
-function switchInlinedForm() {
-    var value = jQuery(this).val().split(';'); // holderId;eid;ttype;rtype;role
-    var holder = jQuery('#' + value[0]);
-    holder.prev().remove();
-    var i18nctx = ''; // XXX
-    addInlineCreationForm(value[1], value[2], value[3], value[4],
-                          i18nctx, $holder);
-}
-        """)
-        form._cw.add_onload(u'''if (!docloaded) {
-  jQuery("input:radio").change(switchInlinedForm);''
-  docloaded = true;
-}
-''')
-        formid = u'f%s' % hex(id(self))
-        with div(w):
-            for targettype in self.find_targettypes(entity):
-                inputargs = {
-                    'value': u'%s;%s;%s;%s;%s' % (formid, entity.eid, targettype,
-                                                  self.rtype, self.role),
-                    }
-                if targettype == selected:
-                    inputargs['checked'] = u'checked'
-                w(input(type=u'radio', name=self.rtype, **inputargs))
-                w(u'%s <br />' % display_name(form._cw, targettype,
-                                              context='inlined:%s.%s.%s' % (eschema, self.rtype, self.role)))
-        w(div(self.initial_form(form, entity, selected)))
-        w(div(u'', id=formid)) # needed by addInlineCreationForm()
-        return u'\n'.join(unicode(x) for x in data)
-
 ## forms ######################################################################
-uicfg.autoform_field.tag_subject_of(('TimeSeriesHandle', 'defined_by', '*'),
-                                    RelationSwitchField(role='subject',
-                                                        name='defined_by',
-                                                        label=('TimeSeriesHandle', 'defined_by'),
-                                                        required=True))
 
 uicfg.autoform_section.tag_subject_of(('BlockConstantTSValue', 'blocks', '*'),
                                          'main', 'inlined')
