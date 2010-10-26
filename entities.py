@@ -5,12 +5,9 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
-from __future__ import division
+from __future__ import division, with_statement
 
-from cubicweb import Binary, ValidationError
-from cubicweb.entities import AnyEntity, fetch_config
-
-from cubes.timeseries.calendars import get_calendar
+from cStringIO import StringIO
 
 import pickle
 import zlib
@@ -22,6 +19,15 @@ import datetime
 
 import numpy
 import xlrd
+from xlwt import Workbook
+
+from cubicweb import Binary, ValidationError
+from cubicweb.selectors import is_instance, ExpectedValueSelector
+from cubicweb.view import EntityAdapter
+from cubicweb.entities import AnyEntity, fetch_config
+
+from cubes.timeseries.calendars import get_calendar
+from cubes.timeseries.utils import numpy_val_map, get_formatter
 
 TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                'hourly': datetime.timedelta(hours=1),
@@ -95,13 +101,13 @@ class TimeSeries(AnyEntity):
             raise ValidationError(self.eid,
                                   {'data': _('data must be a 1-dimensional array')})
         if numpy_array.size == 0:
-            raise ValidationError(self.eid, 
+            raise ValidationError(self.eid,
                                   {'data': _('data must have at least one value')})
         self.data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         self.data.write(compressed_data)
         self._array = numpy_array
-        
+
     def timestamped_array(self):
         if not hasattr(self, '_timestamped_array'):
             date = self.start_date #pylint:disable-msg=E1101
@@ -226,9 +232,7 @@ class TimeSeries(AnyEntity):
 
 
     def compressed_timestamped_array(self):
-        """
-        eliminates duplicated values in piecewise constant timeseries
-        """
+        """ eliminates duplicated values in piecewise constant timeseries """
         data = self.timestamped_array()
         compressed_data = [data[0]]
         delta = datetime.timedelta(seconds=1)
@@ -343,62 +347,6 @@ class TimeSeries(AnyEntity):
             values.append((tstamp, value))
         return values
 
-    def _numpy_from_txt(self, file, filename):
-        try:
-            return numpy.array([float(x.strip().split()[-1]) for x in file])
-        except ValueError:
-            raise ValueError('invalid data in %s (expecting one number per line '
-                             '(with optionally a date in the first column), '
-                             'with . as the decimal separator)', filename)
-
-    def _numpy_from_csv(self, file, filename):
-        sniffer = csv.Sniffer()
-        raw_data = file.read()
-        try:
-            dialect = sniffer.sniff(raw_data, sniffer.preferred)
-            has_header = sniffer.has_header(raw_data)
-        except csv.Error, exc:
-            self.exception('Problem sniffing file %s', file.filename) #pylint:disable-msg=E1101
-            dialect = csv.excel
-            has_header = False
-        file.seek(0)
-        reader = csv.reader(file, dialect)
-        if has_header:
-            reader.next()
-        series = []
-        # TODO: check granularity if we have a date column
-        for line, values in enumerate(reader):
-            if len(values) not in (1, 2):
-                raise ValueError('Too many columns in %s' % filename)
-            try:
-                val = float(values[-1])
-            except ValueError:
-                if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
-                    continue # assume there was a header
-                else:
-                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, filename))
-            series.append(val)
-        return numpy.array(series, dtype=self.dtype)
-
-    def _numpy_from_excel(self, file, filename):
-        xl_data = file.read()
-        wb = xlrd.open_workbook(filename=file.filename,
-                                file_contents=xl_data)
-        sheet = wb.sheet_by_index(0)
-        values = []
-        col = sheet.ncols - 1
-        for row in xrange(sheet.nrows):
-            cell_value = sheet.cell_value(row, col)
-            try:
-                cell_value = float(cell_value)
-            except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
-            values.append(cell_value)
-        if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % filename)
-        return numpy.array(values, dtype=self.dtype)
-
     def get_absolute(self, abs_index):
         index = self._make_relative_index(abs_index)
         return self.get_relative(index)
@@ -456,27 +404,108 @@ class TimeSeries(AnyEntity):
             self.__start_offset = self.calendar.get_offset(self.start_date, self.granularity) #pylint:disable-msg=E1101
             return self.__start_offset
 
+    # import/conversion method
+
+    def _numpy_from_txt(self, file, filename):
+        try:
+            return numpy.array([float(x.strip().split()[-1]) for x in file])
+        except ValueError:
+            raise ValueError('invalid data in %s (expecting one number per line '
+                             '(with optionally a date in the first column), '
+                             'with . as the decimal separator)', filename)
+
+    def _numpy_from_csv(self, file, filename):
+        sniffer = csv.Sniffer()
+        raw_data = file.read()
+        try:
+            dialect = sniffer.sniff(raw_data, sniffer.preferred)
+            has_header = sniffer.has_header(raw_data)
+        except csv.Error, exc:
+            self.exception('Problem sniffing file %s', file.filename) #pylint:disable-msg=E1101
+            dialect = csv.excel
+            has_header = False
+        file.seek(0)
+        reader = csv.reader(file, dialect)
+        if has_header:
+            reader.next()
+        series = []
+        # TODO: check granularity if we have a date column
+        for line, values in enumerate(reader):
+            if len(values) not in (1, 2):
+                raise ValueError('Too many columns in %s' % filename)
+            try:
+                val = float(values[-1])
+            except ValueError:
+                if line == 0 and not has_header:
+                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
+                    continue # assume there was a header
+                else:
+                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, filename))
+            series.append(val)
+        return numpy.array(series, dtype=self.dtype)
+
+    def _numpy_from_excel(self, file, filename):
+        xl_data = file.read()
+        wb = xlrd.open_workbook(filename=file.filename,
+                                file_contents=xl_data)
+        sheet = wb.sheet_by_index(0)
+        values = []
+        col = sheet.ncols - 1
+        for row in xrange(sheet.nrows):
+            cell_value = sheet.cell_value(row, col)
+            try:
+                cell_value = float(cell_value)
+            except ValueError:
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
+            values.append(cell_value)
+        if not values:
+            raise ValueError('Unable to read a Timeseries in %s' % filename)
+        return numpy.array(values, dtype=self.dtype)
 
 
-#
-# Below is some work in progress, not yet used in Pylos
-#
-if False:
-    class TSConstantExceptionBlock(AnyEntity):
-        __regid__ = 'TSConstantExceptionBlock'
-        fetch_attrs, fetch_order = fetch_config(['start_date', 'stop_date', 'value'])
+class TimeSeriesExportAdapter(EntityAdapter):
+    __regid__ = 'ITimeSeriesExporter'
+    __select__ = is_instance('TimeSeries')
+    __abstract__ = True
 
-        def dc_title(self):
-            return u'[%s; %s] : %s' % (self.printable_value('start_date'),
-                                       self.printable_value('stop_date'),
-                                       self.printable_value('value'))
+    def export(self):
+        raise NotImplementedError
 
-    class TSConstantBlock(AnyEntity):
-        __regid__ = 'TSConstantBlock'
-        fetch_attrs, fetch_order = fetch_config(['start_date', 'value'])
+class mimetype(ExpectedValueSelector):
 
-        def dc_title(self):
-            return self._cw._(u'from %s: %s') % (self.printable_value('start_date'),
-                                                 self.printable_value('value'))
+    def _get_value(self, cls, req, **kwargs):
+        return kwargs.get(self.__class__.__name__)
+
+class TimeSeriesCSVexport(TimeSeriesExportAdapter):
+    """ export timestamped array to paste-into-excel-friendly csv """
+    __select__ = TimeSeriesExportAdapter.__select__ & mimetype('text/csv')
+
+    def export(self):
+        entity = self.entity
+        out = StringIO()
+        dateformat, numformat, numformatter = get_formatter(self._cw, entity)
+        writer = csv.writer(out, dialect='excel', delimiter='\t')
+        for date, value in entity.timestamped_array():
+            writer.writerow([date.strftime(dateformat), value])
+        return out.getvalue()
+
+class TimeSeriesXLExport(TimeSeriesExportAdapter):
+    __select__ = TimeSeriesExportAdapter.__select__ & mimetype('application/vnd.ms-excel')
+
+    def export(self):
+        # XXX timestamps ?
+        entity = self.entity
+        tsbox = entity.reverse_ts_variant[0]
+        workbook = Workbook()
+        sheet = workbook.add_sheet(('TS_%s' % tsbox.name)[:31])
+        outrows = []
+        class Writer(object):
+            def write(self, data):
+                """ callback to comply to workbook.save api """
+                outrows.append(data)
+        for rownum, val in enumerate(entity.array):
+            sheet.write(rownum, 0, numpy_val_map(val))
+        workbook.save(Writer())
+        return ''.join(outrows)
 
 
