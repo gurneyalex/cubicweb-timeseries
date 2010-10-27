@@ -38,6 +38,7 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
 _ = unicode
 class TimeSeries(AnyEntity):
     __regid__ = 'TimeSeries'
+    fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity', 'start_date'])
 
     _dtypes = {'Float': numpy.float64,
                'Integer': numpy.int32,
