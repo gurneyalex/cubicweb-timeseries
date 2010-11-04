@@ -258,7 +258,7 @@ class TimeSeries(AnyEntity):
     def python_value(self, v):
         _dtypes = {'Float': float,
                    'Integer': int,
-                   'Boolean': bool,
+                   'Boolean': int,
                    }
         return _dtypes[self.data_type](v) #pylint:disable-msg=E1101
 
