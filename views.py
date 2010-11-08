@@ -173,25 +173,3 @@ class TimeSeriesValuesView(baseviews.EntityView):
 
 
 
-## forms ######################################################################
-
-uicfg.autoform_section.tag_subject_of(('BlockConstantTSValue', 'blocks', '*'),
-                                         'main', 'inlined')
-uicfg.autoform_section.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
-                                         'main', 'inlined')
-
-## primary views ##############################################################
-uicfg.primaryview_section.tag_subject_of(('*', 'defined_by', '*'),
-                                         'relations')
-uicfg.primaryview_section.tag_object_of(('*', 'defined_by', '*'),
-                                         'attributes')
-uicfg.primaryview_section.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
-                                         'relations')
-uicfg.primaryview_display_ctrl.tag_subject_of(('ConstantAndExceptionTSValue', 'has_exceptions', '*'),
-                                              {'vid': 'list', 'order': 10})
-
-uicfg.primaryview_section.tag_subject_of(('BlockConstantTSValue', 'blocks', '*'),
-                                         'relations')
-uicfg.primaryview_display_ctrl.tag_subject_of(('BlockConstantTSValue', 'blocks', '*'),
-                                              {'vid': 'list', 'order': 10})
-
