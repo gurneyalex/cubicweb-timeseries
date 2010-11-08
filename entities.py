@@ -29,13 +29,15 @@ from cubicweb.entities import AnyEntity, fetch_config
 from cubes.timeseries.calendars import get_calendar
 from cubes.timeseries.utils import numpy_val_map, get_formatter
 
+_ = unicode
+
 TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                'hourly': datetime.timedelta(hours=1),
                'daily': datetime.timedelta(days=1),
                'weekly': datetime.timedelta(weeks=1),
                # monthly and yearly do not have a fixed length
                }
-_ = unicode
+
 class TimeSeries(AnyEntity):
     __regid__ = 'TimeSeries'
     fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity', 'start_date'])
@@ -466,7 +468,6 @@ class TimeSeries(AnyEntity):
 
 class TimeSeriesExportAdapter(EntityAdapter):
     __regid__ = 'ITimeSeriesExporter'
-    __select__ = is_instance('TimeSeries')
     __abstract__ = True
 
     def export(self):
@@ -475,16 +476,16 @@ class TimeSeriesExportAdapter(EntityAdapter):
 class mimetype(ExpectedValueSelector):
 
     def _get_value(self, cls, req, **kwargs):
-        return kwargs.get(self.__class__.__name__)
+        return kwargs.get('mimetype')
 
 class TimeSeriesCSVexport(TimeSeriesExportAdapter):
     """ export timestamped array to paste-into-excel-friendly csv """
-    __select__ = TimeSeriesExportAdapter.__select__ & mimetype('text/csv')
+    __select__ = is_instance('TimeSeries') & mimetype('text/csv')
 
     def export(self):
         entity = self.entity
         out = StringIO()
-        dateformat, numformat, numformatter = get_formatter(self._cw, entity)
+        dateformat, _numformat, _numformatter = get_formatter(self._cw, entity)
         writer = csv.writer(out, dialect='excel', delimiter='\t')
         for date, value in entity.timestamped_array():
             writer.writerow([date.strftime(dateformat), value])
