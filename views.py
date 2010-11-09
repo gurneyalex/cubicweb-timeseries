@@ -240,6 +240,9 @@ class DataWidget(fw.Input):
     needs_js = fw.Input.needs_js + ('cubes.timeseries.js',)
     field_id_tmpl = '%s-subject%s:%s' # (field name, suffix, eid)
 
+    # let's keep this open for easy subclassing
+    VariableInputClass = fw.FileInput
+    ConstantInputClass = ConstantDataInput
 
     def _render(self, form, field, renderer):
         """ provide two input widgets
@@ -254,9 +257,11 @@ class DataWidget(fw.Input):
                             (self.field_id_tmpl % ('granularity', '', eid),
                              self.field_id_tmpl % ('data', '-non-constant', eid),
                              self.field_id_tmpl % ('data', '-constant', eid)))
+        nonconstwidget = self.VariableInputClass(suffix='-non-constant')
+        constwidget = self.ConstantInputClass(suffix='-constant')
         return '<div id="%s">%s\n%s</div>' % (field.dom_id(form),
-                                              fw.FileInput(suffix='-non-constant').render(form, field, renderer),
-                                              ConstantDataInput(suffix='-constant').render(form, field, renderer))
+                                              constwidget.render(form, field, renderer),
+                                              nonconstwidget.render(form, field, renderer))
 
     def process_field_data(self, form, field):
         value = super(DataWidget, self).process_field_data(form, field)
