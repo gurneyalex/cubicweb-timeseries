@@ -22,7 +22,7 @@ in a RDBMS, various ways of specifying the values, and several default views.
 
 web = 'http://www.cubicweb.org/project/%s' % distname
 
-pyversions = ['2.4', '2.5']
+pyversions = ['2.5', '2.6']
 
 
 from os import listdir as _listdir

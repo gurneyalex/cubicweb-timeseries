@@ -101,3 +101,39 @@ function onTSPlotHover(event, pos, item) {
 }
 
 // /Plot
+
+// data: constant/non-constant switch
+
+// returns the value of the selected element
+
+function granularity_value(granularity_id) {
+  var $granularity = cw.jqNode(granularity_id).children();
+  for (var i=0; i < $granularity.length; i++) {
+    var $elt = $($granularity[i]);
+    if ($elt.attr('selected')) {
+       return $elt.val();
+    }
+  }
+}
+
+function install_granularity_trigger(granid, nonconstid, constid) {
+  var event = $.browser.msie ? 'click' : 'change';
+  cw.jqNode(granid).bind(event, function () {
+    switch_widget(granid , nonconstid, constid);
+  });
+}
+
+function switch_widget(granid, nonconstid, constid) {
+  if (granularity_value(granid) == 'constant') {
+    cw.jqNode(constid).show();
+    cw.jqNode(nonconstid).hide();
+  } else {
+    cw.jqNode(nonconstid).show();
+    cw.jqNode(constid).hide();
+ }
+}
+
+function init_data_widget(granid, nonconstid, constid) {
+  install_granularity_trigger(granid, nonconstid, constid);
+  switch_widget(granid, nonconstid, constid);
+}
