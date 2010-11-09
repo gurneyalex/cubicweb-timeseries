@@ -8,6 +8,8 @@
 from __future__ import with_statement, division
 import numpy
 
+from cwtags.tag import span, a
+
 from cubicweb import Binary, ValidationError
 
 from cubicweb.web import uicfg
@@ -89,24 +91,33 @@ class DataWidget(fw.Input):
     VariableInputClass = fw.FileInput
     ConstantInputClass = ConstantDataInput
 
+    def _render_export_url(self, form):
+        out = []
+        w = out.append
+        if form.edited_entity and isinstance(form.edited_entity.eid, int):
+            url = form.edited_entity.absolute_url(vid='tsexport')
+            with span(w, Class='tsexport'):
+                with a(w, href=url): # button triggers form validation
+                    w(form._cw._('[export]'))
+        return ''.join(unicode(x) for x in out)
+
     def _render(self, form, field, renderer):
         """ provide two input widgets
         the switch will be made in js-land where the shadows^W
         the live value of the granularity will be used
         to present the appropriate widget
         """
-        formid = form.domid
         eid = form.edited_entity.eid
-        data_fileinput_domid = self.field_id_tmpl % ('granularity', '', eid)
         form._cw.add_onload("init_data_widget('%s', '%s', '%s')" %
                             (self.field_id_tmpl % ('granularity', '', eid),
                              self.field_id_tmpl % ('data', '-non-constant', eid),
                              self.field_id_tmpl % ('data', '-constant', eid)))
         nonconstwidget = self.VariableInputClass(suffix='-non-constant')
         constwidget = self.ConstantInputClass(suffix='-constant')
+        export_url = self._render_export_url(form)
         return '<div id="%s">%s\n%s</div>' % (field.dom_id(form),
                                               constwidget.render(form, field, renderer),
-                                              nonconstwidget.render(form, field, renderer))
+                                              nonconstwidget.render(form, field, renderer) + export_url)
 
     def process_field_data(self, form, field):
         value = super(DataWidget, self).process_field_data(form, field)
