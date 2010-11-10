@@ -6,7 +6,7 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
-# pylint: disable-msg=W0404,W0622,W0704,W0613,W0152
+# pylint: disable-msg=W0404,W0622,W0704,W0613,E0611
 # Copyright (c) 2003-2009 LOGILAB S.A. (Paris, FRANCE).
 # http://www.logilab.fr/ -- mailto:contact@logilab.fr
 #

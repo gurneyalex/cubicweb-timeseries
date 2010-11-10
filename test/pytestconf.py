@@ -6,20 +6,22 @@
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
 import os
-import pwd
+#import pwd
 
 from logilab.common.pytest import PyTester
 
-def getlogin():
-    """avoid usinng os.getlogin() because of strange tty / stdin problems
-    (man 3 getlogin)
-    Another solution would be to use $LOGNAME, $USER or $USERNAME
-    """
-    return pwd.getpwuid(os.getuid())[0]
+#def getlogin():
+#    """avoid usinng os.getlogin() because of strange tty / stdin problems
+#    (man 3 getlogin)
+#    Another solution would be to use $LOGNAME, $USER or $USERNAME
+#    """
+#    return pwd.getpwuid(os.getuid())[0]
 
+from cubicweb.devtools.realdbtest import buildconfig, loadconfig
 
 def update_parser(parser):
-    login = getlogin()
+    login = "alf"
+    login = "admin"
     parser.add_option('-r', '--rebuild-database', dest='rebuild_db',
                       default=False, action="store_true",
                       help="remove tmpdb and rebuilds the test database")
@@ -29,12 +31,13 @@ def update_parser(parser):
                       default=login, help="database name")
     parser.add_option('-n', '--dbname', dest='dbname', action='store',
                       default=None, help="database name")
+    parser.add_option('--source', dest='source', action='store',
+                      default=None, help="source file path")
     parser.add_option('--euser', dest='euser', action='store',
-                      default=login, help="esuer name")
+                      default=login, help="euser name")
     parser.add_option('--epassword', dest='epassword', action='store',
                       default=login, help="euser's password' name")
     return parser
-
 
 class CustomPyTester(PyTester):
     def __init__(self, cvg, options):
@@ -42,3 +45,6 @@ class CustomPyTester(PyTester):
         if options.rebuild_db:
             os.unlink('tmpdb')
             os.unlink('tmpdb-template')
+        if options.source:
+            from cubes.pylos.testutils import PylosTC
+            PylosTC.configcls = loadconfig(options.source)

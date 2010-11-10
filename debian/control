@@ -2,7 +2,9 @@ Source: cubicweb-timeseries
 Section: web
 Priority: optional
 Maintainer: LOGILAB S.A. (Paris, FRANCE) <contact@logilab.fr>
+Uploaders: Alexandre Fayolle <afayolle@debian.org>
 Build-Depends: debhelper (>= 5.0.37.1), python (>=2.4), python-dev (>=2.4)
+Homepage: http://www.cubicweb.org/project/cubicweb-timeseries
 Standards-Version: 3.8.0
 
 

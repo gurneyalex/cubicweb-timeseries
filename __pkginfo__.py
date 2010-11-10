@@ -4,22 +4,26 @@
 modname = 'timeseries'
 distname = 'cubicweb-timeseries'
 
-numversion = (0, 1, 0)
+numversion = (1, 0, 0)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
-copyright = '''Copyright (c) 2009 LOGILAB S.A. (Paris, FRANCE).
+copyright = '''Copyright (c) 2009-2010 LOGILAB S.A. (Paris, FRANCE).
 http://www.logilab.fr -- mailto:contact@logilab.fr'''
 
 author = 'LOGILAB S.A. (Paris, FRANCE)'
 author_email = 'contact@logilab.fr'
 
-short_desc = 'Timeseries component for the CubicWeb framework'
-long_desc = '''Timeseries component for the CubicWeb framework'''
+short_desc = 'timeseries component for the CubicWeb framework'
+long_desc = '''\
+This cube provides a new datatype for time dependent values, handle the storage
+in a RDBMS, various ways of specifying the values, and several default views.
+'''
 
 web = 'http://www.cubicweb.org/project/%s' % distname
 
-pyversions = ['2.4']
+pyversions = ['2.5', '2.6']
+
 
 from os import listdir as _listdir
 from os.path import join, isdir, exists, dirname
@@ -44,10 +48,9 @@ for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18
 # Note: here, you'll need to add subdirectories if you want
 # them to be included in the debian package
 
+
+cube_eid = None # <=== FIXME if you need direct bug-subscription
 __depends_cubes__ = {}
-__depends__ = {'cubicweb': '>= 3.5.12',
-               }
-for key,value in __depends_cubes__.items():
-    __depends__['cubicweb-'+key] = value
-__use__ = tuple(__depends_cubes__)
+__depends__ = {'cubicweb': '>= 3.9.4'}
+__recommends_cubes__ = {}
 
