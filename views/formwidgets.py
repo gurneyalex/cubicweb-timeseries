@@ -95,7 +95,7 @@ class DataWidget(fw.Input):
         out = []
         w = out.append
         if form.edited_entity and isinstance(form.edited_entity.eid, int):
-            url = form.edited_entity.absolute_url(vid='tsexport')
+            url = form.edited_entity.absolute_url(vid='tsxlexport')
             with span(w, Class='tsexport'):
                 with a(w, href=url): # button triggers form validation
                     w(form._cw._('[export]'))
