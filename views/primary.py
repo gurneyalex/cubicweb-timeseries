@@ -44,7 +44,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     characteristics_attrs = ('unit', 'granularity',)
 
     def summary(self, entity):
-        self.w(h2(_('summary')))
+        self.w(h2(_('Summary')))
         self.wview('summary', entity.as_rset())
 
     def _prepare_side_boxes(self, entity):
@@ -52,12 +52,14 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self._cw._
-        w(h2(_('characteristics')))
+        w(h2(_('Characteristics')))
         with table(w):
             for attr in self.characteristics_attrs:
                 self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
                            tr=True, table=True)
             self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
+        w(h2(_('Preview')))
+        self.wview('sparkline', entity.as_rset())
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
