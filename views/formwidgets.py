@@ -27,6 +27,15 @@ class DataFileField(ff.FileField):
         value = widget.process_field_data(form, self)
         return self._ensure_correctly_typed(form, value)
 
+    def _ensure_correctly_typed(self, form, value):
+        """ numpy.ndarray => that was a constant ts _with_ a value
+        but we must work around bool(numpy.array([0])) == False
+        fooling the default implementation
+        """
+        if isinstance(value, numpy.ndarray):
+            return value
+        return super(DataFileField, self)._ensure_correctly_typed(form, value)
+
     def _process_form_value_with_suffix(self, form, suffix=u''):
         """ add suffix parameter & use it """
         posted = form._cw.form
@@ -65,11 +74,21 @@ ff.FileField.__new__ = staticmethod(__new__)
 # /hack
 
 def interpret_constant(entity, str_value):
+    _ = entity._cw._
+    if not str_value:
+        raise ValidationError(entity.eid, {'data': _('required field')})
     try:
         return entity.python_value(str_value)
     except (ValueError, TypeError):
-        _ = entity._cw._
         raise ValidationError(entity.eid, {'data': _('accepted type: %s') % _(entity.data_type)})
+    except KeyError, k:
+        # this can happen at creation time if data_type has not been provided
+        # e.g.: data_type is automatically handled in a hook to be executed later
+        # (yes, there are use case/applications that want to do this)
+        # here we might also look into the form and extract the given
+        # data_type value; for now, let's be dumb
+        assert entity.data_type is None, 'failed with data_type %s' % entity.data_type
+        return float(str_value)
 
 class ConstantDataInput(fw.TextInput):
 

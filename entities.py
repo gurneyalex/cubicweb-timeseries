@@ -263,10 +263,7 @@ class TimeSeries(AnyEntity):
                    'Integer': int,
                    'Boolean': int,
                    }
-        try:
-            return _dtypes[self.data_type](v) #pylint:disable-msg=E1101
-        except KeyError:
-            return float(v) # XXX, happens on new gen constant TS creation form
+        return _dtypes[self.data_type](v) #pylint:disable-msg=E1101
 
     @property
     def dtype(self):
