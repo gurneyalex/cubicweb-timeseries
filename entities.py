@@ -38,14 +38,26 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                # monthly and yearly do not have a fixed length
                }
 
+def boolint(value):
+    """ ensuring such boolean like values
+    are properly summable and plotable
+    0, 0.0 => 0
+    1, 42.0 => 11
+    """
+    return int(bool(float(value)))
+
+
 class TimeSeries(AnyEntity):
     __regid__ = 'TimeSeries'
     fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity', 'start_date'])
 
-    _dtypes = {'Float': numpy.float64,
-               'Integer': numpy.int32,
-               'Boolean': numpy.bool,
-               }
+    _dtypes_in = {'Float': numpy.float64,
+                  'Integer': numpy.int32,
+                  'Boolean': numpy.bool}
+    _dtypes_out = {'Float': float,
+                   'Integer': int,
+                   'Boolean': boolint}
+
     @property
     def array(self):
         if not hasattr(self, '_array'):
@@ -116,7 +128,7 @@ class TimeSeries(AnyEntity):
             date = self.start_date #pylint:disable-msg=E1101
             data = []
             for v in self.array:
-                data.append((date, self.python_value(v)))
+                data.append((date, self.output_value(v)))
                 date = self.get_next_date(date)
             self._timestamped_array = data
         return self._timestamped_array
@@ -237,6 +249,7 @@ class TimeSeries(AnyEntity):
     def compressed_timestamped_array(self):
         """ eliminates duplicated values in piecewise constant timeseries """
         data = self.timestamped_array()
+        print data
         compressed_data = [data[0]]
         delta = datetime.timedelta(seconds=1)
         last_date = data[-1][0]
@@ -259,18 +272,31 @@ class TimeSeries(AnyEntity):
         return compressed_data
 
     def python_value(self, v):
-        _dtypes = {'Float': float,
-                   'Integer': int,
-                   'Boolean': int,
-                   }
-        return _dtypes[self.data_type](v) #pylint:disable-msg=E1101
+        self.warning('python_value is deprecated, use output_value instead')
+        return self.output_value
+
+    def output_value(self, v):
+        """ use this for external representation purposes, but NOT
+        as an entry/input method as Boolean really should be
+        a boolean internally
+        """
+        return self._dtypes_out[self.data_type](v) #pylint:disable-msg=E1101
+
+    def input_value(self, v):
+        """ if you need to update some data piecewise, use this
+        to get it to the correct input type """
+        return self._dtypes_in[self.data_type](v) #pylint:disable-msg=E1101
 
     @property
     def dtype(self):
-        return self._dtypes.get(self.data_type, numpy.float64)
+        """ provides the correct python data type
+        for input purposes
+        """
+        return self._dtypes_in.get(self.data_type, numpy.float64)
 
     @property
     def safe_unit(self):
+        # XXX maybe we just want '' as default ?
         if self.unit is None:
             return u''
         return self.unit
@@ -411,13 +437,14 @@ class TimeSeries(AnyEntity):
 
     def _numpy_from_txt(self, file, filename):
         try:
-            return numpy.array([float(x.strip().split()[-1]) for x in file])
+            return numpy.array([float(x.strip().split()[-1]) for x in file],
+                               dtype=self.dtype)
         except ValueError:
             raise ValueError('invalid data in %s (expecting one number per line '
                              '(with optionally a date in the first column), '
-                             'with . as the decimal separator)', filename)
+                             'with . as the decimal separator)' % filename)
 
-    def _numpy_from_csv(self, file, filename):
+    def _snif_csv_dialect(self, file):
         sniffer = csv.Sniffer()
         raw_data = file.read()
         try:
@@ -428,6 +455,13 @@ class TimeSeries(AnyEntity):
             dialect = csv.excel
             has_header = False
         file.seek(0)
+        return dialect, has_header
+
+    def _numpy_from_csv(self, file, filename, dialect=None, has_header=False):
+        if dialect is None:
+            dialect, has_header = self._snif_csv_dialect(file)
+        else:
+            assert dialect in csv.list_dialects()
         reader = csv.reader(file, dialect)
         if has_header:
             reader.next()
@@ -443,7 +477,8 @@ class TimeSeries(AnyEntity):
                     self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
                     continue # assume there was a header
                 else:
-                    raise ValueError('unable to read value on line %d of %s' % (reader.line_num, filename))
+                    raise ValueError('Invalid data type for value %s on line %d of %s' %
+                                     (values[-1], reader.line_num, filename))
             series.append(val)
         return numpy.array(series, dtype=self.dtype)
 
