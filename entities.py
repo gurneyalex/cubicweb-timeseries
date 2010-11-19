@@ -466,11 +466,15 @@ class TimeSeries(AnyEntity):
             reader.next()
         series = []
         # TODO: check granularity if we have a date column
+        prefs = self._cw.user.format_preferences[0]
+        dec_sep = prefs.decimal_separator
+        th_sep = prefs.thousands_separator
         for line, values in enumerate(reader):
             if len(values) not in (1, 2):
                 raise ValueError('Too many columns in %s' % filename)
             try:
-                val = float(values[-1])
+                strval = values[-1].replace(th_sep, '').replace(dec_sep, '.')
+                val = float(strval)
             except ValueError:
                 if line == 0 and not has_header:
                     self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
@@ -518,11 +522,14 @@ class TimeSeriesCSVexport(TimeSeriesExportAdapter):
 
     def export(self):
         entity = self.entity
+        prefs = self._cw.user.format_preferences[0]
+        dec_sep = prefs.decimal_separator
         out = StringIO()
         dateformat, _numformat, _numformatter = get_formatter(self._cw, entity)
         writer = csv.writer(out, dialect='excel', delimiter='\t')
         for date, value in entity.timestamped_array():
-            writer.writerow([date.strftime(dateformat), value])
+            outvalue = str(entity.output_value(value)).replace('.', dec_sep)
+            writer.writerow([date.strftime(dateformat), outvalue])
         return out.getvalue()
 
 class TimeSeriesXLExport(TimeSeriesExportAdapter):

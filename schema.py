@@ -30,3 +30,14 @@ class TimeSeries(EntityType):
     data = Bytes(required=True,
                  description = _('Timeseries data'))
 
+
+class ExcelPreferences(EntityType):
+    # thousands: input only
+    thousands_separator = String(maxsize=1, default=u'')
+    decimal_separator = String(required=True, maxsize=1, default=u'.')
+
+class format_preferences(RelationDefinition):
+    subject = 'CWUser'
+    object = 'ExcelPreferences'
+    composite = 'subject'
+    cardinality = '11'

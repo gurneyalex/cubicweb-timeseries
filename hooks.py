@@ -21,3 +21,25 @@ class ConstantTimeSeriesValidationHook(Hook):
             if self.entity.count != 1:
                 raise ValidationError(self.entity, {'granularity':
                                                     'TimeSeries is constant, but has more than one value'})
+
+
+class ExcelPreferencesCoherency(Hook):
+    __regid__ = 'pylos.excel_prefs_coherency'
+    events = ('after_add_entity', 'after_update_entity')
+    __select__ = Hook.__select__ & is_instance('ExcelPreferences')
+
+    def __call__(self):
+        self.debug('hook %s', self.__class__.__name__)
+        entity = self.entity
+        if entity.thousands_separator == entity.decimal_separator:
+            msg = self._cw._('thousands separator must not be the same as decimal separator')
+            raise ValidationError(entity.eid, {'thousands_separator': msg})
+
+class SetupExcelPreferences(Hook):
+    __regid__ = 'pylos.setup_excel_prefs'
+    events = ('after_add_entity',)
+    __select__ = Hook.__select__ & is_instance('CWUser')
+
+    def __call__(self):
+        self.debug('hook %s', self.__class__.__name__)
+        self.entity.set_relations(format_preferences=self._cw.create_entity('ExcelPreferences'))

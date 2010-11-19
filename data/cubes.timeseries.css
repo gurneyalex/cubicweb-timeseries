@@ -1,1 +1,9 @@
 /* template specific CSS */
+
+
+/* format prefs */
+
+span.highlight {
+ padding: 3px;
+ background-color: #E6F3EF;
+}
