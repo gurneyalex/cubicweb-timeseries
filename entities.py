@@ -468,7 +468,7 @@ class TimeSeries(AnyEntity):
         # TODO: check granularity if we have a date column
         prefs = self._cw.user.format_preferences[0]
         dec_sep = prefs.decimal_separator
-        th_sep = prefs.thousands_separator
+        th_sep = prefs.thousands_separator or ''
         for line, values in enumerate(reader):
             if len(values) not in (1, 2):
                 raise ValueError('Too many columns in %s' % filename)
