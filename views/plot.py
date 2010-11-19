@@ -41,7 +41,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
         figid = u'figure%s' % req.varmaker.next()
         w(div(id='main%s' % figid, style='width: %spx; height: %spx;' % (width, height)))
         w(div(id='overview%s' % figid, style='width: %spx; height: %spx;' % (width, height/3)))
-        w(button(req._('Reset'), id='reset'))
+        w(button(req._('Zoom reset'), id='reset', Class='validateButton'))
         plotdata = ("{label: '%s', data: %s}" % (xml_escape(ts.dc_title()),
                                                  self.dump_plot(ts.compressed_timestamped_array()))
                     for ts in self.cw_rset.entities())

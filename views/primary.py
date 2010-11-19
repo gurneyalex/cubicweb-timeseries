@@ -81,6 +81,8 @@ class TimeSeriesSummaryView(baseviews.EntityView):
             else:
                 for attr in self.summary_attrs:
                     # XXX getattr because some are actually properties
+                    if attr == 'average_unit' and entity.data_type == 'Boolean':
+                        continue
                     value = getattr(entity, attr)
                     if isinstance(value, float):
                         value = self._cw.format_float(value)

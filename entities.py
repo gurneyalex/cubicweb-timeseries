@@ -249,7 +249,6 @@ class TimeSeries(AnyEntity):
     def compressed_timestamped_array(self):
         """ eliminates duplicated values in piecewise constant timeseries """
         data = self.timestamped_array()
-        print data
         compressed_data = [data[0]]
         delta = datetime.timedelta(seconds=1)
         last_date = data[-1][0]
@@ -273,7 +272,7 @@ class TimeSeries(AnyEntity):
 
     def python_value(self, v):
         self.warning('python_value is deprecated, use output_value instead')
-        return self.output_value
+        return self.output_value(v)
 
     def output_value(self, v):
         """ use this for external representation purposes, but NOT
@@ -327,7 +326,7 @@ class TimeSeries(AnyEntity):
 
     @property
     def min_unit(self):
-        return '%s%s' % (self.min, self.safe_unit)
+        return '%s%s' % (self.output_value(self.min), self.safe_unit)
 
     @property
     def max(self):
@@ -335,7 +334,7 @@ class TimeSeries(AnyEntity):
 
     @property
     def max_unit(self):
-        return '%s%s' % (self.max, self.safe_unit)
+        return '%s%s' % (self.output_value(self.max), self.safe_unit)
 
     @property
     def sum(self):
