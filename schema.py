@@ -8,7 +8,8 @@
 _ = unicode
 
 from yams.buildobjs import (EntityType, String, Bytes, Boolean, #pylint:disable-msg=E0611
-                            Float, Datetime, SubjectRelation,)  #pylint:disable-msg=E0611
+                            Float, Datetime, SubjectRelation,
+                            RelationDefinition)
 
 class TimeSeries(EntityType):
     data_type = String(required=True,
