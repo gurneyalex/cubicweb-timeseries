@@ -78,7 +78,7 @@ def interpret_constant(entity, str_value):
     if not str_value:
         raise ValidationError(entity.eid, {'data': _('required field')})
     try:
-        return entity.python_value(str_value)
+        return entity.output_value(str_value)
     except (ValueError, TypeError):
         raise ValidationError(entity.eid, {'data': _('accepted type: %s') % _(entity.data_type)})
     except KeyError, k:
