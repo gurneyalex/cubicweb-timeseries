@@ -27,7 +27,7 @@ from cubicweb.view import EntityAdapter
 from cubicweb.entities import AnyEntity, fetch_config
 
 from cubes.timeseries.calendars import get_calendar
-from cubes.timeseries.utils import numpy_val_map, get_formatter
+from cubes.timeseries.utils import get_formatter
 
 _ = unicode
 
@@ -547,7 +547,7 @@ class TimeSeriesXLExport(TimeSeriesExportAdapter):
                 """ callback to comply to workbook.save api """
                 outrows.append(data)
         for rownum, val in enumerate(entity.array):
-            sheet.write(rownum, 0, numpy_val_map(val))
+            sheet.write(rownum, 0, entity.output_value(val))
         workbook.save(Writer())
         return ''.join(outrows)
 
