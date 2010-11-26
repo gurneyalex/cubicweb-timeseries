@@ -172,8 +172,25 @@ class TimeSeries(AnyEntity):
             last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
             tstamp = self.timestamped_array()[last_index][0]
             return tstamp, flat_values[-1]
-        elif mode == 'sum':
-            sigmas = []
+        elif mode == 'max':
+            return start, flat_values.max()
+        elif mode == 'sum_realized':
+            return start, flat_values.sum()
+#        elif mode == 'sum':
+#            sigmas = []
+#            for start, end, interval_values in values:
+#                coefs = numpy.ones(interval_values.shape, float)
+#                start_frac =  self.calendar.get_frac_offset(start, self.granularity)
+#                end_frac =  self.calendar.get_frac_offset(end, self.granularity)
+#                coefs[0] -= start_frac
+#                if end_frac != 0:
+#                    coefs[-1] -= 1-end_frac
+#                sigma = (interval_values*coefs).sum()
+#                sigmas.append(sigma)
+#            return start, sum(sigmas)
+        elif mode in ('sum', 'average'):
+            nums = []
+            denoms = []
             for start, end, interval_values in values:
                 coefs = numpy.ones(interval_values.shape, float)
                 start_frac =  self.calendar.get_frac_offset(start, self.granularity)
@@ -181,15 +198,14 @@ class TimeSeries(AnyEntity):
                 coefs[0] -= start_frac
                 if end_frac != 0:
                     coefs[-1] -= 1-end_frac
-                sigma = (interval_values*coefs).sum()
-                sigmas.append(sigma)
-            return start, sum(sigmas)
-        elif mode == 'average':
-            return start, flat_values.mean()
-        elif mode == 'max':
-            return start, flat_values.max()
-        elif mode == 'sum_realized':
-            return start, flat_values.sum()
+                num = (interval_values*coefs).sum()
+                denom = coefs.sum()
+                nums.append(num)
+                denoms.append(denom)
+            if mode == 'sum':
+                return start, sum(nums)
+            elif mode == 'average':
+                return start, sum(nums)/sum(denoms)
         else:
             raise ValueError('unknown mode %s' % mode)
 
