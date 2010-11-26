@@ -145,18 +145,18 @@ msgid "export to excel"
 msgstr "export to excel"
 
 msgid "format_preferences"
-msgstr "format preferences"
+msgstr "excel settings"
 
 msgctxt "CWUser"
 msgid "format_preferences"
-msgstr "format preferences"
+msgstr "excel settings"
 
 msgid "format_preferences_object"
-msgstr "format preferences of"
+msgstr "excel settings of"
 
 msgctxt "ExcelPreferences"
 msgid "format_preferences_object"
-msgstr "format preferences of"
+msgstr "excel settings of"
 
 msgid "granularity"
 msgstr "granularity"
