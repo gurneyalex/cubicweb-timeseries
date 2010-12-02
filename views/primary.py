@@ -24,7 +24,7 @@ _ = unicode
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = is_instance('TimeSeries')
-    tabs = [_('ts_summary'), _('ts_plot'), _('ts_values')]
+    tabs = [_('ts_summary'), _('ts_plot')]
     default_tab = 'ts_summary'
 
     def cell_call(self, row, col):
@@ -41,7 +41,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     __regid__ = 'ts_summary'
     __select__ = is_instance('TimeSeries')
 
-    characteristics_attrs = ('unit', 'granularity',)
+    characteristics_attrs = ('granularity',)
 
     def summary(self, entity):
         self.w(h2(_('Summary')))
@@ -57,14 +57,20 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
             for attr in self.characteristics_attrs:
                 self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
                            tr=True, table=True)
+            # XXX maybe we want reledit on this in the timeseries cube,
+            # but not in the only user of this cube for now...
+            self.field(_('unit'), entity.unit, tr=True, table=True) 
             self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
         w(h2(_('Preview')))
         self.wview('sparkline', entity.as_rset())
+        w(h2(_('ts_values')))
+        self.wview('ts_values', self.cw_rset)
+
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
     __select__ = is_instance('TimeSeries')
-    summary_attrs = (_('start_date'), _('end_date'),
+    summary_attrs = (_('end_date'),
                      _('min_unit'), _('max_unit'),
                      _('average_unit'), _('count'))
 
@@ -79,15 +85,18 @@ class TimeSeriesSummaryView(baseviews.EntityView):
             if entity.is_constant:
                 self.display_constant_fields(entity)
             else:
+                self.field(display_name(self._cw, 'start_date'), entity.view('reledit', rtype='start_date'),
+                           tr=True, table=True)
                 for attr in self.summary_attrs:
                     # XXX getattr because some are actually properties
                     if attr == 'average_unit' and entity.data_type == 'Boolean':
                         continue
-                    value = getattr(entity, attr)
-                    if isinstance(value, float):
-                        value = self._cw.format_float(value)
-                    self.field(attr, getattr(entity, attr),
-                                   show_label=True, tr=True, table=True)
+                    else:
+                        value = getattr(entity, attr)
+                        if isinstance(value, float):
+                            value = self._cw.format_float(value)
+                        self.field(attr, getattr(entity, attr),
+                                       show_label=True, tr=True, table=True)
 
 
 @jsonize
