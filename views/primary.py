@@ -9,7 +9,7 @@ from __future__ import with_statement, division
 
 import math
 
-from cwtags.tag import div, h2, table
+from cwtags.tag import div, h2, table, tr, td
 
 from logilab.mtconverter import xml_escape
 
@@ -44,27 +44,32 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     characteristics_attrs = ('granularity',)
 
     def summary(self, entity):
-        self.w(h2(_('Summary')))
-        self.wview('summary', entity.as_rset())
+        pass
 
     def _prepare_side_boxes(self, entity):
         return []
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self._cw._
-        w(h2(_('Characteristics')))
         with table(w):
-            for attr in self.characteristics_attrs:
-                self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
-                           tr=True, table=True)
-            # XXX maybe we want reledit on this in the timeseries cube,
-            # but not in the only user of this cube for now...
-            self.field(_('unit'), entity.unit, tr=True, table=True)
-            self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
-        w(h2(_('Preview')))
-        self.wview('sparkline', entity.as_rset())
-        w(h2(_('ts_values')))
-        self.wview('ts_values', self.cw_rset)
+            with tr(w):
+                with td(w, style='padding-right: 1cm'):
+                    self.w(h2(_('Summary')))
+                    self.wview('summary', entity.as_rset())
+                    w(h2(_('Characteristics')))
+                    with table(w):
+                        for attr in self.characteristics_attrs:
+                            self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
+                                       tr=True, table=True)
+                        # XXX maybe we want reledit on this in the timeseries cube,
+                        # but not in the only user of this cube for now...
+                        self.field(_('unit'), entity.unit, tr=True, table=True) 
+                        self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
+                    w(h2(_('Preview')))
+                    self.wview('sparkline', entity.as_rset())
+                with td(w):
+                    w(h2(_('ts_values')))
+                    self.wview('ts_values', self.cw_rset)
 
 
 class TimeSeriesSummaryView(baseviews.EntityView):
