@@ -25,8 +25,9 @@ class TimeSeriesPlotView(baseviews.EntityView):
     title = None
     onload = u"init_ts_plot('%(figid)s', [%(plotdata)s]);"
 
-    def dump_plot(self, plot):
-        plot = [(datetime2ticks(x), y) for x,y in plot]
+    def dump_plot(self, ts):
+        plot = [(datetime2ticks(x), y)
+                for x,y in ts.compressed_timestamped_array()]
         return dumps(plot)
 
     def call(self, width=None, height=None):
@@ -42,8 +43,7 @@ class TimeSeriesPlotView(baseviews.EntityView):
         w(div(id='main%s' % figid, style='width: %spx; height: %spx;' % (width, height)))
         w(div(id='overview%s' % figid, style='width: %spx; height: %spx;' % (width, height/3)))
         w(button(req._('Zoom reset'), id='reset', Class='validateButton'))
-        plotdata = ("{label: '%s', data: %s}" % (xml_escape(ts.dc_title()),
-                                                 self.dump_plot(ts.compressed_timestamped_array()))
+        plotdata = ("{label: '%s', data: %s}" % (xml_escape(ts.dc_title()), self.dump_plot(ts))
                     for ts in self.cw_rset.entities())
         req.html_headers.add_onload(self.onload %
                                     {'figid': figid,

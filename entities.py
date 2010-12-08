@@ -145,9 +145,10 @@ class TimeSeries(AnyEntity):
                 raise IndexError("%s date is before the time series's "
                                  "start date (%s)" % (end, self.start_date))
 
+    supported_modes = frozenset(('sum', 'average', 'last', 'sum_realized', 'max'))
     def aggregated_value(self, intervals, mode, use_last_interval=False):
         #pylint:disable-msg=E1101
-        assert mode in ('sum', 'average', 'last', 'sum_realized', 'max'), 'unsupported mode'
+        assert mode in self.supported_modes, 'unsupported mode'
         if use_last_interval and mode != 'last':
             raise AssertionError, '"use_last_interval" may be True only if mode is "last"'
         if self.granularity == 'constant':

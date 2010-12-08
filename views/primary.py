@@ -59,7 +59,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
                            tr=True, table=True)
             # XXX maybe we want reledit on this in the timeseries cube,
             # but not in the only user of this cube for now...
-            self.field(_('unit'), entity.unit, tr=True, table=True) 
+            self.field(_('unit'), entity.unit, tr=True, table=True)
             self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
         w(h2(_('Preview')))
         self.wview('sparkline', entity.as_rset())
