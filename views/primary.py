@@ -69,6 +69,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
                     self.wview('sparkline', entity.as_rset())
                 with td(w):
                     w(h2(_('ts_values')))
+                    w('<p><a href="%s">%s</a></p>' % (entity.absolute_url(vid='tsxlexport'), _("export to Excel")))
                     self.wview('ts_values', self.cw_rset)
 
 
