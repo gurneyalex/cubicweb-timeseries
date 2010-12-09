@@ -68,7 +68,7 @@ def __new__(cls, *args, **kwargs):
     """
     if kwargs.get('name') == 'data':
         cls = DataFileField
-    return ff.StringField.__new__(cls, **kwargs)
+    return ff.StringField.__new__(cls)
 ff.FileField.__new__ = staticmethod(__new__)
 
 # /hack
