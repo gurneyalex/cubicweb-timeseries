@@ -8,7 +8,7 @@ class TimeSeriesDataReadHook(Hook):
     events = ('before_update_entity', 'before_add_entity')
 
     def __call__(self):
-        if 'data' in self.entity.edited_attributes:
+        if 'data' in self.entity.cw_edited:
             self.entity.grok_data()
 
 class ConstantTimeSeriesValidationHook(Hook):
