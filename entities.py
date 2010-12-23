@@ -118,9 +118,10 @@ class TimeSeries(AnyEntity):
         if numpy_array.size == 0:
             raise ValidationError(self.eid,
                                   {'data': _('data must have at least one value')})
-        self.data = Binary()
+        data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
-        self.data.write(compressed_data)
+        data.write(compressed_data)
+        self.cw_edited['data'] = data
         self._array = numpy_array
 
     def timestamped_array(self):
