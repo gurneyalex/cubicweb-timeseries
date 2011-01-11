@@ -137,7 +137,7 @@ class TimeSeries(AnyEntity):
     @property
     def end_date(self):
         if self.granularity in TIME_DELTAS:
-            return self.start_date + self.count*TIME_DELTAS[self.granularity]
+            return self.start_date + self.count * TIME_DELTAS[self.granularity]
         return self.get_next_date(self.timestamped_array()[-1][0])
 
     def _check_intervals(self, intervals):
@@ -195,74 +195,31 @@ class TimeSeries(AnyEntity):
             denoms = []
             for start, end, interval_values in values:
                 coefs = numpy.ones(interval_values.shape, float)
-                start_frac =  self.calendar.get_frac_offset(start, self.granularity)
-                end_frac =  self.calendar.get_frac_offset(end, self.granularity)
+                start_frac = self.calendar.get_frac_offset(start, self.granularity)
+                end_frac = self.calendar.get_frac_offset(end, self.granularity)
                 coefs[0] -= start_frac
                 if end_frac != 0:
-                    coefs[-1] -= 1-end_frac
-                num = (interval_values*coefs).sum()
+                    coefs[-1] -= 1 - end_frac
+                num = (interval_values * coefs).sum()
                 denom = coefs.sum()
                 nums.append(num)
                 denoms.append(denom)
             if mode == 'sum':
                 return start, sum(nums)
             elif mode == 'average':
-                return start, sum(nums)/sum(denoms)
+                return start, sum(nums) / sum(denoms)
         else:
             raise ValueError('unknown mode %s' % mode)
 
 
     def get_next_date(self, date):
-        #pylint:disable-msg=E1101
-        if self.granularity in TIME_DELTAS:
-            return date + TIME_DELTAS[self.granularity]
-        elif self.granularity == 'monthly':
-            return self.get_next_month(date)
-        elif self.granularity == 'yearly':
-            return self.get_next_year(date)
-        else:
-            raise ValueError(self.granularity)
+        return get_next_date(self.granularity, date)
 
     def get_next_month(self, date):
-        year = date.year
-        month = date.month
-        day = date.day
-        if month == 12:
-            month = 1
-            year += 1
-        else:
-            month += 1
-        while True:
-            try:
-                newdate = datetime.date(year, month, day)
-            except ValueError:
-                day -= 1
-            else:
-                break
-
-        if isinstance(date, datetime.datetime):
-            return datetime.datetime.combine(newdate, date.time())
-        else:
-            return date
+        return get_next_month(date)
 
     def get_next_year(self, date):
-        year = date.year + 1
-        month = date.month
-        day = date.day
-
-        while True:
-            try:
-                newdate = datetime.date(year, month, day)
-            except ValueError:
-                day -= 1
-            else:
-                break
-
-        if isinstance(date, datetime.datetime):
-            return datetime.datetime.combine(newdate, date.time())
-        else:
-            return date
-
+        return get_next_year(date)
 
     def compressed_timestamped_array(self):
         """ eliminates duplicated values in piecewise constant timeseries """
@@ -440,7 +397,7 @@ class TimeSeries(AnyEntity):
         try:
             return self.array[index]
         except IndexError, exc:
-            raise IndexError(exc.args+(index,))
+            raise IndexError(exc.args + (index,))
 
     @property
     def _start_offset(self):
@@ -569,4 +526,53 @@ class TimeSeriesXLExport(TimeSeriesExportAdapter):
         workbook.save(Writer())
         return ''.join(outrows)
 
+def get_next_date(granularity, date):
+    #pylint:disable-msg=E1101
+    if granularity in TIME_DELTAS:
+        return date + TIME_DELTAS[granularity]
+    elif granularity == 'monthly':
+        return get_next_month(date)
+    elif granularity == 'yearly':
+        return get_next_year(date)
+    else:
+        raise ValueError(granularity)
 
+def get_next_month(date):
+    year = date.year
+    month = date.month
+    day = date.day
+    if month == 12:
+        month = 1
+        year += 1
+    else:
+        month += 1
+    while True:
+        try:
+            newdate = datetime.date(year, month, day)
+        except ValueError:
+            day -= 1
+        else:
+            break
+
+    if isinstance(date, datetime.datetime):
+        return datetime.datetime.combine(newdate, date.time())
+    else:
+        return date
+
+def get_next_year(date):
+    year = date.year + 1
+    month = date.month
+    day = date.day
+
+    while True:
+        try:
+            newdate = datetime.date(year, month, day)
+        except ValueError:
+            day -= 1
+        else:
+            break
+
+    if isinstance(date, datetime.datetime):
+        return datetime.datetime.combine(newdate, date.time())
+    else:
+        return date
