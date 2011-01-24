@@ -318,15 +318,18 @@
                 } else {
                     height = options.get('height');
                 }
-
-                $.fn.sparkline[options.get('type')].call(this, values, options, width, height);
+                var func = $.fn.sparkline[options.get('type')];
+                func.call(this, values, options, width, height);
             };
-            // jQuery 1.3.0 completely changed the meaning of :hidden :-/
-            if (($(this).html() && $(this).is(':hidden')) || ($.fn.jquery < "1.3.0" && $(this).parents().is(':hidden')) || !$(this).parents('body').length) {
-                pending.push([this, render]);
-            } else {
-                render.call(this);
-            }
+            // patch
+            render.call(this);
+            // // jQuery 1.3.0 completely changed the meaning of :hidden :-/
+            // if (($(this).html() && $(this).is(':hidden')) || ($.fn.jquery < "1.3.0" && $(this).parents().is(':hidden')) || !$(this).parents('body').length) {
+            //     pending.push([this, render]);
+            // } else {
+            //     render.call(this);
+            // }
+            // /patch
         });
     };
 
@@ -1107,11 +1110,11 @@
             target.VCanvas = this;
             $(this.canvas).css({ display:'inline-block', width:width, height:height, verticalAlign:'top' });
             this._insert(this.canvas, target);
-            this.pixel_height = $(this.canvas).height();
-            this.pixel_width = $(this.canvas).width();
-            this.canvas.width = this.pixel_width;
-            this.canvas.height = this.pixel_height;
-            $(this.canvas).css({width: this.pixel_width, height: this.pixel_height});
+            this.pixel_height = height;// $(this.canvas).height();
+            this.pixel_width = width;;//$(this.canvas).width();
+            this.canvas.width = width; //this.pixel_width;
+            this.canvas.height = height; //this.pixel_height;
+            $(this.canvas).css({width: width, height: height});
         },
 
         _getContext : function(lineColor, fillColor, lineWidth) {
@@ -1190,8 +1193,8 @@
             this.canvas = document.createElement('span');
             $(this.canvas).css({ display:'inline-block', position: 'relative', overflow:'hidden', width:width, height:height, margin:'0px', padding:'0px', verticalAlign: 'top'});
             this._insert(this.canvas, target);
-            this.pixel_height = $(this.canvas).height();
-            this.pixel_width = $(this.canvas).width();
+            this.pixel_height = height; //$(this.canvas).height();
+            this.pixel_width = width; //$(this.canvas).width();
             this.canvas.width = this.pixel_width;
             this.canvas.height = this.pixel_height;
             var groupel = '<v:group coordorigin="0 0" coordsize="'+this.pixel_width+' '+this.pixel_height+'"' +

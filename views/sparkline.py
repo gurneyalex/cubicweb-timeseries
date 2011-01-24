@@ -17,7 +17,7 @@ class TimeSeriesSparkLine(EntityView):
     onload = """
 var jqelt = jQuery('#sparklinefor%(target)s');
 if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
-    jqelt.sparkline('html', {%(plot_type)s, height:'20px', width:'120px'});
+    jqelt.sparkline('html', {%(plot_type)s, height:20, width:120});
     jqelt.attr('cubicweb:type', 'prepared-sparkline');
 }
 """
