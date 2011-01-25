@@ -172,8 +172,9 @@ class TimeSeries(AnyEntity):
         end = intervals[-1][1]
         if mode == 'last':
             last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
-            tstamp = self.timestamped_array()[last_index][0]
-            return tstamp, flat_values[-1]
+            tstamp = end - datetime.timedelta(seconds=1)
+            value = self.timestamped_array()[last_index][1]
+            return tstamp, value
         elif mode == 'max':
             return start, flat_values.max()
         elif mode == 'sum_realized':
