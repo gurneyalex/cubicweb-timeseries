@@ -10,3 +10,6 @@
 # Example of site property change
 #set_property('ui.site-title', "<sitename>")
 
+for user in rql('CWUser U').entities():
+    prefs = create_entity('ExcelPreferences')
+    user.set_relations(format_preferences=prefs)
