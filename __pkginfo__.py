@@ -4,11 +4,11 @@
 modname = 'timeseries'
 distname = 'cubicweb-timeseries'
 
-numversion = (0, 14, 0)
+numversion = (0, 15, 0)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
-copyright = '''Copyright (c) 2009-2010 LOGILAB S.A. (Paris, FRANCE).
+copyright = '''Copyright (c) 2009-2011 LOGILAB S.A. (Paris, FRANCE).
 http://www.logilab.fr -- mailto:contact@logilab.fr'''
 
 author = 'LOGILAB S.A. (Paris, FRANCE)'
