@@ -18,6 +18,7 @@ class ExcelPreferencesInContextView(EntityView):
             th_sep = self.noseparator
         else:
             th_sep = udata.name(th_sep)
-        self.w(xml_escape(self._cw._('separators: decimal = %s, thousands = %s')) %
+        self.w(xml_escape(self._cw._('separators: decimal = %s, thousands = %s, csv = %s')) %
                (span(udata.name(entity.decimal_separator), Class='highlight'),
-                span(th_sep, Class='highlight')))
+                span(th_sep, Class='highlight'),
+                span(udata.name(entity.csv_separator), Class='highlight')))
