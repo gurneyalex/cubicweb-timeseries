@@ -31,9 +31,15 @@ class ExcelPreferencesCoherency(Hook):
     def __call__(self):
         self.debug('hook %s', self.__class__.__name__)
         entity = self.entity
+        errors = {}
         if entity.thousands_separator == entity.decimal_separator:
             msg = self._cw._('thousands separator must not be the same as decimal separator')
-            raise ValidationError(entity.eid, {'thousands_separator': msg})
+            errors['thousands_separator'] =msg
+        if entity.csv_separator == entity.decimal_separator:
+            msg = self._cw._('column separator must not be the same as decimal separator')
+            errors['csv_separator'] =msg
+        if errors:
+            raise ValidationError(entity.eid, errors)
 
 class SetupExcelPreferences(Hook):
     __regid__ = 'pylos.setup_excel_prefs'
@@ -43,3 +49,4 @@ class SetupExcelPreferences(Hook):
     def __call__(self):
         self.debug('hook %s', self.__class__.__name__)
         self.entity.set_relations(format_preferences=self._cw.create_entity('ExcelPreferences'))
+
