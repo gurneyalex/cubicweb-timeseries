@@ -21,22 +21,17 @@ import numpy
 import xlrd
 from xlwt import Workbook
 
+from logilab.common.date import days_in_month, days_in_year
+
 from cubicweb import Binary, ValidationError
 from cubicweb.selectors import is_instance, ExpectedValueSelector
 from cubicweb.view import EntityAdapter
 from cubicweb.entities import AnyEntity, fetch_config
 
-from cubes.timeseries.calendars import get_calendar
+from cubes.timeseries.calendars import get_calendar, TIME_DELTAS
 from cubes.timeseries.utils import get_formatter
 
 _ = unicode
-
-TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
-               'hourly': datetime.timedelta(hours=1),
-               'daily': datetime.timedelta(days=1),
-               'weekly': datetime.timedelta(weeks=1),
-               # monthly and yearly do not have a fixed length
-               }
 
 def boolint(value):
     """ ensuring such boolean like values
@@ -146,7 +141,8 @@ class TimeSeries(AnyEntity):
                 raise IndexError("%s date is before the time series's "
                                  "start date (%s)" % (end, self.start_date))
 
-    supported_modes = frozenset(('sum', 'average', 'last', 'sum_realized', 'max'))
+    supported_modes = frozenset(('sum', 'average', 'weighted_average', 
+                                 'last', 'sum_realized', 'max'))
     def aggregated_value(self, intervals, mode, use_last_interval=False):
         #pylint:disable-msg=E1101
         assert mode in self.supported_modes, 'unsupported mode'
@@ -162,9 +158,10 @@ class TimeSeries(AnyEntity):
         values = []
         flat_values = []
         for start, end in intervals:
-            interval_values = self.get_by_date(slice(start, end))
-            values.append((start, end, interval_values))
-            flat_values += interval_values.tolist()
+            interval_date_values = self.get_by_date(slice(start, end), with_dates=True)
+            values.append((start, end, numpy.array(interval_date_values)))
+            interval_values = [date_value[1] for date_value in interval_date_values] 
+            flat_values += interval_values
             if len(interval_values) == 0:
                 raise IndexError()
         flat_values = numpy.array(flat_values)
@@ -179,35 +176,33 @@ class TimeSeries(AnyEntity):
             return start, flat_values.max()
         elif mode == 'sum_realized':
             return start, flat_values.sum()
-#        elif mode == 'sum':
-#            sigmas = []
-#            for start, end, interval_values in values:
-#                coefs = numpy.ones(interval_values.shape, float)
-#                start_frac =  self.calendar.get_frac_offset(start, self.granularity)
-#                end_frac =  self.calendar.get_frac_offset(end, self.granularity)
-#                coefs[0] -= start_frac
-#                if end_frac != 0:
-#                    coefs[-1] -= 1-end_frac
-#                sigma = (interval_values*coefs).sum()
-#                sigmas.append(sigma)
-#            return start, sum(sigmas)
-        elif mode in ('sum', 'average'):
+        elif mode in ('sum', 'average', 'weighted_average'):
             nums = []
             denoms = []
-            for start, end, interval_values in values:
+            for start, end, interval_date_values in values:
+                
+                interval_values = interval_date_values[:,1]
                 coefs = numpy.ones(interval_values.shape, float)
                 start_frac = self.calendar.get_frac_offset(start, self.granularity)
                 end_frac = self.calendar.get_frac_offset(end, self.granularity)
                 coefs[0] -= start_frac
                 if end_frac != 0:
                     coefs[-1] -= 1 - end_frac
+                
+                if mode == 'weighted_average':
+                    interval_dates = interval_date_values[:,0]
+                    weights = [ self.calendar.get_duration_in_days(self.granularity, date)
+                               for date in interval_dates]
+                    coefs *= weights
+                
                 num = (interval_values * coefs).sum()
-                denom = coefs.sum()
                 nums.append(num)
+                denom = coefs.sum()
                 denoms.append(denom)
+                
             if mode == 'sum':
                 return start, sum(nums)
-            elif mode == 'average':
+            elif mode in ('average', 'weighted_average'):
                 return start, sum(nums) / sum(denoms)
         else:
             raise ValueError('unknown mode %s' % mode)
@@ -351,15 +346,15 @@ class TimeSeries(AnyEntity):
             values.append((tstamp, value))
         return values
 
-    def get_absolute(self, abs_index):
+    def get_absolute(self, abs_index, with_dates=False):
         index = self._make_relative_index(abs_index)
-        return self.get_relative(index)
+        return self.get_relative(index, with_dates)
 
     def get_rel_index(self, date):
         abs_index = self.calendar.get_offset(date, self.granularity) #pylint:disable-msg=E1101
         return self._make_relative_index(abs_index)
 
-    def get_by_date(self, date):
+    def get_by_date(self, date, with_dates=False):
         #pylint:disable-msg=E1101
         if type(date) is slice:
             assert date.step is None
@@ -374,7 +369,7 @@ class TimeSeries(AnyEntity):
             index = slice(start, stop, None)
         else:
             index = self.calendar.get_offset(date, self.granularity)
-        return self.get_absolute(index)
+        return self.get_absolute(index, with_dates)
 
     def _make_relative_index(self, abs_index):
         if isinstance(abs_index, (int, float)):
@@ -394,9 +389,12 @@ class TimeSeries(AnyEntity):
         else:
             raise TypeError('Unsupported index type %s' % type(abs_index))
 
-    def get_relative(self, index):
+    def get_relative(self, index, with_dates=False):
         try:
-            return self.array[index]
+            if with_dates:
+                return self.timestamped_array()[index]
+            else:
+                return self.array[index]
         except IndexError, exc:
             raise IndexError(exc.args + (index,))
 

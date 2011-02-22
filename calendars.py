@@ -6,6 +6,13 @@ from logilab.common.date import days_in_month, days_in_year
 
 __ALL_CALENDARS = {}
 
+TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
+               'hourly': datetime.timedelta(hours=1),
+               'daily': datetime.timedelta(days=1),
+               'weekly': datetime.timedelta(weeks=1),
+               # monthly and yearly do not have a fixed length
+               }
+
 def register_calendar(name, calendar):
     __ALL_CALENDARS[name] = calendar
 
@@ -73,6 +80,21 @@ class AbstractCalendar(object):
         frac_ordinal = self.ordinal(date) + self.seconds(date) / (3600*24)
         start_of_year = self.ordinal(datetime.datetime(date.year, 1, 1))
         return  (frac_ordinal-start_of_year) / days_in_year(date)
+    
+    def get_duration_in_days(self, granularity, date):
+        '''
+        Compute the duration of the time interval associated to
+        (granularity, date) in days
+        '''
+        if granularity in TIME_DELTAS.keys():
+            delta = TIME_DELTAS[granularity] 
+            return delta.days + delta.seconds/(3600*24)
+        elif granularity == 'monthly':
+            date = self.prev_month_start(date)
+            return days_in_month(date)
+        elif granularity == 'yearly':
+            date = self.prev_year_start(date)
+            return days_in_year(date)
 
     def ordinal(self, date):
         """
