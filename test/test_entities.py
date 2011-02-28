@@ -194,7 +194,7 @@ class TSaccessTC(CubicWebTC):
         _date, result = self.dailyts.aggregated_value([(date1, date2)], 'last')
         expected = self.dailyts.array[3]
         self.assertEqual(result, expected)
-        
+
     def test_aggregated_value_last_multiple_interval(self):
         interval1 = (datetime(2009, 10, 2, 6), datetime(2009, 10, 4, 6))
         interval2 = (datetime(2009, 10, 5, 6), datetime(2009, 10, 7, 6))

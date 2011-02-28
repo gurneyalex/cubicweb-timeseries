@@ -36,6 +36,7 @@ class ExcelPreferences(EntityType):
     # thousands: input only
     thousands_separator = String(maxsize=1, default=u'')
     decimal_separator = String(required=True, maxsize=1, default=u'.')
+    csv_separator = String(required=True, maxsize=1, default=u';')
 
 class format_preferences(RelationDefinition):
     subject = 'CWUser'
