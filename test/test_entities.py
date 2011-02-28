@@ -174,12 +174,17 @@ class TSaccessTC(CubicWebTC):
     def test_aggregated_value_average(self):
         date1 = datetime(2009, 10, 2, 6)
         date2 = datetime(2009, 10, 4, 6)
-        _date, result = self.dailyts.aggregated_value([(date1, date2)], 'average')
         data = self.dailyts.array
         coefs = numpy.array([18.0/24, 1, 6.0/24])
-        expected = (coefs*data[1:4]).sum()/coefs.sum()    # average
+        expected = (coefs*data[1:4]).sum()/coefs.sum()    # average = weighted average in this case
 #        expected = (data[1] + data[2] + data[3]) / (3.)
+
+        _date, result = self.dailyts.aggregated_value([(date1, date2)], 'average')
         self.assertEqual(result, expected)
+        
+        _date, result = self.dailyts.aggregated_value([(date1, date2)], 'weighted_average')
+        self.assertEqual(result, expected)
+    
         
     def test_weighted_aggregated_value_average(self):
         date1 = datetime(2010, 1, 31, 20)
