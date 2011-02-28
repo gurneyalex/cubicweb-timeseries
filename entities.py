@@ -195,6 +195,7 @@ class TimeSeries(AnyEntity):
                                for date in interval_dates]
                     coefs *= weights
                 
+                print coefs
                 num = (interval_values * coefs).sum()
                 nums.append(num)
                 denom = coefs.sum()

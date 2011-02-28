@@ -177,9 +177,31 @@ class TSaccessTC(CubicWebTC):
         _date, result = self.dailyts.aggregated_value([(date1, date2)], 'average')
         data = self.dailyts.array
         coefs = numpy.array([18.0/24, 1, 6.0/24])
-        expected = (coefs*data[1:4]).sum()/coefs.sum()    # weighted average
+        expected = (coefs*data[1:4]).sum()/coefs.sum()    # average
 #        expected = (data[1] + data[2] + data[3]) / (3.)
         self.assertEqual(result, expected)
+        
+    def test_weighted_aggregated_value_average(self):
+        date1 = datetime(2010, 1, 31, 20)
+        date2 = datetime(2010, 3, 2, 0)
+        _date, result = self.monthlyts.aggregated_value([(date1, date2)], 'weighted_average')
+        data = self.monthlyts.array
+        coefs = numpy.array([1.0/6, 28.0, 1.0])
+        print coefs
+        expected = (coefs*data[3:6]).sum()/coefs.sum()    # weighted average
+#        expected = (data[1] + data[2] + data[3]) / (3.)
+        self.assertEqual(result, expected)
+        
+    def test_not_weighted_aggregated_value_average(self):
+        date1 = datetime(2010, 1, 31, 20)
+        date2 = datetime(2010, 3, 2, 0)
+        _date, result = self.monthlyts.aggregated_value([(date1, date2)], 'average')
+        data = self.monthlyts.array
+        coefs = numpy.array([4.0/(31*24), 1.0, 24.0/(31*24)])
+        print coefs
+        expected = (coefs*data[3:6]).sum()/coefs.sum()    # average
+#        expected = (data[1] + data[2] + data[3]) / (3.)
+        self.assertAlmostEqual(result, expected, 10)
 
     def test_aggregated_value_sum(self):
         date1 = datetime(2009, 10, 2, 6)
