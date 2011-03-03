@@ -1,7 +1,7 @@
 """this contains the cube-specific entities' classes
 
 :organization: Logilab
-:copyright: 2001-2009 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
+:copyright: 2009-2011 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
@@ -179,18 +179,6 @@ class TimeSeries(AnyEntity):
             return start, flat_values.max()
         elif mode == 'sum_realized':
             return start, flat_values.sum()
-#        elif mode == 'sum':
-#            sigmas = []
-#            for start, end, interval_values in values:
-#                coefs = numpy.ones(interval_values.shape, float)
-#                start_frac =  self.calendar.get_frac_offset(start, self.granularity)
-#                end_frac =  self.calendar.get_frac_offset(end, self.granularity)
-#                coefs[0] -= start_frac
-#                if end_frac != 0:
-#                    coefs[-1] -= 1-end_frac
-#                sigma = (interval_values*coefs).sum()
-#                sigmas.append(sigma)
-#            return start, sum(sigmas)
         elif mode in ('sum', 'average'):
             nums = []
             denoms = []
@@ -515,7 +503,7 @@ class TimeSeriesXLExport(TimeSeriesExportAdapter):
         # XXX timestamps ?
         entity = self.entity
         tsbox = entity.reverse_ts_variant[0]
-        workbook = Workbook()
+        workbook = Workbook() # XXX XLSX
         sheet = workbook.add_sheet(('TS_%s' % tsbox.name)[:31])
         outrows = []
         class Writer(object):
