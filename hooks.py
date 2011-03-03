@@ -6,6 +6,7 @@ class TimeSeriesDataReadHook(Hook):
     __regid__ = 'timeseries_data_read_hook'
     __select__ = Hook.__select__ & is_instance('TimeSeries')
     events = ('before_update_entity', 'before_add_entity')
+    category = 'timeseries'
 
     def __call__(self):
         if 'data' in self.entity.cw_edited:
@@ -15,6 +16,7 @@ class ConstantTimeSeriesValidationHook(Hook):
     __regid__ = 'constant_ts_hook'
     __select__ = Hook.__select__ & is_instance('TimeSeries')
     events = ('after_update_entity', 'after_add_entity')
+    category = 'timeseries'
 
     def __call__(self):
         if self.entity.is_constant:
