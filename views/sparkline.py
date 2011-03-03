@@ -50,10 +50,13 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
             newdata.append(data[idx:idx+step].mean())
         return newdata
 
+
+
 class TimeSeriesInContextView(InContextView):
     """ show the sparklines of the time series variants """
     __regid__ = 'incontext'
     __select__ = is_instance('TimeSeries')
+    inner_vid = 'summary'
 
     def cell_call(self, row, col):
         w = self.w
@@ -71,9 +74,12 @@ class TimeSeriesInContextView(InContextView):
                         w("&#xA0;&#xA0;")
                         w(entity.view('sparkline'))
                         w("&#xA0;&#xA0;")
-                    w(div(entity.view('summary'), Class='subinfo'))
                 w(span(xml_escape(last+entity.safe_unit), style='font-size: 10px;'))
+                w("&#xA0;")
+                w(div(entity.view(self.inner_vid, label=_('[summary]')),
+                      style='display: inline'))
                 url = entity.absolute_url(vid='tsxlexport')
                 with span(w, Class='tsexport'):
                     with a(w, href=url):
                         w(self._cw._(u'[export]'))
+

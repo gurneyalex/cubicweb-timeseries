@@ -1,7 +1,7 @@
 """this contains the cube-specific entities' classes
 
 :organization: Logilab
-:copyright: 2001-2009 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
+:copyright: 2009-2011 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
@@ -141,7 +141,7 @@ class TimeSeries(AnyEntity):
                 raise IndexError("%s date is before the time series's "
                                  "start date (%s)" % (end, self.start_date))
 
-    supported_modes = frozenset(('sum', 'average', 'weighted_average', 
+    supported_modes = frozenset(('sum', 'average', 'weighted_average',
                                  'last', 'sum_realized', 'max'))
     def aggregated_value(self, intervals, mode, use_last_interval=False):
         #pylint:disable-msg=E1101
@@ -160,7 +160,7 @@ class TimeSeries(AnyEntity):
         for start, end in intervals:
             interval_date_values = self.get_by_date(slice(start, end), with_dates=True)
             values.append((start, end, numpy.array(interval_date_values)))
-            interval_values = [date_value[1] for date_value in interval_date_values] 
+            interval_values = [date_value[1] for date_value in interval_date_values]
             flat_values += interval_values
             if len(interval_values) == 0:
                 raise IndexError()
@@ -180,7 +180,7 @@ class TimeSeries(AnyEntity):
             nums = []
             denoms = []
             for start, end, interval_date_values in values:
-                
+
                 interval_values = interval_date_values[:,1]
                 coefs = numpy.ones(interval_values.shape, float)
                 start_frac = self.calendar.get_frac_offset(start, self.granularity)
@@ -188,18 +188,18 @@ class TimeSeries(AnyEntity):
                 coefs[0] -= start_frac
                 if end_frac != 0:
                     coefs[-1] -= 1 - end_frac
-                
+
                 if mode == 'weighted_average':
                     interval_dates = interval_date_values[:,0]
                     weights = [ self.calendar.get_duration_in_days(self.granularity, date)
                                for date in interval_dates]
                     coefs *= weights
-                
+
                 num = (interval_values * coefs).sum()
                 nums.append(num)
                 denom = coefs.sum()
                 denoms.append(denom)
-                
+
             if mode == 'sum':
                 return start, sum(nums)
             elif mode in ('average', 'weighted_average'):
@@ -513,7 +513,7 @@ class TimeSeriesXLExport(TimeSeriesExportAdapter):
         # XXX timestamps ?
         entity = self.entity
         tsbox = entity.reverse_ts_variant[0]
-        workbook = Workbook()
+        workbook = Workbook() # XXX XLSX
         sheet = workbook.add_sheet(('TS_%s' % tsbox.name)[:31])
         outrows = []
         class Writer(object):
