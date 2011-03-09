@@ -8,6 +8,7 @@
 from __future__ import with_statement, division
 
 import math
+import datetime
 
 from cwtags.tag import div, h2, table, tr, td
 
@@ -100,7 +101,11 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                         value = getattr(entity, attr)
                         if isinstance(value, float):
                             value = self._cw.format_float(value)
-                        self.field(attr, getattr(entity, attr),
+                        elif isinstance(value, datetime.datetime):
+                            value = self._cw.format_date(value, time=True)
+                        elif isinstance(value, datetime.date):
+                            value = self._cw.format_date(value)
+                        self.field(attr, value,
                                    show_label=True, tr=True, table=True)
 
 
