@@ -60,9 +60,10 @@ class TimeSeriesInContextView(InContextView):
 
     def cell_call(self, row, col):
         w = self.w
+        _ = self._cw._
         entity = self.cw_rset.get_entity(row, col)
         if entity.is_constant and isinstance(entity.first, (bool, numpy.bool_)):
-            w(span(self._cw._(unicode(entity.first_unit))))
+            w(span(_(unicode(entity.first_unit))))
         else:
             with div(w, style='display: inline'):
                 # XXX values should be rounded at the data level
@@ -81,5 +82,5 @@ class TimeSeriesInContextView(InContextView):
                 url = entity.absolute_url(vid='tsxlexport')
                 with span(w, Class='tsexport'):
                     with a(w, href=url):
-                        w(self._cw._(u'[export]'))
+                        w(_(u'[export]'))
 
