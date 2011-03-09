@@ -10,7 +10,7 @@ import numpy
 def numpy_val_map(val):
     # XXX for some reason the workbook handles numpy.float64 fine
     #     but not numpy.int32
-    # XXX (auc) should'nt we track usage of this and replace
+    # XXX (auc) shouldn't we track usage of this and replace
     #     with TimeSeries._dtypes_in/out ?
     if isinstance(val, numpy.int32):
         return int(val)
