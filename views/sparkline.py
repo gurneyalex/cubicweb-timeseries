@@ -41,7 +41,7 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
         req.html_headers.add_onload(self.onload % {'target': entity.eid,
                                                    'plot_type' : plot_type})
         with span(w, id='sparklinefor%s' % entity.eid):
-            w(xml_escape(','.join(unicode(elt) for elt in data)))
+            w(u'<!-- %s -->' % xml_escape(', '.join(unicode(elt) for elt in data)))
 
     def _resample(self, data, sample_length):
         step = len(data) / sample_length
