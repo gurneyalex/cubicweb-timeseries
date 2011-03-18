@@ -559,18 +559,19 @@ def get_next_month(date):
         return date
 
 def get_next_year(date):
+    """ date => date, datetime => datetime
+    if date == bisextile year, february's last
+    day may be adjusted to yield a valid date
+    but NOT the other way around
+    """
     year = date.year + 1
     month = date.month
     day = date.day
-
-    while True:
-        try:
-            newdate = datetime.date(year, month, day)
-        except ValueError:
-            day -= 1
-        else:
-            break
-
+    try:
+        newdate = datetime.date(year, month, day)
+    except ValueError:
+        # date was last day of a bisextile year's february
+        newdate = datetime.date(year, month, day - 1)
     if isinstance(date, datetime.datetime):
         return datetime.datetime.combine(newdate, date.time())
     else:
