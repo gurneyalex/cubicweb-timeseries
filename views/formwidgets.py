@@ -66,7 +66,8 @@ def __new__(cls, *args, **kwargs):
     """depending on the attribute name we dispatch
     to DataFileField class
     """
-    if kwargs.get('name') == 'data':
+    label = kwargs.get('label', ('', ''))
+    if label[1] == 'data' and label[0].endswith('TimeSeries'):
         cls = DataFileField
     return ff.StringField.__new__(cls)
 ff.FileField.__new__ = staticmethod(__new__)
@@ -146,7 +147,7 @@ class DataWidget(fw.Input):
         if granularity == 'constant':
             value = numpy.array([interpret_constant(form.edited_entity, constant_value)])
             return value
-        field = ff.FileField(name='data', eidparam=True, required=True, role='subject')
+        field = DataFileField(name='data', eidparam=True, required=True, role='subject')
         return field._process_form_value_with_suffix(form, suffix=u'-non-constant')
 
 uicfg.autoform_field_kwargs.tag_subject_of(('TimeSeries', 'data', '*'),
