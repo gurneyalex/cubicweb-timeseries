@@ -41,7 +41,7 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
         req.html_headers.add_onload(self.onload % {'target': entity.eid,
                                                    'plot_type' : plot_type})
         with span(w, id='sparklinefor%s' % entity.eid):
-            w(xml_escape(','.join(unicode(elt) for elt in data)))
+            w(u'<!-- %s -->' % xml_escape(', '.join(unicode(elt) for elt in data)))
 
     def _resample(self, data, sample_length):
         step = len(data) / sample_length
@@ -60,9 +60,10 @@ class TimeSeriesInContextView(InContextView):
 
     def cell_call(self, row, col):
         w = self.w
+        _ = self._cw._
         entity = self.cw_rset.get_entity(row, col)
         if entity.is_constant and isinstance(entity.first, (bool, numpy.bool_)):
-            w(span(self._cw._(unicode(entity.first_unit))))
+            w(span(_(unicode(entity.first_unit))))
         else:
             with div(w, style='display: inline'):
                 # XXX values should be rounded at the data level
@@ -81,5 +82,5 @@ class TimeSeriesInContextView(InContextView):
                 url = entity.absolute_url(vid='tsxlexport')
                 with span(w, Class='tsexport'):
                     with a(w, href=url):
-                        w(self._cw._(u'[export]'))
+                        w(_(u'[export]'))
 
