@@ -4,39 +4,77 @@ import numpy
 from datetime import datetime, timedelta
 
 from cubicweb.devtools.testlib import CubicWebTC
-from logilab.common.testlib import unittest_main
+from logilab.common.testlib import TestCase, unittest_main
 
-class TSaccessTC(CubicWebTC):
+from cubes.timeseries.entities import get_next_date
+
+
+class TimeSeriesTC(CubicWebTC):
+
+    def _create_ts(self, data=numpy.arange(10), granularity=None,
+                   start_date=datetime(2009, 10, 1)):
+        req = self.request()
+        return req.create_entity('TimeSeries', data_type=u'Float',
+                                 granularity=granularity, start_date=start_date,
+                                 data=data)
+
+    def _create_npts(self, data=numpy.arange(10), timestamps=None,
+                     granularity='daily', start_date=datetime(2009, 10, 1)):
+        req = self.request()
+        if timestamps is None:
+            date = start_date
+            timestamps = []
+            for v in data:
+                timestamps.append(date)
+                date = get_next_date(granularity, date)
+        return req.create_entity('NPTimeSeries', data_type=u'Float',
+                                 data=data, timestamps=timestamps)
+
+
+class NPTSTC(TimeSeriesTC):
+
+    def test_creation(self):
+        ts = self._create_npts()
+        self.assertEqual(ts.timestamped_array(), [(datetime(2009, 10, 1, 0, 0), 0.0),
+                                                  (datetime(2009, 10, 2, 0, 0), 1.0),
+                                                  (datetime(2009, 10, 3, 0, 0), 2.0),
+                                                  (datetime(2009, 10, 4, 0, 0), 3.0),
+                                                  (datetime(2009, 10, 5, 0, 0), 4.0),
+                                                  (datetime(2009, 10, 6, 0, 0), 5.0),
+                                                  (datetime(2009, 10, 7, 0, 0), 6.0),
+                                                  (datetime(2009, 10, 8, 0, 0), 7.0),
+                                                  (datetime(2009, 10, 9, 0, 0), 8.0),
+                                                  (datetime(2009, 10, 10, 0, 0), 9.0)])
+        self.assertEqual(ts.start_date, datetime(2009, 10, 1, 0, 0))
+        start = (datetime(2009, 10, 1) - datetime(2000, 1, 1)).days
+        ts2 = self._create_npts(timestamps=range(start, start+ 10))
+        self.assertEqual(ts2.timestamped_array(), ts.timestamped_array())
+        ts3 = self._create_ts(granularity=u'daily')
+        self.assertEqual(ts3.timestamped_array(), ts.timestamped_array())
+
+    def test_no_timestamps(self):
+        with self.assertRaises(ValueError) as cm:
+            self._create_npts(timestamps=list(reversed(range(10))))
+        self.assertEqual(str(cm.exception), 'time stamps must be an strictly ascendant vector')
+
+    def test_size_mismatch(self):
+        with self.assertRaises(ValueError) as cm:
+            self._create_npts(timestamps=range(9))
+        self.assertEqual(str(cm.exception), 'data/timestamps vectors size mismatch')
+
+    def test_bad_timestamps(self):
+        with self.assertRaises(ValueError) as cm:
+            self._create_npts(timestamps=list(reversed(range(10))))
+        self.assertEqual(str(cm.exception), 'time stamps must be an strictly ascendant vector')
+
+
+class TSaccessTC(TimeSeriesTC):
     def setup_database(self):
-        data = numpy.arange(10)
-        start_date = datetime(2009, 10, 1)
-        self.hourlyts = self.execute('INSERT TimeSeries SP: '
-                               'SP data_type "Float", SP granularity "hourly", '
-                               'SP start_date %(s)s, SP data %(d)s',
-                               {'d': data,
-                                's': start_date}).get_entity(0, 0)
-        self.dailyts = self.execute('INSERT TimeSeries SP: '
-                               'SP data_type "Float", SP granularity "daily", '
-                               'SP start_date %(s)s, SP data %(d)s',
-                               {'d': data,
-                                's': start_date}).get_entity(0, 0)
-        self.monthlyts = self.execute('INSERT TimeSeries SP: '
-                               'SP data_type "Float", SP granularity "monthly", '
-                               'SP start_date %(s)s, SP data %(d)s',
-                               {'d': data,
-                                's': start_date}).get_entity(0, 0)
-
-        self.yearlyts = self.execute('INSERT TimeSeries SP: '
-                               'SP data_type "Float", SP granularity "yearly", '
-                               'SP start_date %(s)s, SP data %(d)s',
-                               {'d': data,
-                                's': start_date}).get_entity(0, 0)
-
-        self.weeklyts = self.execute('INSERT TimeSeries SP: '
-                               'SP data_type "Float", SP granularity "weekly", '
-                               'SP start_date %(s)s, SP data %(d)s',
-                               {'d': data,
-                                's': datetime(2009, 10, 5)}).get_entity(0, 0)
+        self.hourlyts = self._create_ts(granularity=u'hourly')
+        self.dailyts = self._create_ts(granularity=u'daily')
+        self.monthlyts = self._create_ts(granularity=u'monthly')
+        self.yearlyts = self._create_ts(granularity=u'yearly')
+        self.weeklyts = self._create_ts(granularity=u'weekly', start_date=datetime(2009, 10, 5))
 
     def test_end_date_daily(self):
         expected_end = self.dailyts.start_date + timedelta(days=10)
@@ -57,7 +95,6 @@ class TSaccessTC(CubicWebTC):
     def test_end_date_yearly(self):
         expected_end = datetime(2019, 10, 1)
         self.assertEqual(self.yearlyts.end_date, expected_end)
-
 
 
     def test_make_relative_index_daily(self):
@@ -121,6 +158,21 @@ class TSaccessTC(CubicWebTC):
         delta = calendar.get_offset(date, granularity) - self.yearlyts._start_offset
         self.assertAlmostEqual(delta, (365 + 31 + 36/24)/365)
 
+
+    def test_make_relative_index_weekly(self):
+        date = datetime(2009, 10, 14, 12)
+        calendar = self.weeklyts.calendar
+        granularity = self.weeklyts.granularity
+        delta = calendar.get_offset(date, granularity) - self.weeklyts._start_offset
+        self.assertAlmostEqual(delta, (7 + 2 + 12/24)/7)
+
+    def test_make_relative_index_weekly2(self):
+        date = datetime(2009, 10, 19, 0)
+        calendar = self.weeklyts.calendar
+        granularity = self.weeklyts.granularity
+        delta = calendar.get_offset(date, granularity) - self.weeklyts._start_offset
+        self.assertAlmostEqual(delta, 2)
+
     def test_get_by_date_yearly(self):
         date = datetime(2010, 11, 2, 12)
         self.assertEqual(self.yearlyts.get_by_date(date), self.yearlyts.array[1])
@@ -138,20 +190,6 @@ class TSaccessTC(CubicWebTC):
                           self.yearlyts.array[1:2].tolist())
 
 
-
-    def test_make_relative_index_weekly(self):
-        date = datetime(2009, 10, 14, 12)
-        calendar = self.weeklyts.calendar
-        granularity = self.weeklyts.granularity
-        delta = calendar.get_offset(date, granularity) - self.weeklyts._start_offset
-        self.assertAlmostEqual(delta, (7 + 2 + 12/24)/7)
-
-    def test_make_relative_index_weekly2(self):
-        date = datetime(2009, 10, 19, 0)
-        calendar = self.weeklyts.calendar
-        granularity = self.weeklyts.granularity
-        delta = calendar.get_offset(date, granularity) - self.weeklyts._start_offset
-        self.assertAlmostEqual(delta, 2)
 
     def test_get_by_date_weekly(self):
         date = datetime(2009, 10, 14, 12)
@@ -269,84 +307,118 @@ class TSaccessTC(CubicWebTC):
         self.assertEqual(result, expected)
 
 
+class NPTSaccessTC(TSaccessTC):
+    """same test as above but for NPTimeSeries"""
+    _create_ts = TSaccessTC._create_npts
 
-class ComputeSumAverageTC(CubicWebTC):
+    def test_end_date_daily(self):
+        expected_end = self.dailyts.start_date + timedelta(days=9)
+        self.assertEqual(self.dailyts.end_date, expected_end)
+
+    def test_end_date_hourly(self):
+        expected_end = self.dailyts.start_date + timedelta(hours=9)
+        self.assertEqual(self.hourlyts.end_date, expected_end)
+
+    def test_end_date_weekly(self):
+        expected_end = self.weeklyts.start_date + timedelta(days=9*7)
+        self.assertEqual(self.weeklyts.end_date, expected_end)
+
+    def test_end_date_monthly(self):
+        expected_end = datetime(2010, 7, 1)
+        self.assertEqual(self.monthlyts.end_date, expected_end)
+
+    def test_end_date_yearly(self):
+        expected_end = datetime(2018, 10, 1)
+        self.assertEqual(self.yearlyts.end_date, expected_end)
+
+
+    # XXX: I'm really not sure these tests have a meaning with NPTS
+    def test_make_relative_index_yearly(self):
+        date = datetime(2010, 11, 2, 12)
+        calendar = self.yearlyts.calendar
+        granularity = self.yearlyts.granularity
+        delta = calendar.get_offset(date, granularity) - self.yearlyts._start_offset
+        self.assertAlmostEqual(delta, (365 + 31 + 36/24))
+
+
+    def test_make_relative_index_weekly(self):
+        date = datetime(2009, 10, 14, 12)
+        calendar = self.weeklyts.calendar
+        granularity = self.weeklyts.granularity
+        delta = calendar.get_offset(date, granularity) - self.weeklyts._start_offset
+        self.assertAlmostEqual(delta, (7 + 2 + 12/24))
+
+    def test_make_relative_index_weekly2(self):
+        date = datetime(2009, 10, 19, 0)
+        calendar = self.weeklyts.calendar
+        granularity = self.weeklyts.granularity
+        delta = calendar.get_offset(date, granularity) - self.weeklyts._start_offset
+        self.assertAlmostEqual(delta, 2*7)
+
+    def test_make_relative_index_monthly(self):
+        date = datetime(2009, 11, 2, 12)
+        calendar = self.monthlyts.calendar
+        granularity = self.monthlyts.granularity
+        delta = calendar.get_offset(date, granularity) - self.monthlyts._start_offset
+        self.assertAlmostEqual(delta, 32.5)
+
+class ComputeSumAverageTC(TimeSeriesTC):
 
     def setup_database(self):
-        start_date = datetime(2009, 10, 1, 0)
-        yearly_start_date = datetime(2009, 1, 1, 0)
-        self.yearly_ts = self.execute('INSERT TimeSeries SP: '
-                                      'SP data_type "Float", SP granularity "yearly", '
-                                      'SP start_date %(s)s, SP data %(d)s',
-                                      {'d': numpy.arange(3)*10,
-                                       's': yearly_start_date}).get_entity(0, 0)
-        self.monthly_ts = self.execute('INSERT TimeSeries SP: '
-                                     'SP data_type "Float", SP granularity "monthly", '
-                                     'SP start_date %(s)s, SP data %(d)s',
-                                     {'d': numpy.arange(12),
-                                      's': start_date}).get_entity(0, 0)
-        self.weekly_ts = self.execute('INSERT TimeSeries SP: '
-                                     'SP data_type "Float", SP granularity "weekly", '
-                                     'SP start_date %(s)s, SP data %(d)s',
-                                     {'d': numpy.arange(10),
-                                      's':  datetime(2009, 9, 28, 6)}).get_entity(0, 0)
-
-        self.daily_ts = self.execute('INSERT TimeSeries SP: '
-                                     'SP data_type "Float", SP granularity "daily", '
-                                     'SP start_date %(s)s, SP data %(d)s',
-                                     {'d': numpy.arange(60),
-                                      's': start_date}).get_entity(0, 0)
-        self.hourly_ts = self.execute('INSERT TimeSeries SP: '
-                                      'SP data_type "Float", SP granularity "hourly", '
-                                      'SP start_date %(s)s, SP data %(d)s',
-                                      {'d': numpy.arange(720),
-                                       's': start_date}).get_entity(0, 0)
-        self.quart_ts = self.execute('INSERT TimeSeries SP: '
-                                      'SP data_type "Float", SP granularity "15min", '
-                                      'SP start_date %(s)s, SP data %(d)s',
-                                      {'d': numpy.arange(2880),
-                                       's': start_date}).get_entity(0, 0)
+        self.yearlyts = self._create_ts(granularity=u'yearly',
+                                        data=numpy.arange(3)*10,
+                                        start_date=datetime(2009, 1, 1, 0))
+        self.monthlyts = self._create_ts(granularity=u'monthly', data=numpy.arange(12))
+        self.weeklyts = self._create_ts(granularity=u'weekly',
+                                         data=numpy.arange(10),
+                                         start_date=datetime(2009, 9, 28, 6))
+        self.dailyts = self._create_ts(granularity=u'daily',
+                                         data=numpy.arange(60))
+        self.hourlyts = self._create_ts(granularity=u'hourly',
+                                         data=numpy.arange(720))
+        self.quartts = self._create_ts(granularity=u'15min',
+                                         data=numpy.arange(2880))
 
 
     def test_end_date_error(self):
         start_date = datetime(2009, 12, 3)
         end_date = datetime(2009, 12, 23)
-        self.assertRaises(IndexError, self.daily_ts.aggregated_value, [(start_date, end_date)], 'sum')
-        self.assertRaises(IndexError, self.daily_ts.aggregated_value, [(start_date, end_date)], 'average')
+        self.assertRaises(IndexError, self.dailyts.aggregated_value, [(start_date, end_date)], 'sum')
+        self.assertRaises(IndexError, self.dailyts.aggregated_value, [(start_date, end_date)], 'average')
 
     def test_yearly_sum(self):
         start_date = datetime(2009, 1, 1, 0)
         end_date = datetime(2011, 1, 1, 0)
-        _date, sum_res = self.yearly_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.yearly_ts.array
+        _date, sum_res = self.yearlyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.yearlyts.array
         self.assertAlmostEqual(sum_res, data[0] + data[1])
 
     def test_yearly_average(self):
         start_date = datetime(2009, 1, 1, 0)
         end_date = datetime(2011, 1, 1, 0)
-        _date, average = self.yearly_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.yearly_ts.array
+        _date, average = self.yearlyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.yearlyts.array
         self.assertAlmostEqual(average, (data[0] + data[1])/2)
 
     def test_monthly_sum(self):
         start_date = datetime(2009, 11, 3, 0)
         end_date = datetime(2010, 1, 23, 0)
-        _date, sum_res = self.monthly_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.monthly_ts.array
+        _date, sum_res = self.monthlyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.monthlyts.array
         self.assertAlmostEqual(sum_res, (1-2/30)*data[1] + 1*data[2] + 22/31*data[3])
 
     def test_monthly_sum2(self):
         start_date = datetime(2009, 11, 3, 0)
         end_date = datetime(2009, 11, 23, 0)
-        _date, sum_res = self.monthly_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.monthly_ts.array
+        _date, sum_res = self.monthlyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.monthlyts.array
         self.assertAlmostEqual(sum_res, (20/30)*data[1])
 
     def test_monthly_average(self):
         start_date = datetime(2009, 11, 3, 0)
         end_date = datetime(2010, 1, 23, 0)
-        _date, average = self.monthly_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.monthly_ts.array
+        _date, average = self.monthlyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.monthlyts.array
         coefs = numpy.array([float(30-2)/30, 1, 22.0/31])
         expected = (coefs*data[1:4]).sum()/coefs.sum()    # weighted average
         # expected = (data[1] + data[2] + data[3]) / (3.)
@@ -355,22 +427,22 @@ class ComputeSumAverageTC(CubicWebTC):
     def test_monthly_average2(self):
         start_date = datetime(2009, 11, 3, 0)
         end_date = datetime(2009, 11, 23, 0)
-        _date, average = self.monthly_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.monthly_ts.array
+        _date, average = self.monthlyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.monthlyts.array
         self.assertAlmostEqual(average,  data[1])
 
     def test_weekly_sum(self):
         start_date = datetime(2009, 10, 10, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, sum_res = self.weekly_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.weekly_ts.array
+        _date, sum_res = self.weeklyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.weeklyts.array
         self.assertAlmostEqual(sum_res, 2/7*data[1] + 1*data[2] + 4/7*data[3])
 
     def test_weekly_average(self):
         start_date = datetime(2009, 10, 10, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, average = self.weekly_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.weekly_ts.array
+        _date, average = self.weeklyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.weeklyts.array
         coefs = numpy.array([2.0/7, 1, 4.0/7])
         expected = (coefs*data[1:4]).sum()/coefs.sum()    # weighted average
         # expected = (data[1] + data[2] + data[3]) / (3.)
@@ -379,58 +451,69 @@ class ComputeSumAverageTC(CubicWebTC):
     def test_daily_sum(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, sum_res = self.daily_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.daily_ts.array
+        _date, sum_res = self.dailyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.dailyts.array
         self.assertAlmostEqual(sum_res, data[2:22].sum())
 
     def test_daily_sum2(self):
         start_date = datetime(2009, 10, 3, 2)
         end_date = datetime(2009, 10, 3, 10)
-        _date, sum_res = self.daily_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.daily_ts.array
+        _date, sum_res = self.dailyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.dailyts.array
         self.assertAlmostEqual(sum_res, data[2]*8/24)
 
     def test_daily_average(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, average = self.daily_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.daily_ts.array
+        _date, average = self.dailyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.dailyts.array
         self.assertAlmostEqual(average, data[2:22].mean())
 
     def test_daily_average2(self):
         start_date = datetime(2009, 10, 3, 2)
         end_date = datetime(2009, 10, 3, 10)
-        _date, sum_res = self.daily_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.daily_ts.array
+        _date, sum_res = self.dailyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.dailyts.array
         self.assertAlmostEqual(sum_res, data[2])
 
     def test_hourly_sum(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, sum_res = self.hourly_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.hourly_ts.array
+        _date, sum_res = self.hourlyts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.hourlyts.array
         self.assertAlmostEqual(sum_res, data[2*24:22*24].sum())
 
     def test_hourly_average(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, average = self.hourly_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.hourly_ts.array
+        _date, average = self.hourlyts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.hourlyts.array
         self.assertAlmostEqual(average, data[2*24:22*24].mean())
 
     def test_15min_sum(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, sum_res = self.quart_ts.aggregated_value([(start_date, end_date)], 'sum')
-        data = self.quart_ts.array
+        _date, sum_res = self.quartts.aggregated_value([(start_date, end_date)], 'sum')
+        data = self.quartts.array
         self.assertAlmostEqual(sum_res, data[2*24*4:22*24*4].sum())
 
     def test_15min_average(self):
         start_date = datetime(2009, 10, 3, 0)
         end_date = datetime(2009, 10, 23, 0)
-        _date, average = self.quart_ts.aggregated_value([(start_date, end_date)], 'average')
-        data = self.quart_ts.array
+        _date, average = self.quartts.aggregated_value([(start_date, end_date)], 'average')
+        data = self.quartts.array
         self.assertAlmostEqual(average, data[2*24*4:22*24*4].mean())
+
+
+class NPTSComputeSumAverageTC(ComputeSumAverageTC):
+    """same test as above but for NPTimeSeries"""
+    _create_ts = ComputeSumAverageTC._create_npts
+
+    def test_weekly_sum(self):
+        self.skipTest('need update for non-periodic time-series')
+
+    def test_weekly_average(self):
+        self.skipTest('need update for non-periodic time-series')
 
 
 if __name__ == '__main__':

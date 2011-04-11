@@ -14,6 +14,8 @@ import csv
 import datetime
 from datetime import timedelta
 from math import floor, ceil
+from bisect import bisect_left
+from itertools import izip
 from cStringIO import StringIO
 
 import numpy
@@ -28,7 +30,9 @@ from cubicweb.selectors import is_instance, ExpectedValueSelector
 from cubicweb.view import EntityAdapter
 from cubicweb.entities import AnyEntity, fetch_config
 
-from cubes.timeseries.calendars import get_calendar, TIME_DELTAS
+from cubes.timeseries.calendars import (
+    get_calendar, TIME_DELTAS,
+    timedelta_to_days, timedelta_to_seconds, datetime_to_seconds)
 from cubes.timeseries.utils import get_formatter
 
 _ = unicode
@@ -183,15 +187,15 @@ class TimeSeries(AnyEntity):
 
                 interval_values = interval_date_values[:,1]
                 coefs = numpy.ones(interval_values.shape, float)
-                start_frac = self.calendar.get_frac_offset(start, self.granularity)
-                end_frac = self.calendar.get_frac_offset(end, self.granularity)
+                start_frac = self.get_frac_offset(start)
+                end_frac = self.get_frac_offset(end)
                 coefs[0] -= start_frac
                 if end_frac != 0:
                     coefs[-1] -= 1 - end_frac
 
                 if mode == 'weighted_average':
                     interval_dates = interval_date_values[:,0]
-                    weights = [ self.calendar.get_duration_in_days(self.granularity, date)
+                    weights = [self.get_duration_in_days(date)
                                for date in interval_dates]
                     coefs *= weights
 
@@ -207,6 +211,14 @@ class TimeSeries(AnyEntity):
         else:
             raise ValueError('unknown mode %s' % mode)
 
+    def get_offset(self, date):
+        return self.calendar.get_offset(date, self.granularity)
+
+    def get_frac_offset(self, date):
+        return self.calendar.get_frac_offset(date, self.granularity)
+
+    def get_duration_in_days(self, date):
+        return self.calendar.get_duration_in_days(self.granularity, date)
 
     def get_next_date(self, date):
         return get_next_date(self.granularity, date)
@@ -247,7 +259,7 @@ class TimeSeries(AnyEntity):
 
     def output_value(self, v):
         """ use this for external representation purposes, but NOT
-        as an entry/input method as Boolean really should be
+        as an entry/input method as Boolean really should be
         a boolean internally
         """
         return self._dtypes_out[self.data_type](v) #pylint:disable-msg=E1101
@@ -350,8 +362,9 @@ class TimeSeries(AnyEntity):
         index = self._make_relative_index(abs_index)
         return self.get_relative(index, with_dates)
 
+
     def get_rel_index(self, date):
-        abs_index = self.calendar.get_offset(date, self.granularity) #pylint:disable-msg=E1101
+        abs_index = self.get_offset(date) 
         return self._make_relative_index(abs_index)
 
     def get_by_date(self, date, with_dates=False):
@@ -361,14 +374,18 @@ class TimeSeries(AnyEntity):
             if date.start is None:
                 start = None
             else:
-                start = self.calendar.get_offset(date.start, self.granularity)
+                #start = self.get_rel_index(date.start)
+                start = self.get_offset(date.start)
             if date.stop is None:
                 stop = None
             else:
-                stop = self.calendar.get_offset(date.stop, self.granularity)
+                #stop = self.get_rel_index(date.stop)
+                stop = self.get_offset(date.stop)
             index = slice(start, stop, None)
         else:
-            index = self.calendar.get_offset(date, self.granularity)
+            #index = self.get_rel_index(date)
+            index = self.get_offset(date)
+        #return self.get_relative(index, with_dates)
         return self.get_absolute(index, with_dates)
 
     def _make_relative_index(self, abs_index):
@@ -399,12 +416,10 @@ class TimeSeries(AnyEntity):
             raise IndexError(exc.args + (index,))
 
     @property
+    @cached
     def _start_offset(self):
-        try:
-            return self.__start_offset
-        except AttributeError:
-            self.__start_offset = self.calendar.get_offset(self.start_date, self.granularity) #pylint:disable-msg=E1101
-            return self.__start_offset
+        return self.get_offset(self.start_date)
+
 
     # import/conversion method
 
@@ -476,6 +491,113 @@ class TimeSeries(AnyEntity):
         if not values:
             raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.dtype)
+
+
+class NPTimeSeries(TimeSeries):
+    __regid__ = 'NPTimeSeries'
+
+    is_constant = False
+
+    @property
+    @cached
+    def timestamps_array(self):
+        # XXX turn into datetime here ?
+        raw_data = self.timestamps.getvalue()
+        raw_data = zlib.decompress(raw_data)
+        return pickle.loads(raw_data)
+
+    @cached
+    def timestamped_array(self):
+        date = self.start_date #pylint:disable-msg=E1101
+        data = []
+        for t, v in izip(self.timestamps_array, self.array):
+            data.append((self.calendar.timestamp_to_datetime(t), self.output_value(v)))
+        return data
+
+    def get_next_date(self, date):
+        index = bisect_left(self.timestamps_array, self.calendar.datetime_to_timestamp(date))
+        # XXX what if out of bound
+        return self.calendar.timestamp_to_datetime(self.timestamps_array[index])
+
+    def get_rel_index(self, date, offset=-1):
+        timestamp = self.calendar.datetime_to_timestamp(date)
+        array = self.timestamps_array
+        idx = bisect_left(array, timestamp)
+        # unless this is an exact match, add offset if any to mimick periodic ts
+        # behaviour
+        if timestamp != array[idx]:
+            return max(idx + offset, 0)
+        return idx
+
+    def get_by_date(self, date, with_dates=False):
+        #pylint:disable-msg=E1101
+        if type(date) is slice:
+            assert date.step is None
+            if date.start is None:
+                start = None
+            else:
+                start = self.get_rel_index(date.start, -1)
+            if date.stop is None:
+                stop = None
+            else:
+                stop = self.get_rel_index(date.stop, 0)
+            index = slice(start, stop, None)
+        else:
+            index = self.get_rel_index(date)
+        return self.get_relative(index, with_dates)
+
+    def get_duration_in_days(self, date):
+        idx = self.get_rel_index(date)
+        array = self.timestamped_array()
+        return timedelta_to_days(array[idx+1][0] - array[idx][0])
+
+    def get_frac_offset(self, date):
+        idx = self.get_rel_index(date)
+        array = self.timestamped_array()
+        try:
+            totalsecs = timedelta_to_seconds(array[idx+1][0] - array[idx][0])
+        except IndexError:
+            # date out of bound, consider previous interval
+            totalsecs = timedelta_to_seconds(array[idx][0] - array[idx-1][0])
+        deltasecs = timedelta_to_seconds(date - array[idx][0])
+        return deltasecs / max(totalsecs, deltasecs)
+
+    @property
+    def _start_offset(self):
+        return self.calendar.get_offset(self.start_date, self.granularity)
+
+    def get_offset(self, datetime):
+        timestamp = self.calendar.datetime_to_timestamp(datetime)
+        array = self.timestamps_array
+        idx = bisect_left(array, timestamp)
+        return idx
+
+    def grok_data(self):
+        # XXX when data is a csv/txt/xl file, we want to read timestamps in there to
+        # XXX hooks won't catch change to timestamps
+        super(NPTimeSeries, self).grok_data()
+        numpy_array = self.grok_timestamps()
+        data = Binary()
+        compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
+        data.write(compressed_data)
+        self.cw_edited['timestamps'] = data
+        self._timestamps_array = numpy_array
+        # set start_date to the first value of the time vector
+        self.cw_edited.setdefault('start_date', self.calendar.timestamp_to_datetime(numpy_array[0]))
+
+    def grok_timestamps(self):
+        timestamps = self.timestamps
+        if len(timestamps) != self.count:
+            raise ValueError('data/timestamps vectors size mismatch')
+        if isinstance(timestamps[0], (datetime.datetime, datetime.date)):
+            timestamps = [self.calendar.datetime_to_timestamp(v) for v in timestamps]
+        else:
+            assert isinstance(timestamps[0], (int, float))
+        tstamp_array = numpy.array(timestamps, dtype=numpy.float64)
+        if not (tstamp_array[:-1] < tstamp_array[1:]).all():
+            raise ValueError('time stamps must be an strictly ascendant vector')
+        return tstamp_array
+
 
 
 class TimeSeriesExportAdapter(EntityAdapter):

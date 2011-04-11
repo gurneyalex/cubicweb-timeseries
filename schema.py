@@ -1,7 +1,7 @@
 # cube's specific schema
 """
 :organization: Logilab
-:copyright: 2001-2009 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
+:copyright: 2009-2011 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
@@ -30,6 +30,16 @@ class TimeSeries(EntityType):
 
     data = Bytes(required=True,
                  description = _('Timeseries data'))
+
+
+class NPTimeSeries(TimeSeries):
+    """Non Periodic Time Series"""
+    __specializes_schema__ = True
+    granularity = String(override=True, internationalizable=True,
+                         vocabulary = [_('time_vector')], default='time_vector')
+
+    timestamps = Bytes(required=True,
+                       description = _('Time vector'))
 
 
 class ExcelPreferences(EntityType):

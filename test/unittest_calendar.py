@@ -22,5 +22,32 @@ class GasCalendarDateFunctionsTC(TestCase):
         start = self.calendar.next_month_start(tstamp)
         self.assertEqual(start, datetime(2009, 11, 1, 0))
 
+    def test_timestamp_datetime_roundtrip0(self):
+        date = datetime(2000, 1, 1)
+        timestamp = self.calendar.datetime_to_timestamp(date)
+        self.assertEqual(self.calendar.timestamp_to_datetime(timestamp), date)
+
+    def test_timestamp_datetime_roundtrip1(self):
+        date = datetime(2010, 12, 31)
+        timestamp = self.calendar.datetime_to_timestamp(date)
+        self.assertEqual(self.calendar.timestamp_to_datetime(timestamp), date)
+
+    def test_timestamp_datetime_roundtrip2(self):
+        date = datetime(1990, 1, 1, 1, 1, 2)
+        timestamp = self.calendar.datetime_to_timestamp(date)
+        self.assertEqual(self.calendar.timestamp_to_datetime(timestamp), date)
+
+    def test_0(self):
+        self.assertEqual(self.calendar.timestamp_to_datetime(self.calendar.datetime_to_timestamp(datetime(2000, 1, 1))),
+                         datetime(2000, 1, 1))
+
+    def test_1(self):
+        self.assertEqual(self.calendar.timestamp_to_datetime(self.calendar.datetime_to_timestamp(datetime(2010, 12, 31))),
+                         datetime(2010, 12, 31))
+
+    def test_2(self):
+        self.assertEqual(self.calendar.timestamp_to_datetime(self.calendar.datetime_to_timestamp(datetime(1990, 1, 1, 1, 1, 2))),
+                         datetime(1990, 1, 1, 1, 1, 2))
+
 if __name__ == '__main__':
     unittest_main()

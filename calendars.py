@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy
+import math
 import datetime
 
 from logilab.common.date import days_in_month, days_in_year
@@ -64,6 +65,13 @@ class AbstractCalendar(object):
 
     def _get_offset_yearly(self, date):
         return date.year-1
+
+    def _get_offset_time_vector(self, date):
+        return int(self.datetime_to_timestamp(date))
+
+    def _get_frac_offset_time_vector(self, date):
+        offset = self.datetime_to_timestamp(date)
+        return offset - math.floor(offset)
 
     def _get_frac_offset_15min(self, date):
         rem = self.seconds(date) % (15*60)
@@ -166,6 +174,19 @@ class AbstractCalendar(object):
 
     def get_month_number(self, date):
         raise NotImplementedError
+
+
+    ORIGIN = datetime.datetime(2000, 1, 1)
+    @staticmethod
+    def datetime_to_timestamp(datetime, epoch=ORIGIN):
+        """return datetime as a fraction of days since an epoch"""
+        return timedelta_to_days(datetime - epoch)
+
+    @staticmethod
+    def timestamp_to_datetime(timestamp, epoch=ORIGIN):
+        """return a datetime from a fraction of days since an epoch"""
+        return epoch + datetime.timedelta(days=timestamp)
+
 
 class GregorianCalendar(AbstractCalendar):
     def ordinal(self, date):
