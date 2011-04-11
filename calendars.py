@@ -3,6 +3,16 @@ import numpy
 import datetime
 
 from logilab.common.date import days_in_month, days_in_year
+try:
+    from logilab.common.date import (datetime_to_seconds,
+                                     timedelta_to_days, timedelta_to_seconds)
+except ImportError:
+    def datetime_to_seconds(date):
+        return date.second+60*date.minute + 3600*date.hour
+    def timedelta_to_days(delta):
+        return delta.days + delta.seconds / (3600*24)
+    def timedelta_to_seconds(delta):
+        return delta.days*(3600*24) + delta.seconds
 
 __ALL_CALENDARS = {}
 
@@ -22,7 +32,9 @@ def get_calendar(name):
 def get_all_calendars():
     return __ALL_CALENDARS.values()
 
+
 class AbstractCalendar(object):
+    seconds = staticmethod(datetime_to_seconds)
 
     def get_offset(self, date, granularity):
         offset_method = getattr(self, '_get_offset_%s' % granularity)
@@ -70,25 +82,24 @@ class AbstractCalendar(object):
         return (ordinal % 7) / 7 + self.seconds(date)/(3600*24*7)
 
     def _get_frac_offset_monthly(self, date):
-        ordinal = self.ordinal(date)
         start_of_month = datetime.datetime(date.year, date.month, 1)
         delta = date - start_of_month
-        seconds = delta.days*3600*24 + delta.seconds
+        seconds = timedelta_to_seconds(delta)
         return seconds / (days_in_month(start_of_month)*3600*24)
 
     def _get_frac_offset_yearly(self, date):
         frac_ordinal = self.ordinal(date) + self.seconds(date) / (3600*24)
         start_of_year = self.ordinal(datetime.datetime(date.year, 1, 1))
         return  (frac_ordinal-start_of_year) / days_in_year(date)
-    
+
     def get_duration_in_days(self, granularity, date):
         '''
         Compute the duration of the time interval associated to
         (granularity, date) in days
         '''
         if granularity in TIME_DELTAS.keys():
-            delta = TIME_DELTAS[granularity] 
-            return delta.days + delta.seconds/(3600*24)
+            delta = TIME_DELTAS[granularity]
+            return timedelta_to_days(delta)
         elif granularity == 'monthly':
             date = self.prev_month_start(date)
             return days_in_month(date)
@@ -101,12 +112,6 @@ class AbstractCalendar(object):
         return the number of days since Jan 1st, 0001 (this one being having ordinal 0)
         """
         raise NotImplementedError
-
-    def seconds(self, date):
-        """
-        return the number of seconds since the begining of the day for that date
-        """
-        return date.second+60*date.minute + 3600*date.hour
 
     def day_of_week(self, date):
         """
