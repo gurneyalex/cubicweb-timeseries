@@ -24,7 +24,7 @@ from cubes.timeseries.utils import get_formatter
 _ = unicode
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     tabs = [_('ts_summary'), _('ts_plot')]
     default_tab = 'ts_summary'
 
@@ -40,7 +40,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
 
 class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     __regid__ = 'ts_summary'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
 
     characteristics_attrs = ('granularity',)
 
@@ -75,7 +75,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     summary_attrs = (_('end_date'),
                      _('min_unit'), _('max_unit'),
                      _('average_unit'), _('count'))
@@ -137,7 +137,7 @@ JSonController.js_get_ts_values_data = get_ts_values_data
 
 class TimeSeriesValuesView(baseviews.EntityView):
     __regid__ = 'ts_values'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     title = None
 
     onload = u"init_ts_grid('tsvalue', '%(url)s');"

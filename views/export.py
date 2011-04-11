@@ -6,7 +6,7 @@ _ = unicode
 
 class TimeSeriesExcelExport(EntityView):
     __regid__ = 'tsxlexport'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     content_type = 'application/vnd.ms-excel'
     file_ext = 'xls'
     templatable = False
@@ -38,7 +38,7 @@ class TimeSeriesCSVExport(TimeSeriesExcelExport):
 class ExcelTSExportAction(action.Action):
     __regid__ = 'tsexportaction'
     title = _('export to excel')
-    __select__ = one_line_rset() & is_instance('TimeSeries')
+    __select__ = one_line_rset() & is_instance('TimeSeries', 'NonPeriodicTimeSeries')
 
     def url(self):
         return self.cw_rset.get_entity(0, 0).absolute_url(vid='tsxlexport')

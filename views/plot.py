@@ -21,7 +21,7 @@ _ = unicode
 
 class TimeSeriesPlotView(baseviews.EntityView):
     __regid__ = 'ts_plot'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     title = None
     onload = u"init_ts_plot('%(figid)s', [%(plotdata)s]);"
 

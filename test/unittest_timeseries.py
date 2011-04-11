@@ -27,7 +27,8 @@ class TimeSeriesTC(CubicWebTC):
             for v in data:
                 timestamps.append(date)
                 date = get_next_date(granularity, date)
-        return req.create_entity('NPTimeSeries', data_type=u'Float',
+        timestamps = numpy.array(timestamps)
+        return req.create_entity('NonPeriodicTimeSeries', data_type=u'Float',
                                  data=data, timestamps=timestamps)
 
 
@@ -47,14 +48,14 @@ class NPTSTC(TimeSeriesTC):
                                                   (datetime(2009, 10, 10, 0, 0), 9.0)])
         self.assertEqual(ts.start_date, datetime(2009, 10, 1, 0, 0))
         start = (datetime(2009, 10, 1) - datetime(2000, 1, 1)).days
-        ts2 = self._create_npts(timestamps=range(start, start+ 10))
+        ts2 = self._create_npts(timestamps=numpy.arange(start, start+ 10))
         self.assertEqual(ts2.timestamped_array(), ts.timestamped_array())
         ts3 = self._create_ts(granularity=u'daily')
         self.assertEqual(ts3.timestamped_array(), ts.timestamped_array())
 
     def test_no_timestamps(self):
         with self.assertRaises(ValueError) as cm:
-            self._create_npts(timestamps=list(reversed(range(10))))
+            self._create_npts(timestamps=range(10, 0, -1))
         self.assertEqual(str(cm.exception), 'time stamps must be an strictly ascendant vector')
 
     def test_size_mismatch(self):
@@ -64,7 +65,7 @@ class NPTSTC(TimeSeriesTC):
 
     def test_bad_timestamps(self):
         with self.assertRaises(ValueError) as cm:
-            self._create_npts(timestamps=list(reversed(range(10))))
+            self._create_npts(timestamps=range(10, 0, -1))
         self.assertEqual(str(cm.exception), 'time stamps must be an strictly ascendant vector')
 
 
@@ -308,7 +309,7 @@ class TSaccessTC(TimeSeriesTC):
 
 
 class NPTSaccessTC(TSaccessTC):
-    """same test as above but for NPTimeSeries"""
+    """same test as above but for NonPeriodicTimeSeries"""
     _create_ts = TSaccessTC._create_npts
 
     def test_end_date_daily(self):
@@ -506,7 +507,7 @@ class ComputeSumAverageTC(TimeSeriesTC):
 
 
 class NPTSComputeSumAverageTC(ComputeSumAverageTC):
-    """same test as above but for NPTimeSeries"""
+    """same test as above but for NonPeriodicTimeSeries"""
     _create_ts = ComputeSumAverageTC._create_npts
 
     def test_weekly_sum(self):

@@ -152,3 +152,5 @@ class DataWidget(fw.Input):
 
 uicfg.autoform_field_kwargs.tag_subject_of(('TimeSeries', 'data', '*'),
                                            {'widget': DataWidget})
+uicfg.autoform_field_kwargs.tag_subject_of(('NonPeriodicTimeSeries', 'data', '*'),
+                                           {'widget': DataWidget})

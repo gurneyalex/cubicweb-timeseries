@@ -4,7 +4,7 @@ from cubicweb.selectors import is_instance
 
 class TimeSeriesDataReadHook(Hook):
     __regid__ = 'timeseries_data_read_hook'
-    __select__ = Hook.__select__ & is_instance('TimeSeries')
+    __select__ = Hook.__select__ & is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     events = ('before_update_entity', 'before_add_entity')
     category = 'timeseries'
 

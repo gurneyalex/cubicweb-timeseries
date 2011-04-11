@@ -1,1 +1,1 @@
-add_entity_type('NPTimeSeries')
+add_entity_type('NonPeriodicTimeSeries')

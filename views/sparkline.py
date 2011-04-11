@@ -13,7 +13,7 @@ class TimeSeriesSparkLine(EntityView):
     see: http://omnipotent.net/jquery.sparkline/
     """
     __regid__ = 'sparkline'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     onload = """
 var jqelt = jQuery('#sparklinefor%(target)s');
 if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
@@ -55,7 +55,7 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
 class TimeSeriesInContextView(InContextView):
     """ show the sparklines of the time series variants """
     __regid__ = 'incontext'
-    __select__ = is_instance('TimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
     inner_vid = 'summary'
 
     def cell_call(self, row, col):

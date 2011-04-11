@@ -493,8 +493,9 @@ class TimeSeries(AnyEntity):
         return numpy.array(values, dtype=self.dtype)
 
 
-class NPTimeSeries(TimeSeries):
-    __regid__ = 'NPTimeSeries'
+class NonPeriodicTimeSeries(TimeSeries):
+    __regid__ = 'NonPeriodicTimeSeries'
+    fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity'])
 
     is_constant = False
 
@@ -508,11 +509,15 @@ class NPTimeSeries(TimeSeries):
 
     @cached
     def timestamped_array(self):
-        date = self.start_date #pylint:disable-msg=E1101
         data = []
         for t, v in izip(self.timestamps_array, self.array):
             data.append((self.calendar.timestamp_to_datetime(t), self.output_value(v)))
         return data
+
+    @property
+    @cached
+    def start_date(self):
+        return self.calendar.timestamp_to_datetime(self.timestamps_array[0])
 
     def get_next_date(self, date):
         index = bisect_left(self.timestamps_array, self.calendar.datetime_to_timestamp(date))
@@ -575,15 +580,13 @@ class NPTimeSeries(TimeSeries):
     def grok_data(self):
         # XXX when data is a csv/txt/xl file, we want to read timestamps in there to
         # XXX hooks won't catch change to timestamps
-        super(NPTimeSeries, self).grok_data()
+        super(NonPeriodicTimeSeries, self).grok_data()
         numpy_array = self.grok_timestamps()
         data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         data.write(compressed_data)
         self.cw_edited['timestamps'] = data
         self._timestamps_array = numpy_array
-        # set start_date to the first value of the time vector
-        self.cw_edited.setdefault('start_date', self.calendar.timestamp_to_datetime(numpy_array[0]))
 
     def grok_timestamps(self):
         timestamps = self.timestamps
@@ -603,6 +606,7 @@ class NPTimeSeries(TimeSeries):
 class TimeSeriesExportAdapter(EntityAdapter):
     __regid__ = 'ITimeSeriesExporter'
     __abstract__ = True
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
 
     def export(self):
         raise NotImplementedError
@@ -614,7 +618,7 @@ class mimetype(ExpectedValueSelector):
 
 class TimeSeriesCSVexport(TimeSeriesExportAdapter):
     """ export timestamped array to paste-into-excel-friendly csv """
-    __select__ = is_instance('TimeSeries') & mimetype('text/csv')
+    __select__ = TimeSeriesExportAdapter.__select__ & mimetype('text/csv')
 
     def export(self):
         entity = self.entity

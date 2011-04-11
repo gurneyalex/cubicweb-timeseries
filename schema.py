@@ -11,11 +11,18 @@ from yams.buildobjs import (EntityType, String, Bytes, Boolean, #pylint:disable-
                             Float, Datetime, SubjectRelation,
                             RelationDefinition)
 
-class TimeSeries(EntityType):
+class _AbstractTimeSeries(EntityType):
     data_type = String(required=True,
                        vocabulary = [_('Float'), _('Integer'), _('Boolean')],
                        default = _('Float'))
     unit = String(maxsize=64)
+
+    data = Bytes(required=True,
+                 description = _('Timeseries data'))
+
+class TimeSeries(_AbstractTimeSeries):
+    """Periodic Timeseries, defined with a start date and a fixed
+    granularity"""
     granularity = String(description=_('Granularity'),
                          required=True,
                          internationalizable=True,
@@ -23,18 +30,14 @@ class TimeSeries(EntityType):
                                        _('weekly'), _('monthly'), _('yearly'),
                                        _('constant')],
                          default='daily')
-
     start_date = Datetime(description=_('Start date'),
                           required=True,
                           default='TODAY')
 
-    data = Bytes(required=True,
-                 description = _('Timeseries data'))
 
 
-class NPTimeSeries(TimeSeries):
+class NonPeriodicTimeSeries(_AbstractTimeSeries):
     """Non Periodic Time Series"""
-    __specializes_schema__ = True
     granularity = String(override=True, internationalizable=True,
                          vocabulary = [_('time_vector')], default='time_vector')
 
