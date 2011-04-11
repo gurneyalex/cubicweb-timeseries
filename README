@@ -1,0 +1,2 @@
+This cube provides a new datatype for time dependent values, handle the storage
+in a RDBMS, various ways of specifying the values, and several default views.

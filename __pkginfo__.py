@@ -8,25 +8,24 @@ numversion = (1, 0, 0)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
-copyright = '''Copyright (c) 2009-2011 LOGILAB S.A. (Paris, FRANCE).
-http://www.logilab.fr -- mailto:contact@logilab.fr'''
-
+description = 'timeseries component for the CubicWeb framework'
 author = 'LOGILAB S.A. (Paris, FRANCE)'
 author_email = 'contact@logilab.fr'
-
-short_desc = 'timeseries component for the CubicWeb framework'
-long_desc = '''\
-This cube provides a new datatype for time dependent values, handle the storage
-in a RDBMS, various ways of specifying the values, and several default views.
-'''
-
 web = 'http://www.cubicweb.org/project/%s' % distname
+classifiers = [
+    'Environment :: Web Environment',
+    'Framework :: CubicWeb',
+    'Programming Language :: Python',
+    'Programming Language :: JavaScript',
+    ]
 
-pyversions = ['2.5', '2.6']
 
+__depends__ = {'cubicweb': '>= 3.10.0'}
+
+# packaging ###
 
 from os import listdir as _listdir
-from os.path import join, isdir, exists, dirname
+from os.path import join, isdir
 from glob import glob
 
 THIS_CUBE_DIR = join('share', 'cubicweb', 'cubes', modname)
@@ -42,15 +41,9 @@ data_files = [
     [THIS_CUBE_DIR, [fname for fname in glob('*.py') if fname != 'setup.py']],
     ]
 # check for possible extended cube layout
-for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18n', 'migration'):
+for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18n', 'migration', 'wdoc'):
     if isdir(dirname):
         data_files.append([join(THIS_CUBE_DIR, dirname), listdir(dirname)])
 # Note: here, you'll need to add subdirectories if you want
 # them to be included in the debian package
-
-
-cube_eid = None # <=== FIXME if you need direct bug-subscription
-__depends_cubes__ = {}
-__depends__ = {'cubicweb': '>= 3.10.0'}
-__recommends_cubes__ = {}
 
