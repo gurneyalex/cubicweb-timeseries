@@ -7,15 +7,14 @@
 """
 from __future__ import division, with_statement
 
-from cStringIO import StringIO
-
 import pickle
 import zlib
 import csv
-from math import floor, ceil
-
 # TODO: remove datetime and use our own calendars
 import datetime
+from datetime import timedelta
+from math import floor, ceil
+from cStringIO import StringIO
 
 import numpy
 import xlrd
@@ -84,9 +83,9 @@ class TimeSeries(AnyEntity):
         """
         called in a before_{update|add}_entity_hook
 
-        self.data is something such as an excel file or CSV data or a
-        pickled numpy array. Ensure it a pickle numpy array before
-        storing object in db.
+        self.data is something such as an excel file or CSV data or a pickled
+        numpy array. Ensure it's a pickle numpy array before storing object in
+        db.
         """
         #pylint:disable-msg=E1101,E0203
         try:
@@ -149,7 +148,7 @@ class TimeSeries(AnyEntity):
         assert mode in self.supported_modes, 'unsupported mode'
         if use_last_interval and mode != 'last':
             raise AssertionError, '"use_last_interval" may be True only if mode is "last"'
-        if self.granularity == 'constant':
+        if self.is_constant:
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
             return intervals[0][0], self.first
@@ -169,8 +168,8 @@ class TimeSeries(AnyEntity):
         start = intervals[0][0]
         end = intervals[-1][1]
         if mode == 'last':
-            last_index = self.get_rel_index(end - datetime.timedelta(seconds=1))
-            tstamp = end - datetime.timedelta(seconds=1)
+            last_index = self.get_rel_index(end - timedelta(seconds=1))
+            tstamp = end - timedelta(seconds=1)
             value = self.timestamped_array()[last_index][1]
             return tstamp, value
         elif mode == 'max':
@@ -222,7 +221,7 @@ class TimeSeries(AnyEntity):
         """ eliminates duplicated values in piecewise constant timeseries """
         data = self.timestamped_array()
         compressed_data = [data[0]]
-        delta = datetime.timedelta(seconds=1)
+        delta = timedelta(seconds=1)
         last_date = data[-1][0]
         if len(data) != 1:
             for date, value in data[1:]:
@@ -336,7 +335,7 @@ class TimeSeries(AnyEntity):
         #pylint:disable-msg=E1101
         if start_date is None:
             start_date = self.start_date
-        if self.granularity == 'constant':
+        if self.is_constant:
             return [(start_date, self.first), ]
         values = []
         for tstamp, value in self.timestamped_array():
