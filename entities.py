@@ -22,6 +22,7 @@ import xlrd
 from xlwt import Workbook
 
 from logilab.common.date import days_in_month, days_in_year
+from logilab.common.decorators import cached
 
 from cubicweb import Binary, ValidationError
 from cubicweb.selectors import is_instance, ExpectedValueSelector
@@ -54,6 +55,7 @@ class TimeSeries(AnyEntity):
                    'Boolean': boolint}
 
     @property
+    #@cached(cacheattr='_array') XXX once lgc 0.56 is out
     def array(self):
         if not hasattr(self, '_array'):
             raw_data = self.data.getvalue()
@@ -119,15 +121,14 @@ class TimeSeries(AnyEntity):
         self.cw_edited['data'] = data
         self._array = numpy_array
 
+    @cached
     def timestamped_array(self):
-        if not hasattr(self, '_timestamped_array'):
-            date = self.start_date #pylint:disable-msg=E1101
-            data = []
-            for v in self.array:
-                data.append((date, self.output_value(v)))
-                date = self.get_next_date(date)
-            self._timestamped_array = data
-        return self._timestamped_array
+        date = self.start_date #pylint:disable-msg=E1101
+        data = []
+        for v in self.array:
+            data.append((date, self.output_value(v)))
+            date = self.get_next_date(date)
+        return data
 
     @property
     def end_date(self):
