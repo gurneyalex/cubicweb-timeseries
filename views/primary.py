@@ -75,7 +75,7 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
-    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
+    __select__ = is_instance('TimeSeries')
     summary_attrs = (_('end_date'),
                      _('min_unit'), _('max_unit'),
                      _('average_unit'), _('count'))
@@ -108,6 +108,27 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                         self.field(attr, value,
                                    show_label=True, tr=True, table=True)
 
+class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
+    __select__ = is_instance('NonPeriodicTimeSeries')
+    summary_attrs = ('start_date',) + TimeSeriesSummaryView.summary_attrs
+    def cell_call(self, row, col, **kwargs):
+        entity = self.cw_rset.get_entity(row, col)
+        w = self.w
+        with table(w):
+            for attr in self.summary_attrs:
+                # XXX getattr because some are actually properties
+                if attr == 'average_unit' and entity.data_type == 'Boolean':
+                    continue
+                else:
+                    value = getattr(entity, attr)
+                    if isinstance(value, float):
+                        value = self._cw.format_float(value)
+                    elif isinstance(value, datetime.datetime):
+                        value = self._cw.format_date(value, time=True)
+                    elif isinstance(value, datetime.date):
+                        value = self._cw.format_date(value)
+                    self.field(attr, value,
+                               show_label=True, tr=True, table=True)
 
 @jsonize
 def get_ts_values_data(self):

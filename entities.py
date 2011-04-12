@@ -259,7 +259,7 @@ class TimeSeries(AnyEntity):
 
     def output_value(self, v):
         """ use this for external representation purposes, but NOT
-        as an entry/input method as Boolean really should be
+        as an entry/input method as Boolean really should be
         a boolean internally
         """
         return self._dtypes_out[self.data_type](v) #pylint:disable-msg=E1101
@@ -582,10 +582,10 @@ class NonPeriodicTimeSeries(TimeSeries):
         # XXX hooks won't catch change to timestamps
         super(NonPeriodicTimeSeries, self).grok_data()
         numpy_array = self.grok_timestamps()
-        data = Binary()
+        tstamp_data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
-        data.write(compressed_data)
-        self.cw_edited['timestamps'] = data
+        tstamp_data.write(compressed_data)
+        self.cw_edited['timestamps'] = tstamp_data
         self._timestamps_array = numpy_array
 
     def grok_timestamps(self):
@@ -601,6 +601,72 @@ class NonPeriodicTimeSeries(TimeSeries):
             raise ValueError('time stamps must be an strictly ascendant vector')
         return tstamp_array
 
+    def _numpy_from_txt(self, file, filename):
+        return self._numpy_from_csv(file, filename)
+
+    def _numpy_from_csv(self, file, filename, dialect=None, has_header=False):
+        if dialect is None:
+            dialect, has_header = self._snif_csv_dialect(file)
+        else:
+            assert dialect in csv.list_dialects()
+        reader = csv.reader(file, dialect)
+        if has_header:
+            reader.next()
+        series = []
+        tstamps = []
+        # TODO: check granularity if we have a date column
+        prefs = self._cw.user.format_preferences[0]
+        dec_sep = prefs.decimal_separator
+        th_sep = prefs.thousands_separator or ''
+        for line, values in enumerate(reader):
+            if len(values) != 2:
+                raise ValueError('Expecting exactly 2 columns (timestamp, value), found %d in %s' % (len(values), filename))
+            try:
+                strval = values[1].replace(th_sep, '').replace(dec_sep, '.')
+                val = float(strval)
+            except ValueError:
+                if line == 0 and not has_header:
+                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
+                    continue # assume there was a header
+                else:
+                    raise ValueError('Invalid data type for value %s on line %d of %s' %
+                                     (values[-1], reader.line_num, filename))
+            try:
+                tstamp_datetime = self._cw.parse_datetime(values[0])
+                tstamp = self.calendar.datetime_to_timestamp(tstamp_datetime)
+            except ValueError:
+                raise
+            series.append(val)
+            tstamps.append(tstamp)
+        self.timestamps = numpy.array(tstamps)
+        return numpy.array(series, dtype=self.dtype)
+
+    def _numpy_from_excel(self, file, filename):
+        xl_data = file.read()
+        wb = xlrd.open_workbook(filename=file.filename,
+                                file_contents=xl_data)
+        sheet = wb.sheet_by_index(0)
+        values = []
+        tstamps = []
+        datacol = sheet.ncols - 1
+        tstampcol = sheet.ncols - 2
+        for row in xrange(sheet.nrows):
+            cell_value = sheet.cell_value(row, datacol)
+            cell_tstamp = sheet.cell_value(row, tstampcol)
+            try:
+                cell_value = float(cell_value)
+            except ValueError:
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, datacol, filename))
+            try:
+                cell_tstamp = datetime.datetime(*xlrd.xldate_as_tuple(cell_tstamp, wb.datemode))
+            except ValueError, exc:
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, tstampcol, filename))
+            values.append(cell_value)
+            tstamps.append(self.calendar.datetime_to_timestamp(cell_tstamp))
+        if not values:
+            raise ValueError('Unable to read a Timeseries in %s' % filename)
+        self.timestamps = numpy.array(tstamps)
+        return numpy.array(values, dtype=self.dtype)
 
 
 class TimeSeriesExportAdapter(EntityAdapter):

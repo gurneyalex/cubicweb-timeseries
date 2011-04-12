@@ -15,7 +15,8 @@ class _AbstractTimeSeries(EntityType):
     data_type = String(required=True,
                        vocabulary = [_('Float'), _('Integer'), _('Boolean')],
                        default = _('Float'))
-    unit = String(maxsize=64)
+    unit = String(maxsize=64,
+                  description=_('the unit in which the TimeSeries data are expressed'))
 
     data = Bytes(required=True,
                  description = _('Timeseries data'))
@@ -41,8 +42,8 @@ class NonPeriodicTimeSeries(_AbstractTimeSeries):
     granularity = String(override=True, internationalizable=True,
                          vocabulary = [_('time_vector')], default='time_vector')
 
-    timestamps = Bytes(required=True,
-                       description = _('Time vector'))
+    timestamps = Bytes(required=False,
+                       description = _('the array of timestamps. Mandatory but read from the same source as data'))
 
 
 class ExcelPreferences(EntityType):

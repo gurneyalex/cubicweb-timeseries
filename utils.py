@@ -22,7 +22,7 @@ def numpy_val_map(val):
 def get_formatter(req, entity):
     cw_datetime_format = req.property_value('ui.datetime-format')
     cw_date_format = req.property_value('ui.date-format')
-    if entity.granularity in (u'15min', 'hourly'):
+    if entity.granularity in (u'15min', 'hourly', 'time_vector'):
         dateformat = cw_datetime_format #'%Y/%m/%d %H:%M'
     else:
         dateformat = cw_date_format #'%Y/%m/%d'
