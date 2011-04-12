@@ -38,7 +38,7 @@ except ImportError:
 else:
     HANDLE_XLSX = True
 
-from logilab.common.date import days_in_month, days_in_year
+from logilab.common.date import days_in_month
 from logilab.common.decorators import cached
 
 from cubicweb import Binary, ValidationError
@@ -46,9 +46,8 @@ from cubicweb.selectors import is_instance, ExpectedValueSelector
 from cubicweb.view import EntityAdapter
 from cubicweb.entities import AnyEntity, fetch_config
 
-from cubes.timeseries.calendars import (
-    get_calendar, TIME_DELTAS,
-    timedelta_to_days, timedelta_to_seconds, datetime_to_seconds)
+from cubes.timeseries.calendars import (get_calendar, TIME_DELTAS,
+                                        timedelta_to_days, timedelta_to_seconds)
 from cubes.timeseries.utils import get_formatter
 
 _ = unicode
@@ -673,7 +672,7 @@ class NonPeriodicTimeSeries(TimeSeries):
         self.timestamps = numpy.array(tstamps)
         return numpy.array(series, dtype=self.dtype)
 
-    def _numpy_from_excel(self, file, filename):
+    def _numpy_from_xls(self, file, filename):
         xl_data = file.read()
         wb = xlrd.open_workbook(filename=file.filename,
                                 file_contents=xl_data)
@@ -700,6 +699,8 @@ class NonPeriodicTimeSeries(TimeSeries):
         self.timestamps = numpy.array(tstamps)
         return numpy.array(values, dtype=self.dtype)
 
+    def _numpy_from_xlsx(self, *args):
+        raise NotImplementedError
 
 class TimeSeriesExportAdapter(EntityAdapter):
     __regid__ = 'ITimeSeriesExporter'
