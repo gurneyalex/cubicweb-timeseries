@@ -14,13 +14,29 @@ import csv
 import datetime
 from datetime import timedelta
 from math import floor, ceil
+import tempfile
+import os
+
 from bisect import bisect_left
 from itertools import izip
 from cStringIO import StringIO
 
 import numpy
-import xlrd
-from xlwt import Workbook
+
+try:
+    import xlrd
+    import xlwt
+except ImportError:
+    HANDLE_XLS = False
+else:
+    HANDLE_XLS = True
+
+try:
+    import openpyxl
+except ImportError:
+    HANDLE_XLSX = False
+else:
+    HANDLE_XLSX = True
 
 from logilab.common.date import days_in_month, days_in_year
 from logilab.common.decorators import cached
@@ -105,8 +121,10 @@ class TimeSeries(AnyEntity):
         else:
             if filename.endswith('.csv'):
                 numpy_array = self._numpy_from_csv(self.data, filename)
-            elif filename.endswith('.xls'):
-                numpy_array = self._numpy_from_excel(self.data, filename)
+            elif filename.endswith('.xls') and HANDLE_XLS:
+                numpy_array = self._numpy_from_xls(self.data, filename)
+            elif filename.endswith('.xlsx') and HANDLE_XLSX:
+                numpy_array = self._numpy_from_xlsx(self.data, filename)
             elif filename.endswith('.txt'):
                 numpy_array = self._numpy_from_txt(self.data, filename)
             else:
@@ -474,7 +492,7 @@ class TimeSeries(AnyEntity):
             series.append(val)
         return numpy.array(series, dtype=self.dtype)
 
-    def _numpy_from_excel(self, file, filename):
+    def _numpy_from_xls(self, file, filename):
         xl_data = file.read()
         wb = xlrd.open_workbook(filename=file.filename,
                                 file_contents=xl_data)
@@ -492,6 +510,20 @@ class TimeSeries(AnyEntity):
             raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.dtype)
 
+    def _numpy_from_xlsx(self, fileobj, filename):
+        wb = openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
+        sheet = wb.worksheets[0]
+        values = []
+        for row in sheet.iter_rows():
+            cell_value = row[0].internal_value
+            try:
+                cell_value = float(cell_value)
+            except ValueError:
+                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
+            values.append(cell_value)
+        if not values:
+            raise ValueError('Unable to read a Timeseries in %s' % filename)
+        return numpy.array(values, dtype=self.dtype)
 
 class NonPeriodicTimeSeries(TimeSeries):
     __regid__ = 'NonPeriodicTimeSeries'
@@ -698,14 +730,14 @@ class TimeSeriesCSVexport(TimeSeriesExportAdapter):
             writer.writerow([date.strftime(dateformat), outvalue])
         return out.getvalue()
 
-class TimeSeriesXLExport(TimeSeriesExportAdapter):
+class TimeSeriesXLSExport(TimeSeriesExportAdapter):
     __select__ = TimeSeriesExportAdapter.__select__ & mimetype('application/vnd.ms-excel')
 
     def export(self):
         # XXX timestamps ?
         entity = self.entity
         tsbox = entity.reverse_ts_variant[0]
-        workbook = Workbook() # XXX XLSX
+        workbook = xlwt.Workbook()
         sheet = workbook.add_sheet(('TS_%s' % tsbox.name)[:31])
         outrows = []
         class Writer(object):
@@ -716,6 +748,36 @@ class TimeSeriesXLExport(TimeSeriesExportAdapter):
             sheet.write(rownum, 0, entity.output_value(val))
         workbook.save(Writer())
         return ''.join(outrows)
+
+class TimeSeriesXLSXExport(TimeSeriesExportAdapter):
+    __select__ = (TimeSeriesExportAdapter.__select__ &
+                  mimetype('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
+
+    def export(self):
+        entity = self.entity
+        tsbox = entity.reverse_ts_variant[0]
+        workbook = openpyxl.workbook.Workbook(optimized_write=True)
+        sheet = workbook.create_sheet()
+        sheet.title = ('TS_%s' % tsbox.name)[:31]
+        outrows = []
+        for val in entity.array:
+            sheet.append([entity.output_value(val)])
+        try:
+            # XXX investigate why save_virtual_workbook
+            #     does not work
+            fd, fname = tempfile.mkstemp()
+            # let's windows not complain about a locked file
+            os.close(fd)
+            workbook.save(fname)
+            with open(fname, 'rb') as xlsx:
+                return xlsx.read()
+        finally:
+            try:
+                os.unlink(fname)
+            except:
+                pass
+
+
 
 def get_next_date(granularity, date):
     #pylint:disable-msg=E1101

@@ -10,7 +10,7 @@ Standards-Version: 3.8.0
 
 Package: cubicweb-timeseries
 Architecture: all
-Depends: cubicweb-common (>= 3.10.0)
+Depends: cubicweb-common (>= 3.10.0), python-xlrd, python-xlwt, python-openpyxml
 Recommends: python-openpyxl
 Description: Timeseries component for the CubicWeb framework
  CubicWeb is a semantic web application framework.
