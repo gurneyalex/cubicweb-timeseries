@@ -76,10 +76,10 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
     __select__ = is_instance('TimeSeries')
-    summary_attrs = (_('end_date'),
+    summary_attrs = (_('start_date'), _('end_date'),
                      _('min_unit'), _('max_unit'),
                      _('average_unit'), _('count'))
-
+    editable_summary_attrs = set((_('start_date'),))
     def display_constant_fields(self, entity):
         self.field('constant', entity.first_unit,
                    show_label=True, tr=True, table=True)
@@ -91,9 +91,12 @@ class TimeSeriesSummaryView(baseviews.EntityView):
             if entity.is_constant:
                 self.display_constant_fields(entity)
             else:
-                self.field(display_name(self._cw, 'start_date'), entity.view('reledit', rtype='start_date'),
-                           tr=True, table=True)
                 for attr in self.summary_attrs:
+                    if attr in self.editable_summary_attrs:
+                        self.field(display_name(self._cw, attr),
+                                   entity.view('reledit', rtype=attr),
+                                   tr=True, table=True)
+                        continue
                     # XXX getattr because some are actually properties
                     if attr == 'average_unit' and entity.data_type == 'Boolean':
                         continue
