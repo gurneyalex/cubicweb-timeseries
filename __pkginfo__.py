@@ -21,6 +21,9 @@ classifiers = [
 
 
 __depends__ = {'cubicweb': '>= 3.10.0'}
+# XXX debian/control tells
+# Depends: python-numpy, python-xlrd, python-xlwt, python-openpyxml
+# Recommends: python-openpyxl
 
 # packaging ###
 
