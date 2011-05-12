@@ -1,7 +1,5 @@
 from logilab.mtconverter import xml_escape
 
-from cwtags.tag import span, div, a
-
 import numpy
 
 from cubicweb.selectors import is_instance
@@ -40,8 +38,9 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
                 data = self._resample(data, 25)
         req.html_headers.add_onload(self.onload % {'target': entity.eid,
                                                    'plot_type' : plot_type})
-        with span(w, id='sparklinefor%s' % entity.eid):
-            w(u'<!-- %s -->' % xml_escape(', '.join(unicode(elt) for elt in data)))
+        content = u'<!-- %s -->' % xml_escape(', '.join(unicode(elt) for elt in data))
+        w(tags.span(content, id='sparklinefor%s' % entity.eid,
+                    escapecontent=False))
 
     def _resample(self, data, sample_length):
         step = len(data) / sample_length
@@ -63,24 +62,25 @@ class TimeSeriesInContextView(InContextView):
         _ = self._cw._
         entity = self.cw_rset.get_entity(row, col)
         if entity.is_constant and isinstance(entity.first, (bool, numpy.bool_)):
-            w(span(_(unicode(entity.first_unit))))
+            w(tags.span(_(unicode(entity.first_unit))))
         else:
-            with div(w, style='display: inline'):
-                # XXX values should be rounded at the data level
-                first = unicode(str(round(entity.first, 2)))
-                last = unicode(str(round(entity.last, 2)))
-                w(span(xml_escape(first+entity.safe_unit), style='font-size: 10px;'))
-                with div(w, Class='info'):
-                    with a(w, href=entity.absolute_url()):
-                        w("&#xA0;&#xA0;")
-                        w(entity.view('sparkline'))
-                        w("&#xA0;&#xA0;")
-                w(span(xml_escape(last+entity.safe_unit), style='font-size: 10px;'))
-                w("&#xA0;")
-                w(div(entity.view(self.inner_vid, label=_('[summary]')),
-                      style='display: inline'))
-                url = entity.absolute_url(vid='tsxlexport')
-                with span(w, Class='tsexport'):
-                    with a(w, href=url):
-                        w(_(u'[export]'))
+            w(u'<div style="display: inline">')
+            # XXX values should be rounded at the data level
+            first = unicode(str(round(entity.first, 2)))
+            last = unicode(str(round(entity.last, 2)))
+            w(tags.span(first+entity.safe_unit, style='font-size: 10px;'))
+            w(u'<div class="info">')
+            content = "&#xA0;&#xA0;%s&#xA0;&#xA0;" % entity.view('sparkline')
+            w(tags.a(content, href=entity.absolute_url(),
+                     escapecontent=False))
+            w(u'</div>')
+            w(tags.span(last+entity.safe_unit, style='font-size: 10px;'))
+            w("&#xA0;")
+            w(u'<div style="display: inline">')
+            entity.view(self.inner_vid, label=_('[summary]'), w=w)
+            w(u'</div>')
+            url = entity.absolute_url(vid='tsxlexport')
+            w(tags.span(tags.a(_(u'[export]'), href=url), klass='tsexport',
+                        escapecontent=False))
+            w(u'</div>')
 
