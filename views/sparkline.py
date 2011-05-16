@@ -2,6 +2,7 @@ from logilab.mtconverter import xml_escape
 
 import numpy
 
+from cubicweb import tags
 from cubicweb.selectors import is_instance
 from cubicweb.view import EntityView
 from cubicweb.web.views.baseviews import InContextView
