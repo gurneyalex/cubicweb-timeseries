@@ -1,19 +1,16 @@
 """cube-specific forms/views/actions/components
 
 :organization: Logilab
-:copyright: 2001-2010 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
+:copyright: 2010-2011 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
 from __future__ import with_statement, division
+
 import numpy
 
-from cwtags.tag import span, a
-
-from cubicweb import Binary, ValidationError
-
-from cubicweb.web import uicfg
-from cubicweb.web import formwidgets as fw, formfields as ff
+from cubicweb import Binary, ValidationError, tags
+from cubicweb.web import uicfg, formwidgets as fw, formfields as ff
 
 _ = unicode
 
@@ -116,9 +113,9 @@ class DataWidget(fw.Input):
         w = out.append
         if form.edited_entity and isinstance(form.edited_entity.eid, int):
             url = form.edited_entity.absolute_url(vid='tsxlexport')
-            with span(w, Class='tsexport'):
-                with a(w, href=url): # button triggers form validation
-                    w(form._cw._('[export]'))
+            # button triggers form validation
+            w(tags.span(tags.a(form._cw._('[export]'), href=url), klass='tsexport',
+                        escapecontent=False))
         return ''.join(unicode(x) for x in out)
 
     def _render(self, form, field, renderer):

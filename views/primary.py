@@ -1,7 +1,7 @@
 """cube-specific primary & related views
 
 :organization: Logilab
-:copyright: 2010 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
+:copyright: 2010-2011 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
@@ -10,10 +10,9 @@ from __future__ import with_statement, division
 import math
 import datetime
 
-from cwtags.tag import div, h2, table, tr, td
-
 from logilab.mtconverter import xml_escape
 
+from cubicweb import tags
 from cubicweb.schema import display_name
 from cubicweb.selectors import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
@@ -34,7 +33,8 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
         self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
         if entity.is_constant:
-            self.w(div(u'%s: %s' % (self._cw._('constant value'), self._cw.format_float(entity.first))))
+            self.w(tags.div(u'%s: %s' % (self._cw._('constant value'),
+                                         self._cw.format_float(entity.first))))
         else:
             self.render_tabs(self.tabs, self.default_tab, entity)
 
@@ -52,25 +52,26 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self._cw._
-        with table(w):
-            with tr(w):
-                with td(w, style='padding-right: 1cm'):
-                    self.w(h2(_('Summary')))
-                    self.wview('summary', entity.as_rset())
-                    w(h2(_('Characteristics')))
-                    with table(w):
-                        for attr in self.characteristics_attrs:
-                            self.field(display_name(self._cw, attr), entity.view('reledit', rtype=attr),
-                                       tr=True, table=True)
-                        # XXX maybe we want reledit on this in the timeseries cube,
-                        # but not in the only user of this cube for now...
-                        self.field(_('unit'), entity.unit, tr=True, table=True)
-                        self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
-                    w(h2(_('Preview')))
-                    self.wview('sparkline', entity.as_rset())
-                with td(w):
-                    w(h2(_('ts_values')))
-                    self.wview('ts_values', self.cw_rset)
+        w(u'<table><tr><td style="padding-right: 1cm">')
+        w(tags.h2(_('Summary')))
+        entity.view('summary', w=w)
+        w(tags.h2(_('Characteristics')))
+        w(u'<table>')
+        for attr in self.characteristics_attrs:
+            self.field(display_name(self._cw, attr),
+                       entity.view('reledit', rtype=attr),
+                       tr=True, table=True)
+        # XXX maybe we want reledit on this in the timeseries cube,
+        # but not in the only user of this cube for now...
+        self.field(_('unit'), entity.unit, tr=True, table=True)
+        self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
+        w(u'</table>')
+        w(tags.h2(_('Preview')))
+        entity.view('sparkline', w=w)
+        w(u'</td><td>')
+        w(tags.h2(_('ts_values')))
+        self.wview('ts_values', self.cw_rset)
+        w(u'</td></tr></table>')
 
 
 class TimeSeriesSummaryView(baseviews.EntityView):
@@ -80,45 +81,23 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                      _('min_unit'), _('max_unit'),
                      _('average_unit'), _('count'))
     editable_summary_attrs = set((_('start_date'),))
+
     def display_constant_fields(self, entity):
         self.field('constant', entity.first_unit,
                    show_label=True, tr=True, table=True)
 
     def cell_call(self, row, col, **kwargs):
         entity = self.cw_rset.get_entity(row, col)
-        w = self.w
-        with table(w):
-            if entity.is_constant:
-                self.display_constant_fields(entity)
-            else:
-                for attr in self.summary_attrs:
-                    if attr in self.editable_summary_attrs:
-                        self.field(display_name(self._cw, attr),
-                                   entity.view('reledit', rtype=attr),
-                                   tr=True, table=True)
-                        continue
-                    # XXX getattr because some are actually properties
-                    if attr == 'average_unit' and entity.data_type == 'Boolean':
-                        continue
-                    else:
-                        value = getattr(entity, attr)
-                        if isinstance(value, float):
-                            value = self._cw.format_float(value)
-                        elif isinstance(value, datetime.datetime):
-                            value = self._cw.format_date(value, time=True)
-                        elif isinstance(value, datetime.date):
-                            value = self._cw.format_date(value)
-                        self.field(attr, value,
-                                   show_label=True, tr=True, table=True)
-
-class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
-    __select__ = is_instance('NonPeriodicTimeSeries')
-    summary_attrs = ('start_date',) + TimeSeriesSummaryView.summary_attrs
-    def cell_call(self, row, col, **kwargs):
-        entity = self.cw_rset.get_entity(row, col)
-        w = self.w
-        with table(w):
+        self.w(u'<table>')
+        if entity.is_constant:
+            self.display_constant_fields(entity)
+        else:
             for attr in self.summary_attrs:
+                if attr in self.editable_summary_attrs:
+                    self.field(display_name(self._cw, attr),
+                               entity.view('reledit', rtype=attr),
+                               tr=True, table=True)
+                    continue
                 # XXX getattr because some are actually properties
                 if attr == 'average_unit' and entity.data_type == 'Boolean':
                     continue
@@ -132,6 +111,13 @@ class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
                         value = self._cw.format_date(value)
                     self.field(attr, value,
                                show_label=True, tr=True, table=True)
+        self.w(u'</table>')
+
+
+class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
+    __select__ = is_instance('NonPeriodicTimeSeries')
+    editable_summary_attrs = set()
+
 
 @jsonize
 def get_ts_values_data(self):
@@ -177,5 +163,5 @@ class TimeSeriesValuesView(baseviews.EntityView):
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         url = entity.absolute_url('json') + '&fname=get_ts_values_data'
         req.html_headers.add_onload(self.onload % {'url': xml_escape(url)})
-        self.w(table(id='tsvalue', cubicweb__type='unprepared'))
-        self.w(div(id='pager'))
+        self.w(u'<table id="tsvalue" cubicweb:type="unprepared"></table>')
+        self.w(tags.div(None, id='pager'))
