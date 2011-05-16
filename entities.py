@@ -86,7 +86,7 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return 'TS %s' % self.eid #pylint:disable-msg=E1101
+        return u'TS %s' % self.eid #pylint:disable-msg=E1101
 
     @property
     def is_constant(self):
