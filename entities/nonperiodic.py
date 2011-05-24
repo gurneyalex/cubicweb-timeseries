@@ -9,34 +9,18 @@ from __future__ import division, with_statement
 
 import pickle
 import zlib
-import csv
-# TODO: remove datetime and use our own calendars
-import datetime
 
 from bisect import bisect_left
 from itertools import izip
 
-import numpy
-
 from logilab.common.decorators import cached
 
-from cubicweb import Binary
 from cubicweb.entities import fetch_config
 
 from cubes.timeseries.entities import timeseries
-
 from cubes.timeseries.calendars import timedelta_to_days, timedelta_to_seconds
 
-from cubes.timeseries.entities import utils
 _ = unicode
-
-def boolint(value):
-    """ ensuring such boolean like values
-    are properly summable and plotable
-    0, 0.0 => 0
-    1, 42.0 => 11
-    """
-    return int(bool(float(value)))
 
 class NonPeriodicTimeSeries(timeseries.TimeSeries):
     __regid__ = 'NonPeriodicTimeSeries'
@@ -122,96 +106,3 @@ class NonPeriodicTimeSeries(timeseries.TimeSeries):
         idx = bisect_left(array, timestamp)
         return idx
 
-    def grok_data(self):
-        # XXX when data is a csv/txt/xl file, we want to read timestamps in there to
-        # XXX hooks won't catch change to timestamps
-        super(NonPeriodicTimeSeries, self).grok_data()
-        numpy_array = self.grok_timestamps()
-        tstamp_data = Binary()
-        compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
-        tstamp_data.write(compressed_data)
-        self.cw_edited['timestamps'] = tstamp_data
-        self._timestamps_array = numpy_array
-
-    def grok_timestamps(self):
-        timestamps = self.timestamps
-        if len(timestamps) != self.count:
-            raise ValueError('data/timestamps vectors size mismatch')
-        if isinstance(timestamps[0], (datetime.datetime, datetime.date)):
-            timestamps = [self.calendar.datetime_to_timestamp(v) for v in timestamps]
-        else:
-            assert isinstance(timestamps[0], (int, float))
-        tstamp_array = numpy.array(timestamps, dtype=numpy.float64)
-        if not (tstamp_array[:-1] < tstamp_array[1:]).all():
-            raise ValueError('time stamps must be an strictly ascendant vector')
-        return tstamp_array
-
-    def _numpy_from_txt(self, file, filename):
-        return self._numpy_from_csv(file, filename)
-
-    def _numpy_from_csv(self, file, filename, dialect=None, has_header=False):
-        if dialect is None:
-            dialect, has_header = self._snif_csv_dialect(file)
-        else:
-            assert dialect in csv.list_dialects()
-        reader = csv.reader(file, dialect)
-        if has_header:
-            reader.next()
-        series = []
-        tstamps = []
-        # TODO: check granularity if we have a date column
-        prefs = self._cw.user.format_preferences[0]
-        dec_sep = prefs.decimal_separator
-        th_sep = prefs.thousands_separator or ''
-        for line, values in enumerate(reader):
-            if len(values) != 2:
-                raise ValueError('Expecting exactly 2 columns (timestamp, value), found %d in %s' % (len(values), filename))
-            try:
-                strval = values[1].replace(th_sep, '').replace(dec_sep, '.')
-                val = float(strval)
-            except ValueError:
-                if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
-                    continue # assume there was a header
-                else:
-                    raise ValueError('Invalid data type for value %s on line %d of %s' %
-                                     (values[-1], reader.line_num, filename))
-            try:
-                tstamp_datetime = self._cw.parse_datetime(values[0])
-                tstamp = self.calendar.datetime_to_timestamp(tstamp_datetime)
-            except ValueError:
-                raise
-            series.append(val)
-            tstamps.append(tstamp)
-        self.timestamps = numpy.array(tstamps)
-        return numpy.array(series, dtype=self.dtype)
-
-    def _numpy_from_xls(self, file, filename):
-        xl_data = file.read()
-        wb = utils.xlrd.open_workbook(filename=file.filename,
-                                file_contents=xl_data)
-        sheet = wb.sheet_by_index(0)
-        values = []
-        tstamps = []
-        datacol = sheet.ncols - 1
-        tstampcol = sheet.ncols - 2
-        for row in xrange(sheet.nrows):
-            cell_value = sheet.cell_value(row, datacol)
-            cell_tstamp = sheet.cell_value(row, tstampcol)
-            try:
-                cell_value = float(cell_value)
-            except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, datacol, filename))
-            try:
-                cell_tstamp = datetime.datetime(*utils.xlrd.xldate_as_tuple(cell_tstamp, wb.datemode))
-            except ValueError, exc:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, tstampcol, filename))
-            values.append(cell_value)
-            tstamps.append(self.calendar.datetime_to_timestamp(cell_tstamp))
-        if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % filename)
-        self.timestamps = numpy.array(tstamps)
-        return numpy.array(values, dtype=self.dtype)
-
-    def _numpy_from_xlsx(self, *args):
-        raise NotImplementedError

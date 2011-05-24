@@ -9,7 +9,6 @@ from __future__ import division, with_statement
 
 import pickle
 import zlib
-import csv
 # TODO: remove datetime and use our own calendars
 from datetime import timedelta
 from math import floor, ceil
@@ -19,22 +18,13 @@ import numpy
 
 from logilab.common.decorators import cached
 
-from cubicweb import Binary, ValidationError
 from cubicweb.entities import AnyEntity, fetch_config
 
-from cubes.timeseries.calendars import (get_calendar, TIME_DELTAS,
-                                        )
+from cubes.timeseries.calendars import get_calendar, TIME_DELTAS
 from cubes.timeseries.entities import utils
 
 _ = unicode
 
-def boolint(value):
-    """ ensuring such boolean like values
-    are properly summable and plotable
-    0, 0.0 => 0
-    1, 42.0 => 11
-    """
-    return int(bool(float(value)))
 
 
 class TimeSeries(AnyEntity):
@@ -46,7 +36,7 @@ class TimeSeries(AnyEntity):
                   'Boolean': numpy.bool}
     _dtypes_out = {'Float': float,
                    'Integer': int,
-                   'Boolean': boolint}
+                   'Boolean': utils.boolint}
 
     @property
     #@cached(cacheattr='_array') XXX once lgc 0.56 is out
@@ -62,60 +52,18 @@ class TimeSeries(AnyEntity):
         return self._array
 
     def dc_title(self):
-        return u'TS %s' % self.eid #pylint:disable-msg=E1101
+        return u'TS %s' % self.eid
 
     @property
     def is_constant(self):
-        return self.granularity == u'constant' #pylint:disable-msg=E1101
+        return self.granularity == u'constant'
 
     def dc_long_title(self):
         if self.is_constant:
             return self._cw._(u'Constant time series (value: %s)' % self._cw.format_float(self.first))
         return self._cw._(u'Time series %s starting on %s with %d values' %
-                          (self.dc_title(), self.start_date, self.count)) #pylint:disable-msg=E1101
+                          (self.dc_title(), self.start_date, self.count))
 
-    def grok_data(self):
-        """
-        called in a before_{update|add}_entity_hook
-
-        self.data is something such as an excel file or CSV data or a pickled
-        numpy array. Ensure it's a pickle numpy array before storing object in
-        db.
-        """
-        #pylint:disable-msg=E1101,E0203
-        try:
-            filename = self.data.filename.lower()
-        except AttributeError:
-            # XXX this is a bit dangerous as we break encapsulation doing this
-            #     did the provider not cheat about the inner data type ?
-            #     we should probably check it
-            data = self.data
-            if isinstance(data, Binary):
-                return
-            numpy_array = data
-        else:
-            if filename.endswith('.csv'):
-                numpy_array = self._numpy_from_csv(self.data, filename)
-            elif filename.endswith('.xls') and utils.HANDLE_XLS:
-                numpy_array = self._numpy_from_xls(self.data, filename)
-            elif filename.endswith('.xlsx') and utils.HANDLE_XLSX:
-                numpy_array = self._numpy_from_xlsx(self.data, filename)
-            elif filename.endswith('.txt'):
-                numpy_array = self._numpy_from_txt(self.data, filename)
-            else:
-                raise ValueError('Unsupported file type %s' % self.data.filename)
-
-        if numpy_array.ndim != 1:
-            raise ValidationError(self.eid,
-                                  {'data': _('data must be a 1-dimensional array')})
-        if numpy_array.size == 0:
-            raise ValidationError(self.eid,
-                                  {'data': _('data must have at least one value')})
-        data = Binary()
-        compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
-        data.write(compressed_data)
-        self.cw_edited['data'] = data
-        self._array = numpy_array
 
     @cached
     def timestamped_array(self):
@@ -414,89 +362,4 @@ class TimeSeries(AnyEntity):
         return self.get_offset(self.start_date)
 
 
-    # import/conversion method
-
-    def _numpy_from_txt(self, file, filename):
-        try:
-            return numpy.array([float(x.strip().split()[-1]) for x in file],
-                               dtype=self.dtype)
-        except ValueError:
-            raise ValueError('invalid data in %s (expecting one number per line '
-                             '(with optionally a date in the first column), '
-                             'with . as the decimal separator)' % filename)
-
-    def _snif_csv_dialect(self, file):
-        sniffer = csv.Sniffer()
-        raw_data = file.read()
-        try:
-            dialect = sniffer.sniff(raw_data, sniffer.preferred)
-            has_header = sniffer.has_header(raw_data)
-        except csv.Error, exc:
-            self.exception('Problem sniffing file %s', file.filename) #pylint:disable-msg=E1101
-            dialect = csv.excel
-            has_header = False
-        file.seek(0)
-        return dialect, has_header
-
-    def _numpy_from_csv(self, file, filename, dialect=None, has_header=False):
-        if dialect is None:
-            dialect, has_header = self._snif_csv_dialect(file)
-        else:
-            assert dialect in csv.list_dialects()
-        reader = csv.reader(file, dialect)
-        if has_header:
-            reader.next()
-        series = []
-        # TODO: check granularity if we have a date column
-        prefs = self._cw.user.format_preferences[0]
-        dec_sep = prefs.decimal_separator
-        th_sep = prefs.thousands_separator or ''
-        for line, values in enumerate(reader):
-            if len(values) not in (1, 2):
-                raise ValueError('Too many columns in %s' % filename)
-            try:
-                strval = values[-1].replace(th_sep, '').replace(dec_sep, '.')
-                val = float(strval)
-            except ValueError:
-                if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
-                    continue # assume there was a header
-                else:
-                    raise ValueError('Invalid data type for value %s on line %d of %s' %
-                                     (values[-1], reader.line_num, filename))
-            series.append(val)
-        return numpy.array(series, dtype=self.dtype)
-
-    def _numpy_from_xls(self, file, filename):
-        xl_data = file.read()
-        wb = utils.xlrd.open_workbook(filename=file.filename,
-                                      file_contents=xl_data)
-        sheet = wb.sheet_by_index(0)
-        values = []
-        col = sheet.ncols - 1
-        for row in xrange(sheet.nrows):
-            cell_value = sheet.cell_value(row, col)
-            try:
-                cell_value = float(cell_value)
-            except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
-            values.append(cell_value)
-        if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % filename)
-        return numpy.array(values, dtype=self.dtype)
-
-    def _numpy_from_xlsx(self, fileobj, filename):
-        wb = utils.openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
-        sheet = wb.worksheets[0]
-        values = []
-        for row in sheet.iter_rows():
-            cell_value = row[0].internal_value
-            try:
-                cell_value = float(cell_value)
-            except ValueError:
-                raise ValueError('Invalid data type in cell (row %d) of %s' % (row, filename))
-            values.append(cell_value)
-        if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % filename)
-        return numpy.array(values, dtype=self.dtype)
 

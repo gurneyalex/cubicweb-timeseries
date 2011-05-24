@@ -9,8 +9,10 @@ class TimeSeriesDataReadHook(Hook):
     category = 'timeseries'
 
     def __call__(self):
-        if 'data' in self.entity.cw_edited:
-            self.entity.grok_data()
+        entity = self.entity
+        if 'data' in entity.cw_edited:
+            importer = entity.cw_adapt_to('TimeSeriesImporter')
+            importer.grok_data()
 
 class ConstantTimeSeriesValidationHook(Hook):
     __regid__ = 'constant_ts_hook'

@@ -24,7 +24,7 @@ class TimeSeriesTC(CubicWebTC):
         if timestamps is None:
             date = start_date
             timestamps = []
-            for _v in data:
+            for _qv in data:
                 timestamps.append(date)
                 date = get_next_date(granularity, date)
         timestamps = numpy.array(timestamps)

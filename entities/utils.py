@@ -19,6 +19,14 @@ else:
     HANDLE_XLSX = True
 
 
+def boolint(value):
+    """ ensuring such boolean like values
+    are properly summable and plotable
+    0, 0.0 => 0
+    1, 42.0 => 11
+    """
+    return int(bool(float(value)))
+
 
 def get_next_date(granularity, date):
     #pylint:disable-msg=E1101
