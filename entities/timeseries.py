@@ -7,8 +7,6 @@
 """
 from __future__ import division, with_statement
 
-import pickle
-import zlib
 # TODO: remove datetime and use our own calendars
 from datetime import timedelta
 from math import floor, ceil
@@ -21,13 +19,13 @@ from logilab.common.decorators import cached
 from cubicweb.entities import AnyEntity, fetch_config
 
 from cubes.timeseries.calendars import get_calendar, TIME_DELTAS
-from cubes.timeseries.entities import utils
+from cubes.timeseries.entities import utils, abstract
 
 _ = unicode
 
 
 
-class TimeSeries(AnyEntity):
+class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
     __regid__ = 'TimeSeries'
     fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity', 'start_date'])
 
@@ -38,18 +36,6 @@ class TimeSeries(AnyEntity):
                    'Integer': int,
                    'Boolean': utils.boolint}
 
-    @property
-    #@cached(cacheattr='_array') XXX once lgc 0.56 is out
-    def array(self):
-        if not hasattr(self, '_array'):
-            raw_data = self.data.getvalue()
-            try:
-                raw_data = zlib.decompress(raw_data)
-            except zlib.error:
-                # assume uncompressed data
-                pass
-            self._array = pickle.loads(raw_data)
-        return self._array
 
     def dc_title(self):
         return u'TS %s' % self.eid
