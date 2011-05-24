@@ -4,9 +4,9 @@ import numpy
 from datetime import datetime, timedelta
 
 from cubicweb.devtools.testlib import CubicWebTC
-from logilab.common.testlib import TestCase, unittest_main
+from logilab.common.testlib import unittest_main
 
-from cubes.timeseries.entities import get_next_date
+from cubes.timeseries.entities.utils import get_next_date
 
 
 class TimeSeriesTC(CubicWebTC):
@@ -24,7 +24,7 @@ class TimeSeriesTC(CubicWebTC):
         if timestamps is None:
             date = start_date
             timestamps = []
-            for v in data:
+            for _v in data:
                 timestamps.append(date)
                 date = get_next_date(granularity, date)
         timestamps = numpy.array(timestamps)

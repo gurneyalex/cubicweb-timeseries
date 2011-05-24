@@ -11,44 +11,20 @@ import pickle
 import zlib
 import csv
 # TODO: remove datetime and use our own calendars
-import datetime
 from datetime import timedelta
 from math import floor, ceil
-import tempfile
-import os
 
-from bisect import bisect_left
-from itertools import izip
-from cStringIO import StringIO
 
 import numpy
 
-try:
-    import xlrd
-    import xlwt
-except ImportError:
-    HANDLE_XLS = False
-else:
-    HANDLE_XLS = True
-
-try:
-    import openpyxl
-except ImportError:
-    HANDLE_XLSX = False
-else:
-    HANDLE_XLSX = True
-
-from logilab.common.date import days_in_month
 from logilab.common.decorators import cached
 
 from cubicweb import Binary, ValidationError
-from cubicweb.selectors import is_instance, ExpectedValueSelector
-from cubicweb.view import EntityAdapter
 from cubicweb.entities import AnyEntity, fetch_config
 
 from cubes.timeseries.calendars import (get_calendar, TIME_DELTAS,
-                                        timedelta_to_days, timedelta_to_seconds)
-from cubes.timeseries.utils import get_formatter
+                                        )
+from cubes.timeseries.entities import utils
 
 _ = unicode
 
@@ -120,9 +96,9 @@ class TimeSeries(AnyEntity):
         else:
             if filename.endswith('.csv'):
                 numpy_array = self._numpy_from_csv(self.data, filename)
-            elif filename.endswith('.xls') and HANDLE_XLS:
+            elif filename.endswith('.xls') and utils.HANDLE_XLS:
                 numpy_array = self._numpy_from_xls(self.data, filename)
-            elif filename.endswith('.xlsx') and HANDLE_XLSX:
+            elif filename.endswith('.xlsx') and utils.HANDLE_XLSX:
                 numpy_array = self._numpy_from_xlsx(self.data, filename)
             elif filename.endswith('.txt'):
                 numpy_array = self._numpy_from_txt(self.data, filename)
@@ -238,13 +214,13 @@ class TimeSeries(AnyEntity):
         return self.calendar.get_duration_in_days(self.granularity, date)
 
     def get_next_date(self, date):
-        return get_next_date(self.granularity, date)
+        return utils.get_next_date(self.granularity, date)
 
     def get_next_month(self, date):
-        return get_next_month(date)
+        return utils.get_next_month(date)
 
     def get_next_year(self, date):
-        return get_next_year(date)
+        return utils.get_next_year(date)
 
     def compressed_timestamped_array(self):
         """ eliminates duplicated values in piecewise constant timeseries """
@@ -381,7 +357,7 @@ class TimeSeries(AnyEntity):
 
 
     def get_rel_index(self, date):
-        abs_index = self.get_offset(date) 
+        abs_index = self.get_offset(date)
         return self._make_relative_index(abs_index)
 
     def get_by_date(self, date, with_dates=False):
@@ -493,8 +469,8 @@ class TimeSeries(AnyEntity):
 
     def _numpy_from_xls(self, file, filename):
         xl_data = file.read()
-        wb = xlrd.open_workbook(filename=file.filename,
-                                file_contents=xl_data)
+        wb = utils.xlrd.open_workbook(filename=file.filename,
+                                      file_contents=xl_data)
         sheet = wb.sheet_by_index(0)
         values = []
         col = sheet.ncols - 1
@@ -510,7 +486,7 @@ class TimeSeries(AnyEntity):
         return numpy.array(values, dtype=self.dtype)
 
     def _numpy_from_xlsx(self, fileobj, filename):
-        wb = openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
+        wb = utils.openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
         sheet = wb.worksheets[0]
         values = []
         for row in sheet.iter_rows():
@@ -518,316 +494,9 @@ class TimeSeries(AnyEntity):
             try:
                 cell_value = float(cell_value)
             except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
+                raise ValueError('Invalid data type in cell (row %d) of %s' % (row, filename))
             values.append(cell_value)
         if not values:
             raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.dtype)
 
-class NonPeriodicTimeSeries(TimeSeries):
-    __regid__ = 'NonPeriodicTimeSeries'
-    fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity'])
-
-    is_constant = False
-
-    @property
-    @cached
-    def timestamps_array(self):
-        # XXX turn into datetime here ?
-        raw_data = self.timestamps.getvalue()
-        raw_data = zlib.decompress(raw_data)
-        return pickle.loads(raw_data)
-
-    @cached
-    def timestamped_array(self):
-        data = []
-        for t, v in izip(self.timestamps_array, self.array):
-            data.append((self.calendar.timestamp_to_datetime(t), self.output_value(v)))
-        return data
-
-    @property
-    @cached
-    def start_date(self):
-        return self.calendar.timestamp_to_datetime(self.timestamps_array[0])
-
-    def get_next_date(self, date):
-        index = bisect_left(self.timestamps_array, self.calendar.datetime_to_timestamp(date))
-        # XXX what if out of bound
-        return self.calendar.timestamp_to_datetime(self.timestamps_array[index])
-
-    def get_rel_index(self, date, offset=-1):
-        timestamp = self.calendar.datetime_to_timestamp(date)
-        array = self.timestamps_array
-        idx = bisect_left(array, timestamp)
-        # unless this is an exact match, add offset if any to mimick periodic ts
-        # behaviour
-        if timestamp != array[idx]:
-            return max(idx + offset, 0)
-        return idx
-
-    def get_by_date(self, date, with_dates=False):
-        #pylint:disable-msg=E1101
-        if type(date) is slice:
-            assert date.step is None
-            if date.start is None:
-                start = None
-            else:
-                start = self.get_rel_index(date.start, -1)
-            if date.stop is None:
-                stop = None
-            else:
-                stop = self.get_rel_index(date.stop, 0)
-            index = slice(start, stop, None)
-        else:
-            index = self.get_rel_index(date)
-        return self.get_relative(index, with_dates)
-
-    def get_duration_in_days(self, date):
-        idx = self.get_rel_index(date)
-        array = self.timestamped_array()
-        return timedelta_to_days(array[idx+1][0] - array[idx][0])
-
-    def get_frac_offset(self, date):
-        idx = self.get_rel_index(date)
-        array = self.timestamped_array()
-        try:
-            totalsecs = timedelta_to_seconds(array[idx+1][0] - array[idx][0])
-        except IndexError:
-            # date out of bound, consider previous interval
-            totalsecs = timedelta_to_seconds(array[idx][0] - array[idx-1][0])
-        deltasecs = timedelta_to_seconds(date - array[idx][0])
-        return deltasecs / max(totalsecs, deltasecs)
-
-    @property
-    def _start_offset(self):
-        return self.calendar.get_offset(self.start_date, self.granularity)
-
-    def get_offset(self, datetime):
-        timestamp = self.calendar.datetime_to_timestamp(datetime)
-        array = self.timestamps_array
-        idx = bisect_left(array, timestamp)
-        return idx
-
-    def grok_data(self):
-        # XXX when data is a csv/txt/xl file, we want to read timestamps in there to
-        # XXX hooks won't catch change to timestamps
-        super(NonPeriodicTimeSeries, self).grok_data()
-        numpy_array = self.grok_timestamps()
-        tstamp_data = Binary()
-        compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
-        tstamp_data.write(compressed_data)
-        self.cw_edited['timestamps'] = tstamp_data
-        self._timestamps_array = numpy_array
-
-    def grok_timestamps(self):
-        timestamps = self.timestamps
-        if len(timestamps) != self.count:
-            raise ValueError('data/timestamps vectors size mismatch')
-        if isinstance(timestamps[0], (datetime.datetime, datetime.date)):
-            timestamps = [self.calendar.datetime_to_timestamp(v) for v in timestamps]
-        else:
-            assert isinstance(timestamps[0], (int, float))
-        tstamp_array = numpy.array(timestamps, dtype=numpy.float64)
-        if not (tstamp_array[:-1] < tstamp_array[1:]).all():
-            raise ValueError('time stamps must be an strictly ascendant vector')
-        return tstamp_array
-
-    def _numpy_from_txt(self, file, filename):
-        return self._numpy_from_csv(file, filename)
-
-    def _numpy_from_csv(self, file, filename, dialect=None, has_header=False):
-        if dialect is None:
-            dialect, has_header = self._snif_csv_dialect(file)
-        else:
-            assert dialect in csv.list_dialects()
-        reader = csv.reader(file, dialect)
-        if has_header:
-            reader.next()
-        series = []
-        tstamps = []
-        # TODO: check granularity if we have a date column
-        prefs = self._cw.user.format_preferences[0]
-        dec_sep = prefs.decimal_separator
-        th_sep = prefs.thousands_separator or ''
-        for line, values in enumerate(reader):
-            if len(values) != 2:
-                raise ValueError('Expecting exactly 2 columns (timestamp, value), found %d in %s' % (len(values), filename))
-            try:
-                strval = values[1].replace(th_sep, '').replace(dec_sep, '.')
-                val = float(strval)
-            except ValueError:
-                if line == 0 and not has_header:
-                    self.debug('error while parsing first line of %s', filename) #pylint:disable-msg=E1101
-                    continue # assume there was a header
-                else:
-                    raise ValueError('Invalid data type for value %s on line %d of %s' %
-                                     (values[-1], reader.line_num, filename))
-            try:
-                tstamp_datetime = self._cw.parse_datetime(values[0])
-                tstamp = self.calendar.datetime_to_timestamp(tstamp_datetime)
-            except ValueError:
-                raise
-            series.append(val)
-            tstamps.append(tstamp)
-        self.timestamps = numpy.array(tstamps)
-        return numpy.array(series, dtype=self.dtype)
-
-    def _numpy_from_xls(self, file, filename):
-        xl_data = file.read()
-        wb = xlrd.open_workbook(filename=file.filename,
-                                file_contents=xl_data)
-        sheet = wb.sheet_by_index(0)
-        values = []
-        tstamps = []
-        datacol = sheet.ncols - 1
-        tstampcol = sheet.ncols - 2
-        for row in xrange(sheet.nrows):
-            cell_value = sheet.cell_value(row, datacol)
-            cell_tstamp = sheet.cell_value(row, tstampcol)
-            try:
-                cell_value = float(cell_value)
-            except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, datacol, filename))
-            try:
-                cell_tstamp = datetime.datetime(*xlrd.xldate_as_tuple(cell_tstamp, wb.datemode))
-            except ValueError, exc:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, tstampcol, filename))
-            values.append(cell_value)
-            tstamps.append(self.calendar.datetime_to_timestamp(cell_tstamp))
-        if not values:
-            raise ValueError('Unable to read a Timeseries in %s' % filename)
-        self.timestamps = numpy.array(tstamps)
-        return numpy.array(values, dtype=self.dtype)
-
-    def _numpy_from_xlsx(self, *args):
-        raise NotImplementedError
-
-class TimeSeriesExportAdapter(EntityAdapter):
-    __regid__ = 'ITimeSeriesExporter'
-    __abstract__ = True
-    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
-
-    def export(self):
-        raise NotImplementedError
-
-class mimetype(ExpectedValueSelector):
-
-    def _get_value(self, cls, req, **kwargs):
-        return kwargs.get('mimetype')
-
-class TimeSeriesCSVexport(TimeSeriesExportAdapter):
-    """ export timestamped array to paste-into-excel-friendly csv """
-    __select__ = TimeSeriesExportAdapter.__select__ & mimetype('text/csv')
-
-    def export(self):
-        entity = self.entity
-        prefs = self._cw.user.format_preferences[0]
-        dec_sep = prefs.decimal_separator
-        out = StringIO()
-        dateformat, _numformat, _numformatter = get_formatter(self._cw, entity)
-        writer = csv.writer(out, dialect='excel', delimiter='\t')
-        for date, value in entity.timestamped_array():
-            outvalue = str(entity.output_value(value)).replace('.', dec_sep)
-            writer.writerow([date.strftime(dateformat), outvalue])
-        return out.getvalue()
-
-class TimeSeriesXLSExport(TimeSeriesExportAdapter):
-    __select__ = TimeSeriesExportAdapter.__select__ & mimetype('application/vnd.ms-excel')
-
-    def export(self):
-        # XXX timestamps ?
-        entity = self.entity
-        tsbox = entity.reverse_ts_variant[0]
-        workbook = xlwt.Workbook()
-        sheet = workbook.add_sheet(('TS_%s' % tsbox.name)[:31])
-        outrows = []
-        class Writer(object):
-            def write(self, data):
-                """ callback to comply to workbook.save api """
-                outrows.append(data)
-        for rownum, val in enumerate(entity.array):
-            sheet.write(rownum, 0, entity.output_value(val))
-        workbook.save(Writer())
-        return ''.join(outrows)
-
-class TimeSeriesXLSXExport(TimeSeriesExportAdapter):
-    __select__ = (TimeSeriesExportAdapter.__select__ &
-                  mimetype('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
-
-    def export(self):
-        entity = self.entity
-        tsbox = entity.reverse_ts_variant[0]
-        workbook = openpyxl.workbook.Workbook(optimized_write=True)
-        sheet = workbook.create_sheet()
-        sheet.title = ('TS_%s' % tsbox.name)[:31]
-        outrows = []
-        for val in entity.array:
-            sheet.append([entity.output_value(val)])
-        try:
-            # XXX investigate why save_virtual_workbook
-            #     does not work
-            fd, fname = tempfile.mkstemp()
-            # let's windows not complain about a locked file
-            os.close(fd)
-            workbook.save(fname)
-            with open(fname, 'rb') as xlsx:
-                return xlsx.read()
-        finally:
-            try:
-                os.unlink(fname)
-            except:
-                pass
-
-
-
-def get_next_date(granularity, date):
-    #pylint:disable-msg=E1101
-    if granularity in TIME_DELTAS:
-        return date + TIME_DELTAS[granularity]
-    elif granularity == 'monthly':
-        return get_next_month(date)
-    elif granularity == 'yearly':
-        return get_next_year(date)
-    else:
-        raise ValueError(granularity)
-
-def get_next_month(date):
-    year = date.year
-    month = date.month
-    day = date.day
-    if month == 12:
-        month = 1
-        year += 1
-    else:
-        month += 1
-    while True:
-        try:
-            newdate = datetime.date(year, month, day)
-        except ValueError:
-            day -= 1
-        else:
-            break
-
-    if isinstance(date, datetime.datetime):
-        return datetime.datetime.combine(newdate, date.time())
-    else:
-        return date
-
-def get_next_year(date):
-    """ date => date, datetime => datetime
-    if date == bisextile year, february's last
-    day may be adjusted to yield a valid date
-    but NOT the other way around
-    """
-    year = date.year + 1
-    month = date.month
-    day = date.day
-    try:
-        newdate = datetime.date(year, month, day)
-    except ValueError:
-        # date was last day of a bisextile year's february
-        newdate = datetime.date(year, month, day - 1)
-    if isinstance(date, datetime.datetime):
-        return datetime.datetime.combine(newdate, date.time())
-    else:
-        return date
