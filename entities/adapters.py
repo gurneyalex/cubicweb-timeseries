@@ -269,6 +269,10 @@ class TimeSeriesExportAdapter(EntityAdapter):
     def export(self):
         raise NotImplementedError
 
+    @property
+    def filename(self):
+        raise NotImplementedError
+
 class TimeSeriesCSVexport(TimeSeriesExportAdapter):
     """ export timestamped array to paste-into-excel-friendly csv """
     __select__ = TimeSeriesExportAdapter.__select__ & mimetype('text/csv')
@@ -284,6 +288,10 @@ class TimeSeriesCSVexport(TimeSeriesExportAdapter):
             outvalue = str(entity.output_value(value)).replace('.', dec_sep)
             writer.writerow([date.strftime(dateformat), outvalue])
         return out.getvalue()
+
+    @property
+    def filename(self):
+        return 'ts.csv'
 
 class TimeSeriesXLSExport(TimeSeriesExportAdapter):
     __select__ = TimeSeriesExportAdapter.__select__ & mimetype('application/vnd.ms-excel')
@@ -302,6 +310,11 @@ class TimeSeriesXLSExport(TimeSeriesExportAdapter):
             sheet.write(rownum, 0, entity.output_value(val))
         workbook.save(Writer())
         return ''.join(outrows)
+
+    @property
+    def filename(self):
+        return 'ts.xls'
+
 
 class TimeSeriesXLSXExport(TimeSeriesExportAdapter):
     __select__ = (TimeSeriesExportAdapter.__select__ &
@@ -328,5 +341,9 @@ class TimeSeriesXLSXExport(TimeSeriesExportAdapter):
                 os.unlink(fname)
             except:
                 pass
+
+    @property
+    def filename(self):
+        return 'ts.xlsx'
 
 
