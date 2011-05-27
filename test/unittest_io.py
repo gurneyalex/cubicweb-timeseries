@@ -45,7 +45,7 @@ class RoundTripTC(TimeSeriesTC):
             exporter = self.vreg['adapters'].select('ITimeSeriesExporter', req,
                                                     entity=ts, mimetype=fmt)
             if not exporter:
-                pass
+                continue
             out = exporter.export()
             self.failIf(len(out) == 0)
 
@@ -59,7 +59,7 @@ class RoundTripTC(TimeSeriesTC):
             exporter = self.vreg['adapters'].select('ITimeSeriesExporter', req,
                                                 entity=ts, mimetype=fmt)
             if not exporter:
-                pass
+                continue
             out = exporter.export()
             self.failIf(len(out) == 0)
 
