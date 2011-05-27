@@ -5,16 +5,18 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
+from __future__ import with_statement
+
 import tempfile
 import os
 import csv
 import zlib
 import datetime
+import pickle
 import os.path as osp
 from cStringIO import StringIO
 
 import numpy
-import pickle
 
 from cubicweb import Binary, ValidationError
 from cubicweb.selectors import is_instance, ExpectedValueSelector
@@ -40,7 +42,8 @@ class filename_ext(ExpectedValueSelector):
             return osp.splitext(fname)[1]
         return fname
 
-# importers
+
+# importers ####################################################################
 
 class TSImportAdapter(EntityAdapter):
     """ import from various sources, delegates actual job to various other adapters
@@ -83,11 +86,13 @@ class TSImportAdapter(EntityAdapter):
         entity.cw_edited['data'] = data
         entity._array = numpy_array
 
+
 class NPTSImportAdapter(TSImportAdapter):
     __select__ = is_instance('NonPeriodicTimeSeries')
 
     def grok_data(self):
-        # XXX when data is a csv/txt/xl file, we want to read timestamps in there too
+        # XXX when data is a csv/txt/xl file, we want to read timestamps in
+        # there too
         # XXX hooks won't catch change to timestamps
         super(NPTSImportAdapter, self).grok_data()
         numpy_array = self.grok_timestamps()
@@ -102,7 +107,8 @@ class NPTSImportAdapter(TSImportAdapter):
         if len(timestamps) != self.entity.count:
             raise ValueError('data/timestamps vectors size mismatch')
         if isinstance(timestamps[0], (datetime.datetime, datetime.date)):
-            timestamps = [self.entity.calendar.datetime_to_timestamp(v) for v in timestamps]
+            timestamps = [self.entity.calendar.datetime_to_timestamp(v)
+                          for v in timestamps]
         else:
             assert isinstance(timestamps[0], (int, float))
         tstamp_array = numpy.array(timestamps, dtype=numpy.float64)
@@ -110,7 +116,8 @@ class NPTSImportAdapter(TSImportAdapter):
             raise ValueError('time stamps must be an strictly ascendant vector')
         return tstamp_array
 
-# source to numpy array converters
+
+# source to numpy array converters #############################################
 
 class TSTXTToNumpyArray(EntityAdapter):
     __regid__ = 'source_to_numpy_array'
@@ -126,6 +133,7 @@ class TSTXTToNumpyArray(EntityAdapter):
                              '(with optionally a date in the first column), '
                              'with . as the decimal separator)' % filename)
 
+
 class CSVImportMixin(object):
 
     def snif_csv_dialect(self, file):
@@ -140,6 +148,7 @@ class CSVImportMixin(object):
             has_header = False
         file.seek(0)
         return dialect, has_header
+
 
 class TSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
     __regid__ = 'source_to_numpy_array'
@@ -198,6 +207,7 @@ class TSXLSToNumpyArray(EntityAdapter):
             raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.entity.dtype)
 
+
 class TSXLSXToNumpyArray(EntityAdapter):
     __regid__ = 'source_to_numpy_array'
     __select__ = is_instance('TimeSeries') & filename_ext('.xlsx')
@@ -216,6 +226,7 @@ class TSXLSXToNumpyArray(EntityAdapter):
         if not values:
             raise ValueError('Unable to read a Timeseries in %s' % filename)
         return numpy.array(values, dtype=self.entity.dtype)
+
 
 class NDTSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
     __regid__ = 'source_to_numpy_array'
@@ -259,7 +270,8 @@ class NDTSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
         self.entity.timestamps = numpy.array(tstamps)
         return numpy.array(series, dtype=self.entity.dtype)
 
-# exporters
+
+# exporters ####################################################################
 
 class TimeSeriesExportAdapter(EntityAdapter):
     __regid__ = 'ITimeSeriesExporter'
@@ -272,6 +284,7 @@ class TimeSeriesExportAdapter(EntityAdapter):
     @property
     def filename(self):
         raise NotImplementedError
+
 
 class TimeSeriesCSVexport(TimeSeriesExportAdapter):
     """ export timestamped array to paste-into-excel-friendly csv """
@@ -292,6 +305,7 @@ class TimeSeriesCSVexport(TimeSeriesExportAdapter):
     @property
     def filename(self):
         return 'ts.csv'
+
 
 class TimeSeriesXLSExport(TimeSeriesExportAdapter):
     __select__ = TimeSeriesExportAdapter.__select__ & mimetype('application/vnd.ms-excel')

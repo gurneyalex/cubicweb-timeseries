@@ -1,10 +1,10 @@
-from __future__ import division
+from __future__ import division, with_statement
 
-import numpy
 from datetime import datetime, timedelta
 
+import numpy
+
 from cubicweb.devtools.testlib import CubicWebTC
-from logilab.common.testlib import unittest_main
 
 from cubes.timeseries.entities.utils import get_next_date
 
@@ -518,4 +518,5 @@ class NPTSComputeSumAverageTC(ComputeSumAverageTC):
 
 
 if __name__ == '__main__':
+    from logilab.common.testlib import unittest_main
     unittest_main()

@@ -1,11 +1,11 @@
-import numpy
-from datetime import datetime
 import tempfile
 import os.path as osp
+from datetime import datetime
+
+import numpy
 
 from cubicweb import Binary
 from cubicweb.devtools.testlib import CubicWebTC
-from logilab.common.testlib import unittest_main
 
 from cubes.timeseries.entities import utils
 
@@ -85,3 +85,8 @@ class RoundTripTC(TimeSeriesTC):
             blob.filename = fname
             ts = req.create_entity('NonPeriodicTimeSeries', data=blob)
             self.assertEqual(orig.timestamped_array(), ts.timestamped_array())
+
+
+if __name__ == '__main__':
+    from logilab.common.testlib import unittest_main
+    unittest_main()
