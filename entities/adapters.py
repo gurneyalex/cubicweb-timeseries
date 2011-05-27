@@ -267,7 +267,7 @@ class NDTSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
                 raise
             series.append(val)
             tstamps.append(tstamp)
-        self.entity.timestamps = numpy.array(tstamps)
+        self.entity.cw_attr_cache['timestamps'] = numpy.array(tstamps)
         return numpy.array(series, dtype=self.entity.dtype)
 
 
@@ -361,3 +361,14 @@ class TimeSeriesXLSXExport(TimeSeriesExportAdapter):
         return 'ts.xlsx'
 
 
+def registration_callback(vreg):
+    always = [TSImportAdapter, NPTSImportAdapter, TSTXTToNumpyArray,
+              TSCSVToNumpyArray, NDTSCSVToNumpyArray, TimeSeriesCSVexport]
+    for adapter in always:
+        vreg.register(adapter)
+    if utils.HANDLE_XLS:
+        vreg.register(TSXLSToNumpyArray)
+        vreg.register(TSXLSXToNumpyArray)
+    if utils.HANDLE_XLSX:
+        vreg.register(TimeSeriesXLSExport)
+        vreg.register(TimeSeriesXLSXExport)
