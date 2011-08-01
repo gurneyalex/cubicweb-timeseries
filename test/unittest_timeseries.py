@@ -306,8 +306,7 @@ class TSaccessTC(TimeSeriesTC):
         _date, result = self.dailyts.aggregated_value([(date1, date2)], 'sum')
         expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + 1*self.dailyts.array[3])
         self.assertEqual(result, expected)
-
-
+        
 class NPTSaccessTC(TSaccessTC):
     """same test as above but for NonPeriodicTimeSeries"""
     _create_ts = TSaccessTC._create_npts
@@ -362,6 +361,11 @@ class NPTSaccessTC(TSaccessTC):
         granularity = self.monthlyts.granularity
         delta = calendar.get_offset(date, granularity) - self.monthlyts._start_offset
         self.assertAlmostEqual(delta, 32.5)
+
+    def test_offset_for_granularity_with_dash(self):
+        date = datetime(2009, 10, 5, 0)
+        calendar = self.yearlyts.calendar
+        self.assertEqual(calendar.get_offset(date, 'time-vector'), calendar.get_offset(date, 'time_vector'))
 
 class ComputeSumAverageTC(TimeSeriesTC):
 

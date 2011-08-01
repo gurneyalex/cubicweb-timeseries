@@ -38,11 +38,11 @@ class AbstractCalendar(object):
     seconds = staticmethod(datetime_to_seconds)
 
     def get_offset(self, date, granularity):
-        offset_method = getattr(self, '_get_offset_%s' % granularity)
+        offset_method = getattr(self, '_get_offset_%s' % granularity.replace('-', '_'))
         return offset_method(date) + self.get_frac_offset(date, granularity)
 
     def get_frac_offset(self, date, granularity):
-        frac_offset_method = getattr(self, '_get_frac_offset_%s' % granularity)
+        frac_offset_method = getattr(self, '_get_frac_offset_%s' % granularity.replace('-', '_'))
         return frac_offset_method(date)
 
     def _get_offset_15min(self, date):
