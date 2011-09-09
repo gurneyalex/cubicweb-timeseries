@@ -9,8 +9,6 @@ from cubicweb.devtools.testlib import CubicWebTC
 
 from cubes.timeseries.entities import utils
 
-DATADIR = osp.join(osp.dirname(__name__), 'data')
-
 class TimeSeriesTC(CubicWebTC):
 
     def _create_ts(self, data=numpy.arange(10), granularity=None,
@@ -70,7 +68,7 @@ class RoundTripTC(TimeSeriesTC):
         for ext, fmt in (('.xls', 'application/vnd.ms-excel'),
                          ('.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
                          ('.csv', 'text/csv')):
-            fname = osp.join(DATADIR, 'ts' + ext)
+            fname = self.datapath('ts' + ext)
             blob = Binary(open(fname, 'rb').read())
             blob.filename = fname
             ts = req.create_entity('TimeSeries',
@@ -84,7 +82,7 @@ class RoundTripTC(TimeSeriesTC):
         orig = self._create_npts()
         self.commit()
         for ext, fmt in (('.csv', 'text/csv'),):
-            fname = osp.join(DATADIR, 'npts' + ext)
+            fname = self.datapath('npts' + ext)
             blob = Binary(open(fname, 'rb').read())
             blob.filename = fname
             ts = req.create_entity('NonPeriodicTimeSeries', data=blob)
