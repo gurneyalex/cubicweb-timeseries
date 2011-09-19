@@ -179,7 +179,7 @@ class TSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
                     self.debug('error while parsing first line of %s', filename)
                     continue # assume there was a header
                 else:
-                    raise ValueError('Invalid data type for value %s on line %d of %s' %
+                    raise ValueError('Invalid data type for value %s on line %s of %s' %
                                      (values[-1], reader.line_num, filename))
             series.append(val)
         return numpy.array(series, dtype=self.entity.dtype)
@@ -201,7 +201,8 @@ class TSXLSToNumpyArray(EntityAdapter):
             try:
                 cell_value = float(cell_value)
             except ValueError:
-                raise ValueError('Invalid data type in cell (%d, %d) of %s' % (row, col, filename))
+                raise ValueError('Invalid data type in cell (%s, %s) of %s (data: %s)'
+                                 % (row, col, filename, cell_value))
             values.append(cell_value)
         if not values:
             raise ValueError('Unable to read a Timeseries in %s' % filename)
@@ -216,12 +217,13 @@ class TSXLSXToNumpyArray(EntityAdapter):
         wb = utils.openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
         sheet = wb.worksheets[0]
         values = []
-        for row in sheet.iter_rows():
+        for rownum, row in enumerate(sheet.iter_rows()):
             cell_value = row[0].internal_value
             try:
                 cell_value = float(cell_value)
             except ValueError:
-                raise ValueError('Invalid data type in cell (row %d) of %s' % (row, filename))
+                raise ValueError('Invalid data type in cell (row %d) of %s (data: %s)'
+                                 % (rownum, filename, cell_value))
             values.append(cell_value)
         if not values:
             raise ValueError('Unable to read a Timeseries in %s' % filename)
@@ -249,7 +251,7 @@ class NDTSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
         cal = self.entity.calendar
         for line, values in enumerate(reader):
             if len(values) != 2:
-                raise ValueError('Expecting exactly 2 columns (timestamp, value), found %d in %s' % (len(values), filename))
+                raise ValueError('Expecting exactly 2 columns (timestamp, value), found %s in %s' % (len(values), filename))
             try:
                 strval = values[1].replace(th_sep, '').replace(dec_sep, '.')
                 val = float(strval)
@@ -258,7 +260,7 @@ class NDTSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
                     self.debug('error while parsing first line of %s', filename)
                     continue # assume there was a header
                 else:
-                    raise ValueError('Invalid data type for value %s on line %d of %s' %
+                    raise ValueError('Invalid data type for value %s on line %s of %s' %
                                      (values[-1], reader.line_num, filename))
             try:
                 tstamp_datetime = self._cw.parse_datetime(values[0])
