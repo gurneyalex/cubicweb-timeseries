@@ -1,3 +1,5 @@
+from __future__ import division
+
 from logilab.mtconverter import xml_escape
 
 import numpy
@@ -20,6 +22,8 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
     jqelt.attr('cubicweb:type', 'prepared-sparkline');
 }
 """
+    _switch_to_line_threshold = 500
+    _downsample_threshold = 18
 
     def cell_call(self, row, col):
         w = self.w; req = self._cw
@@ -32,11 +36,11 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
             data = [entity.first] * 10
         else:
             data = entity.array
-            if len(data) > 500:
-                data = self._resample(data, 500)
+            if len(data) > self._switch_to_line_threshold:
+                data = self._resample(data, self._switch_to_line_threshold)
                 plot_type = "type : 'line'"
-            elif len(data) > 25:
-                data = self._resample(data, 25)
+            elif len(data) > self._downsample_threshold:
+                data = self._resample(data, self._downsample_threshold)
         req.html_headers.add_onload(self.onload % {'target': entity.eid,
                                                    'plot_type' : plot_type})
         content = u'<!-- %s -->' % xml_escape(', '.join(unicode(elt) for elt in data))
@@ -44,10 +48,11 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
                     escapecontent=False))
 
     def _resample(self, data, sample_length):
-        step = len(data) / sample_length
         newdata = []
-        for idx in xrange(0, len(data), step):
-            newdata.append(data[idx:idx+step].mean())
+        datalen = len(data)
+        for x in xrange(sample_length):
+            idx = int(((x + .5) / sample_length) * datalen)
+            newdata.append(data[idx])
         return newdata
 
 
