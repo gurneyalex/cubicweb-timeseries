@@ -13,6 +13,11 @@ else:
 
 try:
     import openpyxl
+    try:
+        openpyxl.reader
+        openpyxl.workbook
+    except AttributeError:
+        raise ImportError('installed openpyxl version is too old')
 except ImportError:
     HANDLE_XLSX = False
 else:
