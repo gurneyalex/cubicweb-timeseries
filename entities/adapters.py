@@ -369,8 +369,8 @@ def registration_callback(vreg):
     for adapter in always:
         vreg.register(adapter)
     if utils.HANDLE_XLS:
-        vreg.register(TSXLSToNumpyArray)
-        vreg.register(TSXLSXToNumpyArray)
-    if utils.HANDLE_XLSX:
         vreg.register(TimeSeriesXLSExport)
+        vreg.register(TSXLSToNumpyArray)
+    if utils.HANDLE_XLSX:
+        vreg.register(TSXLSXToNumpyArray)
         vreg.register(TimeSeriesXLSXExport)
