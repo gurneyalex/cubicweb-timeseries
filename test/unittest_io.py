@@ -4,10 +4,17 @@ from datetime import datetime
 
 import numpy
 
-from cubicweb import Binary
+from cubicweb import Binary, NoSelectableObject
 from cubicweb.devtools.testlib import CubicWebTC
 
 from cubes.timeseries.entities import utils
+
+def is_supported(ext):
+    if ext == '.xls':
+        return utils.HANDLE_XLS
+    if ext == '.xlsx':
+        return utils.HANDLE_XLSX
+    return True
 
 class TimeSeriesTC(CubicWebTC):
 
@@ -40,9 +47,10 @@ class RoundTripTC(TimeSeriesTC):
         for ext, fmt in (('.xls', 'application/vnd.ms-excel'),
                          ('.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
                          ('.csv', 'text/csv')):
-            exporter = self.vreg['adapters'].select('ITimeSeriesExporter', req,
-                                                    entity=ts, mimetype=fmt)
-            if not exporter:
+            try:
+                exporter = self.vreg['adapters'].select('ITimeSeriesExporter', req,
+                                                        entity=ts, mimetype=fmt)
+            except NoSelectableObject:
                 continue
             out = exporter.export()
             self.failIf(len(out) == 0)
@@ -54,9 +62,10 @@ class RoundTripTC(TimeSeriesTC):
         for ext, fmt in (('.xls', 'application/vnd.ms-excel'),
                          ('.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
                          ('.csv', 'text/csv')):
-            exporter = self.vreg['adapters'].select('ITimeSeriesExporter', req,
-                                                entity=ts, mimetype=fmt)
-            if not exporter:
+            try:
+                exporter = self.vreg['adapters'].select('ITimeSeriesExporter', req,
+                                                        entity=ts, mimetype=fmt)
+            except NoSelectableObject:
                 continue
             out = exporter.export()
             self.failIf(len(out) == 0)
@@ -68,6 +77,8 @@ class RoundTripTC(TimeSeriesTC):
         for ext, fmt in (('.xls', 'application/vnd.ms-excel'),
                          ('.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
                          ('.csv', 'text/csv')):
+            if not is_supported(ext):
+                continue
             fname = self.datapath('ts' + ext)
             blob = Binary(open(fname, 'rb').read())
             blob.filename = fname
@@ -82,6 +93,8 @@ class RoundTripTC(TimeSeriesTC):
         orig = self._create_npts()
         self.commit()
         for ext, fmt in (('.csv', 'text/csv'),):
+            if not is_supported(ext):
+                continue
             fname = self.datapath('npts' + ext)
             blob = Binary(open(fname, 'rb').read())
             blob.filename = fname
