@@ -43,7 +43,7 @@ if (jqelt.attr('cubicweb:type') != 'prepared-sparkline') {
                 data = self._resample(data, self._downsample_threshold)
         req.html_headers.add_onload(self.onload % {'target': entity.eid,
                                                    'plot_type' : plot_type})
-        content = u'<!-- %s -->' % xml_escape(', '.join(unicode(elt) for elt in data))
+        content = u'<!-- %s -->' % xml_escape(u', '.join(unicode(elt) for elt in data))
         w(tags.span(content, id='sparklinefor%s' % entity.eid,
                     escapecontent=False))
 
@@ -76,12 +76,12 @@ class TimeSeriesInContextView(InContextView):
             last = unicode(str(round(entity.last, 2)))
             w(tags.span(first+entity.safe_unit, style='font-size: 10px;'))
             w(u'<div class="info">')
-            content = "&#xA0;&#xA0;%s&#xA0;&#xA0;" % entity.view('sparkline')
+            content = u"&#xA0;&#xA0;%s&#xA0;&#xA0;" % entity.view('sparkline')
             w(tags.a(content, href=entity.absolute_url(),
                      escapecontent=False))
             w(u'</div>')
             w(tags.span(last+entity.safe_unit, style='font-size: 10px;'))
-            w("&#xA0;")
+            w(u'&#xA0;')
             w(u'<div style="display: inline">')
             entity.view(self.inner_vid, label=_('[summary]'), w=w)
             w(u'</div>')
