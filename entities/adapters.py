@@ -113,7 +113,7 @@ class NPTSImportAdapter(TSImportAdapter):
             assert isinstance(timestamps[0], (int, float))
         tstamp_array = numpy.array(timestamps, dtype=numpy.float64)
         if not (tstamp_array[:-1] < tstamp_array[1:]).all():
-            raise ValueError('time stamps must be an strictly ascendant vector')
+            raise ValueError('time stamps must be a strictly ascendant vector')
         return tstamp_array
 
 

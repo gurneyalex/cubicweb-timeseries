@@ -56,7 +56,7 @@ class NPTSTC(TimeSeriesTC):
     def test_no_timestamps(self):
         with self.assertRaises(ValueError) as cm:
             self._create_npts(timestamps=range(10, 0, -1))
-        self.assertEqual(str(cm.exception), 'time stamps must be an strictly ascendant vector')
+        self.assertEqual(str(cm.exception), 'time stamps must be a strictly ascendant vector')
 
     def test_size_mismatch(self):
         with self.assertRaises(ValueError) as cm:
@@ -66,7 +66,7 @@ class NPTSTC(TimeSeriesTC):
     def test_bad_timestamps(self):
         with self.assertRaises(ValueError) as cm:
             self._create_npts(timestamps=range(10, 0, -1))
-        self.assertEqual(str(cm.exception), 'time stamps must be an strictly ascendant vector')
+        self.assertEqual(str(cm.exception), 'time stamps must be a strictly ascendant vector')
 
 
 class TSaccessTC(TimeSeriesTC):
