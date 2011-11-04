@@ -41,6 +41,8 @@ def get_next_date(granularity, date):
         return get_next_month(date)
     elif granularity == 'yearly':
         return get_next_year(date)
+    elif granularity == 'constant':
+        return date + datetime.timedelta.resolution
     else:
         raise ValueError(granularity)
 

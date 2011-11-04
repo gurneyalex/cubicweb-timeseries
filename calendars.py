@@ -21,7 +21,7 @@ TIME_DELTAS = {'15min': datetime.timedelta(minutes=15),
                'hourly': datetime.timedelta(hours=1),
                'daily': datetime.timedelta(days=1),
                'weekly': datetime.timedelta(weeks=1),
-               # monthly and yearly do not have a fixed length
+               # constant, monthly and yearly do not have a fixed length
                }
 
 def register_calendar(name, calendar):
@@ -69,6 +69,9 @@ class AbstractCalendar(object):
     def _get_offset_time_vector(self, date):
         return int(self.datetime_to_timestamp(date))
 
+    def _get_offset_constant(self, date):
+        return 0
+
     def _get_frac_offset_time_vector(self, date):
         offset = self.datetime_to_timestamp(date)
         return offset - math.floor(offset)
@@ -99,6 +102,9 @@ class AbstractCalendar(object):
         frac_ordinal = self.ordinal(date) + self.seconds(date) / (3600*24)
         start_of_year = self.ordinal(datetime.datetime(date.year, 1, 1))
         return  (frac_ordinal-start_of_year) / days_in_year(date)
+
+    def _get_frac_offset_constant(self, date):
+        return 0
 
     def get_duration_in_days(self, granularity, date):
         '''
