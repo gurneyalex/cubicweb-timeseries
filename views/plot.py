@@ -12,7 +12,7 @@ from logilab.mtconverter import xml_escape
 
 from cubicweb import tags
 from cubicweb.utils import json_dumps as dumps
-from cubicweb.selectors import is_instance
+from cubicweb.selectors import is_instance, score_entity
 from cubicweb.web.views import baseviews
 
 _ = unicode
@@ -20,7 +20,7 @@ _ = unicode
 
 class TimeSeriesPlotView(baseviews.EntityView):
     __regid__ = 'ts_plot'
-    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
+    __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries') & score_entity(lambda x: not x.is_constant)
     title = None
     onload = u"init_ts_plot('%(figid)s', [%(plotdata)s]);"
 

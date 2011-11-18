@@ -32,11 +32,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
         self._cw.demote_to_html()
         self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
-        if entity.is_constant:
-            self.w(tags.div(u'%s: %s' % (self._cw._('constant value'),
-                                         self._cw.format_float(entity.first))))
-        else:
-            self.render_tabs(self.tabs, self.default_tab, entity)
+        self.render_tabs(self.tabs, self.default_tab, entity)
 
 class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     __regid__ = 'ts_summary'
@@ -69,10 +65,10 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
         w(tags.h2(_('Preview')))
         entity.view('sparkline', w=w)
         w(u'</td><td>')
-        w(tags.h2(_('ts_values')))
-        self.wview('ts_values', self.cw_rset)
+        if not entity.is_constant:
+            w(tags.h2(_('ts_values')))
+            self.wview('ts_values', self.cw_rset)
         w(u'</td></tr></table>')
-
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'

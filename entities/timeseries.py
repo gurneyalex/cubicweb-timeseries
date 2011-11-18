@@ -298,6 +298,8 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
         #pylint:disable-msg=E1101
         if type(date) is slice:
             assert date.step is None
+            if self.is_constant:
+                date = slice(None, None)
             if date.start is None:
                 start = None
             else:

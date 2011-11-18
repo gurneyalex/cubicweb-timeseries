@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 import numpy
 
+from logilab.common.testlib import tag
+
 from cubicweb.devtools.testlib import CubicWebTC
 
 from cubes.timeseries.entities.utils import get_next_date
@@ -71,11 +73,17 @@ class NPTSTC(TimeSeriesTC):
 
 class TSaccessTC(TimeSeriesTC):
     def setup_database(self):
+        self.constantts = self._create_ts(data= numpy.array([0]), granularity=u'constant')
         self.hourlyts = self._create_ts(granularity=u'hourly')
         self.dailyts = self._create_ts(granularity=u'daily')
         self.monthlyts = self._create_ts(granularity=u'monthly')
         self.yearlyts = self._create_ts(granularity=u'yearly')
         self.weeklyts = self._create_ts(granularity=u'weekly', start_date=datetime(2009, 10, 5))
+
+    @tag('constant')
+    def test_end_date_constant(self):
+        expected_end = self.constantts.start_date + timedelta.resolution
+        self.assertEqual(self.constantts.end_date, expected_end)
 
     def test_end_date_daily(self):
         expected_end = self.dailyts.start_date + timedelta(days=10)
@@ -97,6 +105,30 @@ class TSaccessTC(TimeSeriesTC):
         expected_end = datetime(2019, 10, 1)
         self.assertEqual(self.yearlyts.end_date, expected_end)
 
+    @tag('constant')
+    def test_make_relative_index_constant(self):
+        ts = self.constantts
+        date = datetime(2009, 10, 2, 12)
+        calendar = ts.calendar
+        granularity = ts.granularity
+        delta = calendar.get_offset(date, granularity) - ts._start_offset
+        self.assertEqual(delta, 0)
+
+    @tag('constant')
+    def test_get_by_date_constant(self):
+        date = datetime(2009, 10, 2, 12)
+        self.assertEqual(self.constantts.get_by_date(date), self.constantts.array[0])
+
+    @tag('constant')
+    def test_get_by_date_constant_slice(self):
+        date1 = datetime(2009, 10, 2, 12)
+        date2 = datetime(2009, 10, 4, 6)
+        self.assertEqual(self.constantts.get_by_date(slice(date1, date2)).tolist(),
+                          self.constantts.array[0:1].tolist())
+    @tag('constant')
+    def test_get_by_date_constant_slice_none(self):
+        self.assertEqual(self.constantts.get_by_date(slice(None, None)).tolist(),
+                          self.constantts.array[0:1].tolist())
 
     def test_make_relative_index_daily(self):
         date = datetime(2009, 10, 2, 12)
@@ -306,10 +338,18 @@ class TSaccessTC(TimeSeriesTC):
         _date, result = self.dailyts.aggregated_value([(date1, date2)], 'sum')
         expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + 1*self.dailyts.array[3])
         self.assertEqual(result, expected)
-        
+
 class NPTSaccessTC(TSaccessTC):
     """same test as above but for NonPeriodicTimeSeries"""
     _create_ts = TSaccessTC._create_npts
+
+    @tag('constant')
+    def test_end_date_constant(self):
+        self.skipTest('Non relevant.')
+    test_make_relative_index_constant = test_end_date_constant
+    test_get_by_date_constant = test_end_date_constant
+    test_get_by_date_constant_slice = test_end_date_constant
+    test_get_by_date_constant_slice_none = test_end_date_constant
 
     def test_end_date_daily(self):
         expected_end = self.dailyts.start_date + timedelta(days=9)
