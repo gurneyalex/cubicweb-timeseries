@@ -1,5 +1,5 @@
 include *.py
+include */*.py
 include hudson.ini
 recursive-include data external_resources *.gif *.png *.css *.ico *.js *.xls *.xlsx *.csv
 recursive-include i18n *.pot *.po
-recursive-include migration *.py
