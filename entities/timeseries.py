@@ -27,8 +27,7 @@ _ = unicode
 
 class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
     __regid__ = 'TimeSeries'
-    fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity', 'start_date'])
-
+    fetch_attrs, cw_fetch_order = fetch_config(['data_type', 'unit', 'granularity', 'start_date'])
     _dtypes_in = {'Float': numpy.float64,
                   'Integer': numpy.int32,
                   'Boolean': numpy.bool}

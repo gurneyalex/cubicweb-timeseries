@@ -133,6 +133,9 @@ class AbstractCalendar(object):
         """
         raise NotImplementedError
 
+    def iso_day_of_week(self, date):
+        return self.day_of_week(date) + 1
+
     def start_of_day(self, tstamp):
         """
         return datetime of the begining of day for tstamp
@@ -200,6 +203,9 @@ class GregorianCalendar(AbstractCalendar):
 
     def day_of_week(self, date):
         return date.weekday()
+    
+    def iso_day_of_week(self, date):
+        return date.isoweekday()
 
     def start_of_day(self, tstamp):
         """
