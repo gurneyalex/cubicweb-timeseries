@@ -24,7 +24,7 @@ _ = unicode
 
 class NonPeriodicTimeSeries(timeseries.TimeSeries):
     __regid__ = 'NonPeriodicTimeSeries'
-    fetch_attrs, fetch_order = fetch_config(['data_type', 'unit', 'granularity'])
+    fetch_attrs, cw_fetch_order = fetch_config(['data_type', 'unit', 'granularity'])
 
     is_constant = False
 
