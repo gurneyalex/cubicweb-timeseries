@@ -134,6 +134,9 @@ class AbstractCalendar(object):
         raise NotImplementedError
 
     def iso_day_of_week(self, date):
+        """
+        return the day of week for a given date as an integer (1 is monday -> 7 is sunday)
+        """
         return self.day_of_week(date) + 1
 
     def start_of_day(self, tstamp):
