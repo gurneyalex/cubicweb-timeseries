@@ -14,7 +14,8 @@ from cubicweb import __pkginfo__ as cwinfo
 
 # cw 3.15 runs hooks on postcreate, don't do this twice
 # http://www.cubicweb.org/ticket/1417110
-if cwinfo.numversion < (3, 15, 0):
-    for user in rql('CWUser U').entities():
+# but some (e.g the admin/bootstrap user) may not have it
+for user in rql('CWUser U').entities():
+    if not user.format_preferences:
         prefs = create_entity('ExcelPreferences')
         user.set_relations(format_preferences=prefs)
