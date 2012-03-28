@@ -16,7 +16,7 @@ from cubicweb import tags
 from cubicweb.schema import display_name
 from cubicweb.selectors import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
-from cubicweb.web.views.basecontrollers import jsonize, JSonController
+from cubicweb.web.views.ajaxcontroller import ajaxfunc
 
 from cubes.timeseries.utils import get_formatter
 
@@ -115,7 +115,7 @@ class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
     editable_summary_attrs = set()
 
 
-@jsonize
+@ajaxfunc(output_type='json')
 def get_ts_values_data(self):
     form = self._cw.form
     page = int(form.get('page'))
@@ -139,7 +139,7 @@ def get_ts_values_data(self):
            'records': str(len(values)),
            'rows': values[start:end]}
     return out
-JSonController.js_get_ts_values_data = get_ts_values_data
+
 
 class TimeSeriesValuesView(baseviews.EntityView):
     __regid__ = 'ts_values'

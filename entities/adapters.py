@@ -19,7 +19,7 @@ from cStringIO import StringIO
 import numpy
 
 from cubicweb import Binary, ValidationError
-from cubicweb.selectors import is_instance, ExpectedValueSelector
+from cubicweb.predicates import is_instance, ExpectedValuePredicate
 from cubicweb.view import EntityAdapter
 
 from cubes.timeseries.utils import get_formatter
@@ -27,13 +27,13 @@ from cubes.timeseries.entities import utils
 
 _ = unicode
 
-class mimetype(ExpectedValueSelector):
+class mimetype(ExpectedValuePredicate):
     """ a selector for exporters  """
 
     def _get_value(self, cls, req, **kwargs):
         return kwargs.get('mimetype')
 
-class filename_ext(ExpectedValueSelector):
+class filename_ext(ExpectedValuePredicate):
     """ a selector for converters  """
 
     def _get_value(self, cls, req, **kwargs):
