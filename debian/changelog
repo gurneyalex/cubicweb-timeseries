@@ -1,3 +1,9 @@
+cubicweb-timeseries (1.2.4-1) unstable; urgency=low
+
+  * new upstream release
+
+ -- David Douard <david.douard@logilab.fr>  Wed, 11 Apr 2012 15:14:16 +0200
+
 cubicweb-timeseries (1.2.3-1) unstable; urgency=low
 
   * new upstream release
