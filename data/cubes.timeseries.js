@@ -134,6 +134,10 @@ function switch_widget(granid, nonconstid, constid) {
 }
 
 function init_data_widget(granid, nonconstid, constid) {
+  // this may amount to not much since the granid is not garanteed
+  // to yield an existing dom node
+  var $node = cw.jqNode(granid);
+  if (!$node) { return; }
   install_granularity_trigger(granid, nonconstid, constid);
   switch_widget(granid, nonconstid, constid);
 }
