@@ -13,7 +13,7 @@ import zlib
 from bisect import bisect_left
 from itertools import izip
 
-from logilab.common.decorators import cached
+from logilab.common.decorators import cachedproperty, cached, clear_cache
 
 from cubicweb.entities import fetch_config
 
@@ -28,8 +28,7 @@ class NonPeriodicTimeSeries(timeseries.TimeSeries):
 
     is_constant = False
 
-    @property
-    @cached
+    @cachedproperty
     def timestamps_array(self):
         # XXX turn into datetime here ?
         raw_data = self.timestamps.getvalue()
@@ -43,8 +42,7 @@ class NonPeriodicTimeSeries(timeseries.TimeSeries):
             data.append((self.calendar.timestamp_to_datetime(t), self.output_value(v)))
         return data
 
-    @property
-    @cached
+    @cachedproperty
     def start_date(self):
         return self.calendar.timestamp_to_datetime(self.timestamps_array[0])
 
@@ -105,4 +103,12 @@ class NonPeriodicTimeSeries(timeseries.TimeSeries):
         array = self.timestamps_array
         idx = bisect_left(array, timestamp)
         return idx
+
+    def cw_clear_all_caches(self):
+        super(NonPeriodicTimeSeries, self).cw_clear_all_caches()
+        if 'start_date' in vars(self):
+            del self.start_date
+        if 'timestamps_array' in vars(self):
+            del self.timestamps_array
+        clear_cache(self, 'timestamped_array')
 
