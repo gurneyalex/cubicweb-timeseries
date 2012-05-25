@@ -84,7 +84,7 @@ class TSImportAdapter(EntityAdapter):
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         data.write(compressed_data)
         entity.cw_edited['data'] = data
-        entity._array = numpy_array
+        entity.array = numpy_array
 
 
 class NPTSImportAdapter(TSImportAdapter):
@@ -100,7 +100,7 @@ class NPTSImportAdapter(TSImportAdapter):
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         tstamp_data.write(compressed_data)
         self.entity.cw_edited['timestamps'] = tstamp_data
-        self.entity._timestamps_array = numpy_array
+        self.entity.timestamps_array = numpy_array
 
     def grok_timestamps(self):
         timestamps = self.entity.timestamps
