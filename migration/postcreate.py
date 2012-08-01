@@ -7,6 +7,6 @@
 """
 
 # some (e.g the admin/bootstrap user) may not have it
-for user in rql('CWUser U WHERE NOT X format_preferences P').entities():
+for user in rql('CWUser U WHERE NOT U format_preferences P').entities():
     prefs = create_entity('ExcelPreferences')
     user.set_relations(format_preferences=prefs)

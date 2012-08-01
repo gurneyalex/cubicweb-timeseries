@@ -12,6 +12,13 @@ class ExcelPreferencesTC(CubicWebTC):
         except ValidationError, exc:
             self.assertListEqual(exc.errors.keys(), ['csv_separator'])
 
+    def test_everyone(self):
+        req = self.request()
+        user = self.create_user(req, 'toto', commit=False)
+        self.commit()
+        self.assertEqual(self.execute('CWUser U WHERE U format_preferences P').rowcount, 3)
+        self.assertEqual(self.execute('CWUser U WHERE NOT U format_preferences P').rowcount, 0)
+
     def test_user_owned(self):
         req = self.request()
         user = self.create_user(req, 'toto', commit=False)
