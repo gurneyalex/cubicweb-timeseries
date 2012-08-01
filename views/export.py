@@ -1,4 +1,4 @@
-from cubicweb.selectors import is_instance, one_line_rset
+from cubicweb.predicates import is_instance, one_line_rset
 from cubicweb.view import EntityView
 from cubicweb.web import action
 

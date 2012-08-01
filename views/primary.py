@@ -14,7 +14,7 @@ from logilab.mtconverter import xml_escape
 
 from cubicweb import tags
 from cubicweb.schema import display_name
-from cubicweb.selectors import is_instance
+from cubicweb.predicates import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
 from cubicweb.web.views.ajaxcontroller import ajaxfunc
 
