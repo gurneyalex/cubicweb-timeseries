@@ -19,7 +19,7 @@ from cStringIO import StringIO
 import numpy
 
 from cubicweb import Binary, ValidationError
-from cubicweb.selectors import is_instance, ExpectedValueSelector
+from cubicweb.predicates import is_instance, ExpectedValuePredicate
 from cubicweb.view import EntityAdapter
 
 from cubes.timeseries.utils import get_formatter
@@ -27,13 +27,13 @@ from cubes.timeseries.entities import utils
 
 _ = unicode
 
-class mimetype(ExpectedValueSelector):
+class mimetype(ExpectedValuePredicate):
     """ a selector for exporters  """
 
     def _get_value(self, cls, req, **kwargs):
         return kwargs.get('mimetype')
 
-class filename_ext(ExpectedValueSelector):
+class filename_ext(ExpectedValuePredicate):
     """ a selector for converters  """
 
     def _get_value(self, cls, req, **kwargs):
@@ -84,7 +84,7 @@ class TSImportAdapter(EntityAdapter):
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         data.write(compressed_data)
         entity.cw_edited['data'] = data
-        entity._array = numpy_array
+        entity.array = numpy_array
 
 
 class NPTSImportAdapter(TSImportAdapter):
@@ -100,7 +100,7 @@ class NPTSImportAdapter(TSImportAdapter):
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
         tstamp_data.write(compressed_data)
         self.entity.cw_edited['timestamps'] = tstamp_data
-        self.entity._timestamps_array = numpy_array
+        self.entity.timestamps_array = numpy_array
 
     def grok_timestamps(self):
         timestamps = self.entity.timestamps

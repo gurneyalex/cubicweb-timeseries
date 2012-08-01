@@ -1,6 +1,6 @@
 from cubicweb import ValidationError
 from cubicweb.server.hook import Hook
-from cubicweb.selectors import is_instance
+from cubicweb.predicates import is_instance
 
 class TimeSeriesDataReadHook(Hook):
     __regid__ = 'timeseries_data_read_hook'

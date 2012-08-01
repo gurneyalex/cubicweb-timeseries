@@ -4,7 +4,7 @@
 modname = 'timeseries'
 distname = 'cubicweb-timeseries'
 
-numversion = (1, 2, 4)
+numversion = (1, 3, 0)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
@@ -49,4 +49,3 @@ for dirname in ('entities', 'views', 'sobjects', 'hooks', 'schema', 'data', 'i18
         data_files.append([join(THIS_CUBE_DIR, dirname), listdir(dirname)])
 # Note: here, you'll need to add subdirectories if you want
 # them to be included in the debian package
-

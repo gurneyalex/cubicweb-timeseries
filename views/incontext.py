@@ -1,7 +1,7 @@
 from logilab.mtconverter import xml_escape
 
 from cubicweb import tags
-from cubicweb.selectors import is_instance
+from cubicweb.predicates import is_instance
 from cubicweb.view import EntityView
 
 import unicodedata as udata

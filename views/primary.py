@@ -14,9 +14,9 @@ from logilab.mtconverter import xml_escape
 
 from cubicweb import tags
 from cubicweb.schema import display_name
-from cubicweb.selectors import is_instance
+from cubicweb.predicates import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
-from cubicweb.web.views.basecontrollers import jsonize, JSonController
+from cubicweb.web.views.ajaxcontroller import ajaxfunc
 
 from cubes.timeseries.utils import get_formatter
 
@@ -70,6 +70,15 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
             self.wview('ts_values', self.cw_rset)
         w(u'</td></tr></table>')
 
+def format_value(cw, value):
+    if isinstance(value, float):
+        value = cw.format_float(value)
+    elif isinstance(value, datetime.datetime):
+        value = cw.format_date(value, time=True)
+    elif isinstance(value, datetime.date):
+        value = cw.format_date(value)
+    return value
+
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
     __select__ = is_instance('TimeSeries')
@@ -94,19 +103,13 @@ class TimeSeriesSummaryView(baseviews.EntityView):
                                entity.view('reledit', rtype=attr),
                                tr=True, table=True)
                     continue
-                # XXX getattr because some are actually properties
                 if attr == 'average_unit' and entity.data_type == 'Boolean':
                     continue
-                else:
-                    value = getattr(entity, attr)
-                    if isinstance(value, float):
-                        value = self._cw.format_float(value)
-                    elif isinstance(value, datetime.datetime):
-                        value = self._cw.format_date(value, time=True)
-                    elif isinstance(value, datetime.date):
-                        value = self._cw.format_date(value)
-                    self.field(attr, value,
-                               show_label=True, tr=True, table=True)
+                # XXX getattr because some are actually properties
+                value = getattr(entity, attr)
+                value = format_value(self._cw, value)
+                self.field(attr, value,
+                           show_label=True, tr=True, table=True)
         self.w(u'</table>')
 
 
@@ -115,7 +118,7 @@ class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
     editable_summary_attrs = set()
 
 
-@jsonize
+@ajaxfunc(output_type='json')
 def get_ts_values_data(self):
     form = self._cw.form
     page = int(form.get('page'))
@@ -139,7 +142,7 @@ def get_ts_values_data(self):
            'records': str(len(values)),
            'rows': values[start:end]}
     return out
-JSonController.js_get_ts_values_data = get_ts_values_data
+
 
 class TimeSeriesValuesView(baseviews.EntityView):
     __regid__ = 'ts_values'

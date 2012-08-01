@@ -12,7 +12,7 @@ from logilab.mtconverter import xml_escape
 
 from cubicweb import tags
 from cubicweb.utils import json_dumps as dumps
-from cubicweb.selectors import is_instance, score_entity
+from cubicweb.predicates import is_instance, score_entity
 from cubicweb.web.views import baseviews
 
 _ = unicode
