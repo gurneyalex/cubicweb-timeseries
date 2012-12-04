@@ -54,7 +54,11 @@ class TSImportAdapter(EntityAdapter):
 
     def grok_data(self):
         """ self.data is something such as an excel file or CSV data or a pickled
-        numpy array. Ensure it's a pickle numpy array before storing object in db.
+        numpy array or an already processed binary.
+
+        Ensure it's a pickle numpy array before storing object in db.
+
+        If data seems to be already processed, return True, else return False.
         """
         entity = self.entity
         try:
@@ -62,7 +66,7 @@ class TSImportAdapter(EntityAdapter):
         except AttributeError:
             data = entity.data
             if isinstance(data, Binary):
-                return
+                return True
             # if not isinstance(data, numpy.ndarray):
             #     raise TypeError('data is neither a Binary nor a numpy array (%s)' % type(data))
             numpy_array = data
@@ -85,7 +89,7 @@ class TSImportAdapter(EntityAdapter):
         data.write(compressed_data)
         entity.cw_edited['data'] = data
         entity.array = numpy_array
-
+        return False
 
 class NPTSImportAdapter(TSImportAdapter):
     __select__ = is_instance('NonPeriodicTimeSeries')
@@ -94,7 +98,8 @@ class NPTSImportAdapter(TSImportAdapter):
         # XXX when data is a csv/txt/xl file, we want to read timestamps in
         # there too
         # XXX hooks won't catch change to timestamps
-        super(NPTSImportAdapter, self).grok_data()
+        if super(NPTSImportAdapter, self).grok_data():
+            return # already processed
         numpy_array = self.grok_timestamps()
         tstamp_data = Binary()
         compressed_data = zlib.compress(pickle.dumps(numpy_array, protocol=2))
