@@ -52,7 +52,7 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
 
     @cached
     def timestamped_array(self):
-        date = self.start_date #pylint:disable-msg=E1101
+        date = self.start_date  # pylint:disable-msg=E1101
         data = []
         for v in self.array:
             data.append((date, self.output_value(v)))
@@ -72,9 +72,9 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
                                  "start date (%s)" % (end, self.start_date))
 
     supported_modes = frozenset(('sum', 'average', 'weighted_average',
-                                 'last', 'sum_realized', 'max'))
+                                 'last', 'sum_realized', 'max', 'min'))
     def aggregated_value(self, intervals, mode, use_last_interval=False):
-        #pylint:disable-msg=E1101
+        # pylint:disable-msg=E1101
         assert mode in self.supported_modes, 'unsupported mode'
         if use_last_interval and mode != 'last':
             raise AssertionError, '"use_last_interval" may be True only if mode is "last"'
@@ -104,6 +104,8 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
             return tstamp, value
         elif mode == 'max':
             return start, flat_values.max()
+        elif mode == 'min':
+            return start, flat_values.min()
         elif mode == 'sum_realized':
             return start, flat_values.sum()
         elif mode in ('sum', 'average', 'weighted_average'):
@@ -111,7 +113,7 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
             denoms = []
             for start, end, interval_date_values in values:
 
-                interval_values = interval_date_values[:,1]
+                interval_values = interval_date_values[:, 1]
                 coefs = numpy.ones(interval_values.shape, float)
                 start_frac = self.get_frac_offset(start)
                 end_frac = self.get_frac_offset(end)
@@ -120,7 +122,7 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
                     coefs[-1] -= 1 - end_frac
 
                 if mode == 'weighted_average':
-                    interval_dates = interval_date_values[:,0]
+                    interval_dates = interval_date_values[:, 0]
                     weights = [self.get_duration_in_days(date)
                                for date in interval_dates]
                     coefs *= weights
@@ -188,12 +190,12 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
         as an entry/input method as Boolean really should be
         a boolean internally
         """
-        return self._dtypes_out[self.data_type](v) #pylint:disable-msg=E1101
+        return self._dtypes_out[self.data_type](v)  # pylint:disable-msg=E1101
 
     def input_value(self, v):
         """ if you need to update some data piecewise, use this
         to get it to the correct input type """
-        return self._dtypes_in[self.data_type](v) #pylint:disable-msg=E1101
+        return self._dtypes_in[self.data_type](v)  # pylint:disable-msg=E1101
 
     @property
     def dtype(self):
@@ -267,10 +269,10 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
 
     @property
     def calendar(self):
-        return get_calendar(self.use_calendar) #pylint:disable-msg=E1101
+        return get_calendar(self.use_calendar)  # pylint:disable-msg=E1101
 
     def get_values_between(self, start_date, end_date):
-        #pylint:disable-msg=E1101
+        # pylint:disable-msg=E1101
         if start_date is None:
             start_date = self.start_date
         if self.is_constant:
@@ -294,7 +296,7 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
         return self._make_relative_index(abs_index)
 
     def get_by_date(self, date, with_dates=False):
-        #pylint:disable-msg=E1101
+        # pylint:disable-msg=E1101
         if type(date) is slice:
             assert date.step is None
             if self.is_constant:
@@ -302,18 +304,18 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
             if date.start is None:
                 start = None
             else:
-                #start = self.get_rel_index(date.start)
+                # start = self.get_rel_index(date.start)
                 start = self.get_offset(date.start)
             if date.stop is None:
                 stop = None
             else:
-                #stop = self.get_rel_index(date.stop)
+                # stop = self.get_rel_index(date.stop)
                 stop = self.get_offset(date.stop)
             index = slice(start, stop, None)
         else:
-            #index = self.get_rel_index(date)
+            # index = self.get_rel_index(date)
             index = self.get_offset(date)
-        #return self.get_relative(index, with_dates)
+        # return self.get_relative(index, with_dates)
         return self.get_absolute(index, with_dates)
 
     def _make_relative_index(self, abs_index):
