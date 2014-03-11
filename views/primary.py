@@ -48,11 +48,11 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self._cw._
-        w(u'<table><tr><td style="padding-right: 1cm">')
+        w(u'<table class="table table-bordered"><tr><td style="padding-right: 1cm">')
         w(tags.h2(_('Summary')))
         entity.view('summary', w=w)
         w(tags.h2(_('Characteristics')))
-        w(u'<table>')
+        w(u'<table  class="table table-bordered">')
         for attr in self.characteristics_attrs:
             self.field(display_name(self._cw, attr),
                        entity.view('reledit', rtype=attr),
@@ -93,7 +93,7 @@ class TimeSeriesSummaryView(baseviews.EntityView):
 
     def cell_call(self, row, col, **kwargs):
         entity = self.cw_rset.get_entity(row, col)
-        self.w(u'<table>')
+        self.w(u'<table class="table table-bordered">')
         if entity.is_constant:
             self.display_constant_fields(entity)
         else:
@@ -162,5 +162,5 @@ class TimeSeriesValuesView(baseviews.EntityView):
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         url = entity.absolute_url('json') + '&fname=get_ts_values_data'
         req.html_headers.add_onload(self.onload % {'url': xml_escape(url)})
-        self.w(u'<table id="tsvalue" cubicweb:type="unprepared"></table>')
+        self.w(u'<table id="tsvalue" cubicweb:type="unprepared" class="table table-bordered"></table>')
         self.w(tags.div(None, id='pager'))
