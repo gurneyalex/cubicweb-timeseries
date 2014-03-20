@@ -16,6 +16,8 @@ from cStringIO import StringIO
 
 import numpy
 
+from openpyxl import __version__
+
 from cubicweb import Binary, ValidationError
 from cubicweb.predicates import is_instance, ExpectedValuePredicate
 from cubicweb.view import EntityAdapter
@@ -40,6 +42,19 @@ class filename_ext(ExpectedValuePredicate):
             return osp.splitext(fname)[1]
         return fname
 
+_old_openpyxl_version = __version__.split('.') < (1, 9, 0)
+
+def rows(sheet):
+    if _old_openpyxl_version:
+        return sheet.iter_rows()
+    else:
+        return sheet.rows
+
+def value(cell):
+    if _old_openpyxl_version:
+        return cell.internal_value
+    else:
+        return cell.value
 
 # importers ####################################################################
 
@@ -220,8 +235,8 @@ class TSXLSXToNumpyArray(EntityAdapter):
         wb = utils.openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
         sheet = wb.worksheets[0]
         values = []
-        for rownum, row in enumerate(sheet.iter_rows()):
-            cell_value = row[0].internal_value
+        for rownum, row in enumerate(rows(sheet)):
+            cell_value = value(row[0])
             try:
                 cell_value = float(cell_value)
             except ValueError:
