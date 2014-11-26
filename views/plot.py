@@ -10,7 +10,7 @@ from __future__ import division
 from logilab.common.date import datetime2ticks
 from logilab.mtconverter import xml_escape
 
-from cubicweb import tags
+from cwtags import tag as t
 from cubicweb.utils import json_dumps as dumps
 from cubicweb.predicates import is_instance, score_entity
 from cubicweb.web.views import baseviews
@@ -39,9 +39,9 @@ class TimeSeriesPlotView(baseviews.EntityView):
         width = width or req.form.get('width', 700)
         height = height or req.form.get('height', 400)
         figid = u'figure%s' % req.varmaker.next()
-        w(tags.div(None, id='main%s' % figid, style='width: %spx; height: %spx;' % (width, height)))
-        w(tags.div(None, id='overview%s' % figid, style='width: %spx; height: %spx;' % (width, height/3)))
-        w(tags.button(req._('Zoom reset'), id='reset', klass='validateButton'))
+        w(t.div(u'', id='main%s' % figid, style='width: %spx; height: %spx;' % (width, height)))
+        w(t.div(u'', id='overview%s' % figid, style='width: %spx; height: %spx;' % (width, height/3)))
+        w(t.button(req._('Zoom reset'), id='reset', klass='validateButton'))
         plotdata = ("{label: '%s', data: %s}" % (xml_escape(ts.dc_title()), self.dump_plot(ts))
                     for ts in self.cw_rset.entities())
         req.html_headers.add_onload(self.onload %

@@ -12,7 +12,8 @@ import datetime
 
 from logilab.mtconverter import xml_escape
 
-from cubicweb import tags
+from cwtags import tag as t
+
 from cubicweb.schema import display_name
 from cubicweb.predicates import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
@@ -21,6 +22,7 @@ from cubicweb.web.views.ajaxcontroller import ajaxfunc
 from cubes.timeseries.utils import get_formatter
 
 _ = unicode
+
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
     __select__ = is_instance('TimeSeries', 'NonPeriodicTimeSeries')
@@ -33,6 +35,7 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
         self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
         self.render_tabs(self.tabs, self.default_tab, entity)
+
 
 class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
     __regid__ = 'ts_summary'
@@ -48,27 +51,26 @@ class TimeSeriesSummaryViewTab(tabs.PrimaryTab):
 
     def render_entity_attributes(self, entity):
         w = self.w; _ = self._cw._
-        w(u'<table class="table table-bordered"><tr><td style="padding-right: 1cm">')
-        w(tags.h2(_('Summary')))
-        entity.view('summary', w=w)
-        w(tags.h2(_('Characteristics')))
-        w(u'<table  class="table table-bordered">')
-        for attr in self.characteristics_attrs:
-            self.field(display_name(self._cw, attr),
-                       entity.view('reledit', rtype=attr),
-                       tr=True, table=True)
-        # XXX maybe we want reledit on this in the timeseries cube,
-        # but not in the only user of this cube for now...
-        self.field(_('unit'), entity.unit, tr=True, table=True)
-        self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
-        w(u'</table>')
-        w(tags.h2(_('Preview')))
-        entity.view('sparkline', w=w)
-        w(u'</td><td>')
-        if not entity.is_constant:
-            w(tags.h2(_('ts_values')))
-            self.wview('ts_values', self.cw_rset)
-        w(u'</td></tr></table>')
+        with t.table(w, class_='table table-bordered'):
+            with t.tr(w):
+                with t.td(w, style='padding-right: 1cm'):
+                    w(t.h2(_('Summary')))
+                    entity.view('summary', w=w)
+                    w(t.h2(_('Characteristics')))
+                    with t.table(w, class_='table table-bordered'):
+                        for attr in self.characteristics_attrs:
+                            self.field(display_name(self._cw, attr),
+                                       entity.view('reledit', rtype=attr),
+                                       tr=True, table=True)
+                            self.field(_('unit'), entity.unit, tr=True, table=True)
+                            self.field(_('calendar'), entity.use_calendar, tr=True, table=True)
+                    w(t.h2(_('Preview')))
+                    entity.view('sparkline', w=w)
+                with t.td(w):
+                    if not entity.is_constant:
+                        w(t.h2(_('ts_values')))
+                        self.wview('ts_values', self.cw_rset)
+
 
 def format_value(cw, value):
     if isinstance(value, float):
@@ -78,6 +80,7 @@ def format_value(cw, value):
     elif isinstance(value, datetime.date):
         value = cw.format_date(value)
     return value
+
 
 class TimeSeriesSummaryView(baseviews.EntityView):
     __regid__ = 'summary'
@@ -93,24 +96,23 @@ class TimeSeriesSummaryView(baseviews.EntityView):
 
     def cell_call(self, row, col, **kwargs):
         entity = self.cw_rset.get_entity(row, col)
-        self.w(u'<table class="table table-bordered">')
-        if entity.is_constant:
-            self.display_constant_fields(entity)
-        else:
-            for attr in self.summary_attrs:
-                if attr in self.editable_summary_attrs:
-                    self.field(display_name(self._cw, attr),
-                               entity.view('reledit', rtype=attr),
-                               tr=True, table=True)
-                    continue
-                if attr == 'average_unit' and entity.data_type == 'Boolean':
-                    continue
-                # XXX getattr because some are actually properties
-                value = getattr(entity, attr)
-                value = format_value(self._cw, value)
-                self.field(attr, value,
-                           show_label=True, tr=True, table=True)
-        self.w(u'</table>')
+        with t.table(self.w, class_='table table-bordered'):
+            if entity.is_constant:
+                self.display_constant_fields(entity)
+            else:
+                for attr in self.summary_attrs:
+                    if attr in self.editable_summary_attrs:
+                        self.field(display_name(self._cw, attr),
+                                   entity.view('reledit', rtype=attr),
+                                   tr=True, table=True)
+                        continue
+                    if attr == 'average_unit' and entity.data_type == 'Boolean':
+                        continue
+                    # XXX getattr because some are actually properties
+                    value = getattr(entity, attr)
+                    value = format_value(self._cw, value)
+                    self.field(attr, value,
+                               show_label=True, tr=True, table=True)
 
 
 class NonPeriodicTimeSeriesSummaryView(TimeSeriesSummaryView):
@@ -162,5 +164,7 @@ class TimeSeriesValuesView(baseviews.EntityView):
         req.add_css(('jquery-ui-1.7.2.custom.css', 'ui.jqgrid.css'))
         url = entity.absolute_url('json') + '&fname=get_ts_values_data'
         req.html_headers.add_onload(self.onload % {'url': xml_escape(url)})
-        self.w(u'<table id="tsvalue" cubicweb:type="unprepared" class="table table-bordered"></table>')
-        self.w(tags.div(None, id='pager'))
+        with t.table(self.w, id='tsvalue',
+                     cubicweb_type='unprepared',
+                     class_='table table-bordered'):
+            self.w(t.div(u'', id='pager'))

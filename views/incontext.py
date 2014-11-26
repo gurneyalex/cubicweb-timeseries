@@ -1,10 +1,12 @@
 from logilab.mtconverter import xml_escape
 
-from cubicweb import tags
+from cwtags import tag as t
+
 from cubicweb.predicates import is_instance
 from cubicweb.view import EntityView
 
 import unicodedata as udata
+
 
 class ExcelPreferencesInContextView(EntityView):
     __regid__ = 'incontext'
@@ -19,6 +21,6 @@ class ExcelPreferencesInContextView(EntityView):
         else:
             th_sep = udata.name(th_sep)
         self.w(xml_escape(self._cw._('separators: decimal = %s, thousands = %s, csv = %s')) %
-               (tags.span(udata.name(entity.decimal_separator), klass='highlight'),
-                tags.span(th_sep, klass='highlight'),
-                tags.span(udata.name(entity.csv_separator), klass='highlight')))
+               (t.span(xml_escape(udata.name(entity.decimal_separator)), klass='highlight'),
+                t.span(xml_escape(th_sep), klass='highlight'),
+                t.span(xml_escape(udata.name(entity.csv_separator)), klass='highlight')))
