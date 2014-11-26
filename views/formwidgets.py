@@ -10,7 +10,8 @@ from __future__ import with_statement, division
 import numpy
 
 from cubicweb import Binary, ValidationError, tags
-from cubicweb.web import uicfg, formwidgets as fw, formfields as ff
+from cubicweb.web.views import uicfg
+from cubicweb.web import formwidgets as fw, formfields as ff
 
 _ = unicode
 

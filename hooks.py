@@ -53,7 +53,7 @@ class SetupExcelPreferences(Hook):
     def __call__(self):
         self.debug('hook %s', self.__class__.__name__)
         try:
-            self.entity.set_relations(format_preferences=self._cw.create_entity('ExcelPreferences'))
+            self.entity.cw_set(format_preferences=self._cw.create_entity('ExcelPreferences'))
         except Exception, e:
             # while migrating from a pre 0.15 version, it can happen
             # that some users are fetched from LDAP and created

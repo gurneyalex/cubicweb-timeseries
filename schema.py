@@ -56,4 +56,4 @@ class format_preferences(RelationDefinition):
     subject = 'CWUser'
     object = 'ExcelPreferences'
     composite = 'subject'
-    cardinality = '11'
+    cardinality = '?1'

@@ -1,6 +1,6 @@
 # the timeseries views ...
 
-from cubicweb.web import uicfg
+from cubicweb.web.views import uicfg
 
 uicfg.autoform_section.tag_subject_of(('CWUser', 'format_preferences', '*'), 'main', 'hidden')
 uicfg.autoform_section.tag_attribute(('NonPeriodicTimeSeries', 'timestamps'), 'main', 'hidden')
