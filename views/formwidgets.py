@@ -1,11 +1,11 @@
 """cube-specific forms/views/actions/components
 
 :organization: Logilab
-:copyright: 2010-2011 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
+:copyright: 2010-2014 LOGILAB S.A. (Paris, FRANCE), license is LGPL v2.
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
-from __future__ import with_statement, division
+from __future__ import division
 
 import numpy
 
