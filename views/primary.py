@@ -31,7 +31,6 @@ class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):
 
     def cell_call(self, row, col):
         entity = self.cw_rset.complete_entity(row, col)
-        self._cw.demote_to_html()
         self.render_entity_toolbox(entity)
         self.render_entity_title(entity)
         self.render_tabs(self.tabs, self.default_tab, entity)
