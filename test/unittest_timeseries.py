@@ -13,16 +13,14 @@ from cubes.timeseries.entities.utils import get_next_date
 
 class TimeSeriesTC(CubicWebTC):
 
-    def _create_ts(self, data=numpy.arange(10), granularity=None,
+    def _create_ts(self, cnx, data=numpy.arange(10), granularity=None,
                    start_date=datetime(2009, 10, 1)):
-        req = self.request()
-        return req.create_entity('TimeSeries', data_type=u'Float',
+        return cnx.create_entity('TimeSeries', data_type=u'Float',
                                  granularity=granularity, start_date=start_date,
                                  data=data)
 
-    def _create_npts(self, data=numpy.arange(10), timestamps=None,
+    def _create_npts(self, cnx, data=numpy.arange(10), timestamps=None,
                      granularity='daily', start_date=datetime(2009, 10, 1)):
-        req = self.request()
         if timestamps is None:
             date = start_date
             timestamps = []
@@ -30,55 +28,61 @@ class TimeSeriesTC(CubicWebTC):
                 timestamps.append(date)
                 date = get_next_date(granularity, date)
         timestamps = numpy.array(timestamps)
-        return req.create_entity('NonPeriodicTimeSeries', data_type=u'Float',
+        return cnx.create_entity('NonPeriodicTimeSeries', data_type=u'Float',
                                  data=data, timestamps=timestamps)
 
 
 class NPTSTC(TimeSeriesTC):
 
     def test_creation(self):
-        ts = self._create_npts()
-        self.assertEqual(ts.timestamped_array(), [(datetime(2009, 10, 1, 0, 0), 0.0),
-                                                  (datetime(2009, 10, 2, 0, 0), 1.0),
-                                                  (datetime(2009, 10, 3, 0, 0), 2.0),
-                                                  (datetime(2009, 10, 4, 0, 0), 3.0),
-                                                  (datetime(2009, 10, 5, 0, 0), 4.0),
-                                                  (datetime(2009, 10, 6, 0, 0), 5.0),
-                                                  (datetime(2009, 10, 7, 0, 0), 6.0),
-                                                  (datetime(2009, 10, 8, 0, 0), 7.0),
-                                                  (datetime(2009, 10, 9, 0, 0), 8.0),
-                                                  (datetime(2009, 10, 10, 0, 0), 9.0)])
-        self.assertEqual(ts.start_date, datetime(2009, 10, 1, 0, 0))
-        start = (datetime(2009, 10, 1) - datetime(2000, 1, 1)).days
-        ts2 = self._create_npts(timestamps=numpy.arange(start, start+ 10))
-        self.assertEqual(ts2.timestamped_array(), ts.timestamped_array())
-        ts3 = self._create_ts(granularity=u'daily')
-        self.assertEqual(ts3.timestamped_array(), ts.timestamped_array())
+        with self.admin_access.repo_cnx() as cnx:
+            ts = self._create_npts(cnx)
+            self.assertEqual(ts.timestamped_array(), [(datetime(2009, 10, 1, 0, 0), 0.0),
+                                                      (datetime(2009, 10, 2, 0, 0), 1.0),
+                                                      (datetime(2009, 10, 3, 0, 0), 2.0),
+                                                      (datetime(2009, 10, 4, 0, 0), 3.0),
+                                                      (datetime(2009, 10, 5, 0, 0), 4.0),
+                                                      (datetime(2009, 10, 6, 0, 0), 5.0),
+                                                      (datetime(2009, 10, 7, 0, 0), 6.0),
+                                                      (datetime(2009, 10, 8, 0, 0), 7.0),
+                                                      (datetime(2009, 10, 9, 0, 0), 8.0),
+                                                      (datetime(2009, 10, 10, 0, 0), 9.0)])
+            self.assertEqual(ts.start_date, datetime(2009, 10, 1, 0, 0))
+            start = (datetime(2009, 10, 1) - datetime(2000, 1, 1)).days
+            ts2 = self._create_npts(cnx, timestamps=numpy.arange(start, start+ 10))
+            self.assertEqual(ts2.timestamped_array(), ts.timestamped_array())
+            ts3 = self._create_ts(cnx, granularity=u'daily')
+            self.assertEqual(ts3.timestamped_array(), ts.timestamped_array())
 
     def test_no_timestamps(self):
-        with self.assertRaises(ValueError) as cm:
-            self._create_npts(timestamps=range(10, 0, -1))
-        self.assertEqual(str(cm.exception), 'time stamps must be a strictly ascendant vector')
+        with self.admin_access.repo_cnx() as cnx:
+            with self.assertRaises(ValueError) as cm:
+                self._create_npts(cnx, timestamps=range(10, 0, -1))
+            self.assertEqual(str(cm.exception), 'time stamps must be a strictly ascendant vector')
 
     def test_size_mismatch(self):
-        with self.assertRaises(ValueError) as cm:
-            self._create_npts(timestamps=range(9))
-        self.assertEqual(str(cm.exception), 'data/timestamps vectors size mismatch')
+        with self.admin_access.repo_cnx() as cnx:
+            with self.assertRaises(ValueError) as cm:
+                self._create_npts(cnx, timestamps=range(9))
+            self.assertEqual(str(cm.exception), 'data/timestamps vectors size mismatch')
 
     def test_bad_timestamps(self):
-        with self.assertRaises(ValueError) as cm:
-            self._create_npts(timestamps=range(10, 0, -1))
-        self.assertEqual(str(cm.exception), 'time stamps must be a strictly ascendant vector')
+        with self.admin_access.repo_cnx() as cnx:
+            with self.assertRaises(ValueError) as cm:
+                self._create_npts(cnx, timestamps=range(10, 0, -1))
+            self.assertEqual(str(cm.exception), 'time stamps must be a strictly ascendant vector')
 
 
 class TSaccessTC(TimeSeriesTC):
     def setup_database(self):
-        self.constantts = self._create_ts(data= numpy.array([0]), granularity=u'constant')
-        self.hourlyts = self._create_ts(granularity=u'hourly')
-        self.dailyts = self._create_ts(granularity=u'daily')
-        self.monthlyts = self._create_ts(granularity=u'monthly')
-        self.yearlyts = self._create_ts(granularity=u'yearly')
-        self.weeklyts = self._create_ts(granularity=u'weekly', start_date=datetime(2009, 10, 5))
+        with self.admin_access.repo_cnx() as cnx:
+            self.constantts = self._create_ts(cnx, data= numpy.array([0]), granularity=u'constant')
+            self.hourlyts = self._create_ts(cnx, granularity=u'hourly')
+            self.dailyts = self._create_ts(cnx, granularity=u'daily')
+            self.monthlyts = self._create_ts(cnx, granularity=u'monthly')
+            self.yearlyts = self._create_ts(cnx, granularity=u'yearly')
+            self.weeklyts = self._create_ts(cnx, granularity=u'weekly', start_date=datetime(2009, 10, 5))
+            cnx.commit()
 
     @tag('constant')
     def test_end_date_constant(self):
@@ -339,6 +343,7 @@ class TSaccessTC(TimeSeriesTC):
         expected = (.75*self.dailyts.array[1] + 1*self.dailyts.array[2] + 1*self.dailyts.array[3])
         self.assertEqual(result, expected)
 
+
 class NPTSaccessTC(TSaccessTC):
     """same test as above but for NonPeriodicTimeSeries"""
     _create_ts = TSaccessTC._create_npts
@@ -410,20 +415,21 @@ class NPTSaccessTC(TSaccessTC):
 class ComputeSumAverageTC(TimeSeriesTC):
 
     def setup_database(self):
-        self.yearlyts = self._create_ts(granularity=u'yearly',
-                                        data=numpy.arange(3)*10,
-                                        start_date=datetime(2009, 1, 1, 0))
-        self.monthlyts = self._create_ts(granularity=u'monthly', data=numpy.arange(12))
-        self.weeklyts = self._create_ts(granularity=u'weekly',
-                                         data=numpy.arange(10),
-                                         start_date=datetime(2009, 9, 28, 6))
-        self.dailyts = self._create_ts(granularity=u'daily',
-                                         data=numpy.arange(60))
-        self.hourlyts = self._create_ts(granularity=u'hourly',
-                                         data=numpy.arange(720))
-        self.quartts = self._create_ts(granularity=u'15min',
-                                         data=numpy.arange(2880))
-
+        with self.admin_access.repo_cnx() as cnx:
+            self.yearlyts = self._create_ts(cnx, granularity=u'yearly',
+                                            data=numpy.arange(3)*10,
+                                            start_date=datetime(2009, 1, 1, 0))
+            self.monthlyts = self._create_ts(cnx, granularity=u'monthly', data=numpy.arange(12))
+            self.weeklyts = self._create_ts(cnx, granularity=u'weekly',
+                                             data=numpy.arange(10),
+                                             start_date=datetime(2009, 9, 28, 6))
+            self.dailyts = self._create_ts(cnx, granularity=u'daily',
+                                           data=numpy.arange(60))
+            self.hourlyts = self._create_ts(cnx, granularity=u'hourly',
+                                            data=numpy.arange(720))
+            self.quartts = self._create_ts(cnx, granularity=u'15min',
+                                           data=numpy.arange(2880))
+            cnx.commit()
 
     def test_end_date_error(self):
         start_date = datetime(2009, 12, 3)
