@@ -232,7 +232,7 @@ class TSXLSXToNumpyArray(EntityAdapter):
     __select__ = is_instance('TimeSeries') & filename_ext('.xlsx')
 
     def to_numpy_array(self, fileobj, filename):
-        wb = utils.openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True)
+        wb = utils.openpyxl.reader.excel.load_workbook(filename=fileobj, use_iterators=True, data_only=True)
         sheet = wb.worksheets[0]
         values = []
         for rownum, row in enumerate(rows(sheet)):
