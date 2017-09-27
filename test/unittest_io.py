@@ -37,10 +37,9 @@ class TimeSeriesTC(CubicWebTC):
 class RoundTripTC(TimeSeriesTC):
 
     def test_ts_export(self):
-        with self.admin_access.repo_cnx() as cnx:
-            ts = self._create_ts(cnx, granularity=u'daily')
-            cnx.commit()
         with self.admin_access.web_request() as req:
+            ts = self._create_ts(req, granularity=u'daily')
+            req.cnx.commit()
             for ext, fmt in (('.xls', 'application/vnd.ms-excel'),
                              ('.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
                              ('.csv', 'text/csv')):
@@ -53,10 +52,9 @@ class RoundTripTC(TimeSeriesTC):
                 self.failIf(len(out) == 0)
 
     def test_npts_export(self):
-        with self.admin_access.repo_cnx() as cnx:
-            ts = self._create_npts(cnx)
-            cnx.commit()
         with self.admin_access.web_request() as req:
+            ts = self._create_npts(req)
+            req.cnx.commit()
             for ext, fmt in (('.xls', 'application/vnd.ms-excel'),
                              ('.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
                              ('.csv', 'text/csv')):
