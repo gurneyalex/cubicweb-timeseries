@@ -83,6 +83,15 @@ class TSaccessTC(TimeSeriesTC):
             self.yearlyts = self._create_ts(cnx, granularity=u'yearly')
             self.weeklyts = self._create_ts(cnx, granularity=u'weekly', start_date=datetime(2009, 10, 5))
             cnx.commit()
+            # XXX: preload cache on 'granularity' to avoid "Closed Connection"
+            # in test accessing granularity. This surely need to be refactored
+            # by creating the TS inside each test.
+            for ts in [
+                self.constantts, self.hourlyts, self.dailyts,
+                self.monthlyts, self.yearlyts, self.weeklyts
+            ]:
+                ts.granularity
+
 
     @tag('constant')
     def test_end_date_constant(self):
