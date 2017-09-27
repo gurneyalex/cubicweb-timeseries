@@ -1,13 +1,14 @@
 from datetime import datetime
 
-from logilab.common.testlib import TestCase, unittest_main
+import unittest
 
 # this import is for apycot
 import cubicweb.devtools
 
 from cubes.timeseries.calendars import GregorianCalendar
 
-class GasCalendarDateFunctionsTC(TestCase):
+
+class GasCalendarDateFunctionsTC(unittest.TestCase):
 
     def setUp(self):
         self.calendar = GregorianCalendar()
@@ -50,4 +51,4 @@ class GasCalendarDateFunctionsTC(TestCase):
                          datetime(1990, 1, 1, 1, 1, 2))
 
 if __name__ == '__main__':
-    unittest_main()
+    unittest.main()

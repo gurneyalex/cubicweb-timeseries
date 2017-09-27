@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 
 import numpy
 
-from logilab.common.testlib import tag
-
 from cubicweb.devtools.testlib import CubicWebTC
 
 from cubes.timeseries.entities.utils import get_next_date
@@ -93,7 +91,6 @@ class TSaccessTC(TimeSeriesTC):
                 ts.granularity
 
 
-    @tag('constant')
     def test_end_date_constant(self):
         expected_end = self.constantts.start_date + timedelta.resolution
         self.assertEqual(self.constantts.end_date, expected_end)
@@ -118,7 +115,6 @@ class TSaccessTC(TimeSeriesTC):
         expected_end = datetime(2019, 10, 1)
         self.assertEqual(self.yearlyts.end_date, expected_end)
 
-    @tag('constant')
     def test_make_relative_index_constant(self):
         ts = self.constantts
         date = datetime(2009, 10, 2, 12)
@@ -127,18 +123,15 @@ class TSaccessTC(TimeSeriesTC):
         delta = calendar.get_offset(date, granularity) - ts._start_offset
         self.assertEqual(delta, 0)
 
-    @tag('constant')
     def test_get_by_date_constant(self):
         date = datetime(2009, 10, 2, 12)
         self.assertEqual(self.constantts.get_by_date(date), self.constantts.array[0])
 
-    @tag('constant')
     def test_get_by_date_constant_slice(self):
         date1 = datetime(2009, 10, 2, 12)
         date2 = datetime(2009, 10, 4, 6)
         self.assertEqual(self.constantts.get_by_date(slice(date1, date2)).tolist(),
                           self.constantts.array[0:1].tolist())
-    @tag('constant')
     def test_get_by_date_constant_slice_none(self):
         self.assertEqual(self.constantts.get_by_date(slice(None, None)).tolist(),
                           self.constantts.array[0:1].tolist())
@@ -357,7 +350,6 @@ class NPTSaccessTC(TSaccessTC):
     """same test as above but for NonPeriodicTimeSeries"""
     _create_ts = TSaccessTC._create_npts
 
-    @tag('constant')
     def test_end_date_constant(self):
         self.skipTest('Non relevant.')
     test_make_relative_index_constant = test_end_date_constant
@@ -577,5 +569,5 @@ class NPTSComputeSumAverageTC(ComputeSumAverageTC):
 
 
 if __name__ == '__main__':
-    from logilab.common.testlib import unittest_main
-    unittest_main()
+    import unittest
+    unittest.main()
