@@ -22,6 +22,7 @@ classifiers = [
 
 __depends__ = {
     'cubicweb': '>= 3.16.0',
+    'cwtags': None,
     'numpy': None,
 }
 # XXX debian/control tells
