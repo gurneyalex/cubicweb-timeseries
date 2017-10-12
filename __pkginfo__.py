@@ -4,7 +4,7 @@
 modname = 'timeseries'
 distname = 'cubicweb-timeseries'
 
-numversion = (1, 4, 0)
+numversion = (1, 5, 0)
 version = '.'.join(str(num) for num in numversion)
 
 license = 'LCL'
