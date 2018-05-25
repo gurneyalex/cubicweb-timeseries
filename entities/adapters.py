@@ -259,7 +259,7 @@ class NDTSCSVToNumpyArray(CSVImportMixin, EntityAdapter):
             assert dialect in csv.list_dialects()
         reader = csv.reader(file, dialect)
         if has_header:
-            reader.next()
+            next(reader)
         series = []
         tstamps = []
         # TODO: check granularity if we have a date column
