@@ -11,7 +11,7 @@ import pickle
 import zlib
 
 from bisect import bisect_left
-from itertools import izip
+from six.moves import zip as izip
 
 from logilab.common.decorators import cachedproperty, cached, clear_cache
 
