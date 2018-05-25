@@ -80,7 +80,7 @@ def interpret_constant(entity, str_value):
         return entity.output_value(str_value)
     except (ValueError, TypeError):
         raise ValidationError(entity.eid, {'data': _('accepted type: %s') % _(entity.data_type)})
-    except KeyError, k:
+    except KeyError as k:
         # this can happen at creation time if data_type has not been provided
         # e.g.: data_type is automatically handled in a hook to be executed later
         # (yes, there are use case/applications that want to do this)

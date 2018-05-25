@@ -342,7 +342,7 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
                 return self.timestamped_array()[index]
             else:
                 return self.array[index]
-        except IndexError, exc:
+        except IndexError as exc:
             raise IndexError(exc.args + (index,))
 
     @property

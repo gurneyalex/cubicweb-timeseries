@@ -9,7 +9,7 @@ class ExcelPreferencesTC(CubicWebTC):
             try:
                 prefs = req.create_entity('ExcelPreferences', csv_separator=u',', decimal_separator=u',')
                 self.fail('should have ValidationError')
-            except ValidationError, exc:
+            except ValidationError as exc:
                 self.assertListEqual(exc.errors.keys(), ['csv_separator'])
 
     def test_everyone(self):

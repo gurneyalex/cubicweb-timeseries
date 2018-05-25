@@ -54,7 +54,7 @@ class SetupExcelPreferences(Hook):
         self.debug('hook %s', self.__class__.__name__)
         try:
             self.entity.cw_set(format_preferences=self._cw.create_entity('ExcelPreferences'))
-        except Exception, e:
+        except Exception as e:
             # while migrating from a pre 0.15 version, it can happen
             # that some users are fetched from LDAP and created
             # but at this moment the schema has not yet been updated
