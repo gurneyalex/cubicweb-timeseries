@@ -11,11 +11,10 @@ from logilab.common.date import datetime2ticks
 from logilab.mtconverter import xml_escape
 
 from cwtags import tag as t
+from cubicweb import _
 from cubicweb.utils import json_dumps as dumps
 from cubicweb.predicates import is_instance, score_entity
 from cubicweb.web.views import baseviews
-
-_ = unicode
 
 
 class TimeSeriesPlotView(baseviews.EntityView):

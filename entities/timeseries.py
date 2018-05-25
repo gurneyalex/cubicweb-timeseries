@@ -16,13 +16,11 @@ import numpy
 
 from logilab.common.decorators import cached
 
+from cubicweb import _
 from cubicweb.entities import AnyEntity, fetch_config
 
 from cubes.timeseries.calendars import get_calendar, TIME_DELTAS
 from cubes.timeseries.entities import utils, abstract
-
-_ = unicode
-
 
 
 class TimeSeries(abstract.AbstractTSMixin, AnyEntity):

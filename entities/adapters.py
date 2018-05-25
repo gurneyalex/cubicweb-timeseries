@@ -16,14 +16,13 @@ from cStringIO import StringIO
 
 import numpy
 
-from cubicweb import Binary, ValidationError
+from cubicweb import Binary, ValidationError, _
 from cubicweb.predicates import is_instance, ExpectedValuePredicate
 from cubicweb.view import EntityAdapter
 
 from cubes.timeseries.utils import get_formatter
 from cubes.timeseries.entities import utils
 
-_ = unicode
 
 class mimetype(ExpectedValuePredicate):
     """ a selector for exporters  """

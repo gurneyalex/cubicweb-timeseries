@@ -1,8 +1,7 @@
+from cubicweb import _
 from cubicweb.predicates import is_instance, one_line_rset
 from cubicweb.view import EntityView
 from cubicweb.web import action
-
-_ = unicode
 
 class TimeSeriesExcelExport(EntityView):
     __regid__ = 'tsxlexport'

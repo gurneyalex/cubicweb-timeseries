@@ -14,14 +14,13 @@ from logilab.mtconverter import xml_escape
 
 from cwtags import tag as t
 
+from cubicweb import _
 from cubicweb.schema import display_name
 from cubicweb.predicates import is_instance
 from cubicweb.web.views import primary, baseviews, tabs
 from cubicweb.web.views.ajaxcontroller import ajaxfunc
 
 from cubes.timeseries.utils import get_formatter
-
-_ = unicode
 
 
 class TimeSeriesPrimaryView(tabs.TabsMixin, primary.PrimaryView):

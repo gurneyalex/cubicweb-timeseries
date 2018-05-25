@@ -9,11 +9,9 @@ from __future__ import division
 
 import numpy
 
-from cubicweb import Binary, ValidationError, tags
+from cubicweb import Binary, ValidationError, tags, _
 from cubicweb.web.views import uicfg
 from cubicweb.web import formwidgets as fw, formfields as ff
-
-_ = unicode
 
 # XXX hack to work around https://www.cubicweb.org/ticket/1381203
 

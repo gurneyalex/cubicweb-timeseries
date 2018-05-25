@@ -15,12 +15,12 @@ from itertools import izip
 
 from logilab.common.decorators import cachedproperty, cached, clear_cache
 
+from cubicweb import _
 from cubicweb.entities import fetch_config
 
 from cubes.timeseries.entities import timeseries
 from cubes.timeseries.calendars import timedelta_to_days, timedelta_to_seconds
 
-_ = unicode
 
 class NonPeriodicTimeSeries(timeseries.TimeSeries):
     __regid__ = 'NonPeriodicTimeSeries'

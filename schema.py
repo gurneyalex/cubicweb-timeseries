@@ -5,11 +5,12 @@
 :contact: http://www.logilab.fr/ -- mailto:contact@logilab.fr
 :license: GNU Lesser General Public License, v2.1 - http://www.gnu.org/licenses
 """
-_ = unicode
 
 from yams.buildobjs import (EntityType, String, Bytes, Boolean, #pylint:disable-msg=E0611
                             Float, Datetime, SubjectRelation,
                             RelationDefinition)
+from cubicweb import _
+
 
 class _AbstractTimeSeries(EntityType):
     data_type = String(required=True,
