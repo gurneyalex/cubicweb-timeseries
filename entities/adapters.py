@@ -12,7 +12,7 @@ import zlib
 import datetime
 import pickle
 import os.path as osp
-from cStringIO import StringIO
+from io import StringIO
 
 import numpy
 
