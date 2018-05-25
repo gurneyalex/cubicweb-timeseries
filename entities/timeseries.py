@@ -77,7 +77,7 @@ class TimeSeries(abstract.AbstractTSMixin, AnyEntity):
         # pylint:disable-msg=E1101
         assert mode in self.supported_modes, 'unsupported mode'
         if use_last_interval and mode != 'last':
-            raise AssertionError, '"use_last_interval" may be True only if mode is "last"'
+            raise AssertionError('"use_last_interval" may be True only if mode is "last"')
         if self.is_constant:
             if mode == 'sum':
                 raise ValueError("sum can't be computed with a constant granularity")
